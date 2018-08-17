@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
@@ -13,12 +14,11 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/ethclient"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
 	"sync"
-	"crypto/tls"
-	"log"
 )
 
 const (
