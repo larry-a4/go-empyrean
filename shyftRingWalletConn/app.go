@@ -17,6 +17,8 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"crypto/tls"
+	"log"
 )
 
 const (
@@ -40,7 +42,13 @@ func signHash(data []byte) []byte {
 }
 
 func main() {
-	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	cer, err := tls.LoadX509KeyPair("server_test.crt", "server_test.key")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	config := &tls.Config{Certificates: []tls.Certificate{cer}}
+	l, err := tls.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT, config)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
