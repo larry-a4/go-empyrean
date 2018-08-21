@@ -17,14 +17,52 @@
 package eth
 
 import (
+	"os"
+	"os/exec"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/p2p/discover"
 )
+
+//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+func TestMain(m *testing.M) {
+	pgTestDbSetup()
+	retCode := m.Run()
+	pgTestTearDown()
+	os.Exit(retCode)
+}
+
+// pgTestDbSetup - reinitializes the pg database
+func pgTestDbSetup() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+	pgRecreateTables()
+	if err != nil {
+		println(err.Error())
+		return
+	}
+}
+
+func pgTestTearDown() {
+	pgTestDbSetup()
+}
+
+func pgRecreateTables() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+
+	if err != nil {
+		println(err.Error())
+		return
+	}
+}
 
 // Tests that fast sync gets disabled as soon as a real block is successfully
 // imported into the blockchain.
@@ -41,7 +79,7 @@ func TestFastSyncDisabling(t *testing.T) {
 	}
 	// Sync up the two peers
 	io1, io2 := p2p.MsgPipe()
-
+	core.TruncateTables()
 	go pmFull.handle(pmFull.newPeer(63, p2p.NewPeer(discover.NodeID{}, "empty", nil), io2))
 	go pmEmpty.handle(pmEmpty.newPeer(63, p2p.NewPeer(discover.NodeID{}, "full", nil), io1))
 

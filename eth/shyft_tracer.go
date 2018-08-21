@@ -2,6 +2,7 @@ package eth
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/params"
@@ -34,6 +35,7 @@ func InitTracerEnv() {
 }
 
 func (st ShyftTracer) GetTracerToRun(hash common.Hash) (interface{}, error) {
+	fmt.Println("GetTracer")
 	return PrivateAPI.STraceTransaction(Context, hash, TracerConfig)
 }
 

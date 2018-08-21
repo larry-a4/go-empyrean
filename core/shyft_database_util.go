@@ -31,7 +31,6 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt) error {
 	if err != nil {
 		panic(err)
 	}
-
 	//Get miner rewards
 	rewards := swriteMinerRewards(sqldb, block)
 	//Format block time to be stored
@@ -120,11 +119,15 @@ func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.H
 		Status:      statusFromReciept,
 		IsContract:  isContract,
 	}
-	//Inserts Tx into DB
-	InsertTx(sqldb, txData)
-	//Runs necessary functions for tracing internal transactions through tracers.go
-	IShyftTracer.GetTracerToRun(tx.Hash())
-
+	isContractCheck := IsContract(sqldb, txData.To.String())
+	if isContractCheck == true {
+		InsertTx(sqldb, txData)
+		//Runs necessary functions for tracing internal transactions through tracers.go
+		IShyftTracer.GetTracerToRun(tx.Hash())
+	} else {
+		//Inserts Tx into DB
+		InsertTx(sqldb, txData)
+	}
 	return nil
 }
 
@@ -315,7 +318,8 @@ func CreateAccount(sqldb *sql.DB, addr string, balance string, accountNonce stri
 //AccountExists checks if account exists in Postgres Db
 func AccountExists(sqldb *sql.DB, addr string) (string, string, error) {
 	var addressBalance, accountNonce string
-	sqlExistsStatement := `SELECT balance, accountNonce from accounts WHERE addr = ($1)`
+
+	sqlExistsStatement := `SELECT balance, accountnonce from accounts WHERE addr = ($1)`
 	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&addressBalance, &accountNonce)
 	switch {
 	case err == sql.ErrNoRows:
@@ -330,8 +334,10 @@ func AccountExists(sqldb *sql.DB, addr string) (string, string, error) {
 //BlockExists checks if block exists in Postgres Db
 func BlockExists(sqldb *sql.DB, hash string) error {
 	var res string
+	tx, _ := sqldb.Begin()
 	sqlExistsStatement := `SELECT hash from blocks WHERE hash= ($1)`
-	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(hash)).Scan(&res)
+	err := tx.QueryRow(sqlExistsStatement, strings.ToLower(hash)).Scan(&res)
+	tx.Commit()
 	switch {
 	case err == sql.ErrNoRows:
 		return err
@@ -341,10 +347,25 @@ func BlockExists(sqldb *sql.DB, hash string) error {
 	}
 }
 
+//IsContract checks if toAddr is from a contract in Postgres Db
+func IsContract(sqldb *sql.DB, addr string) bool {
+	var isContract bool
+	sqlExistsStatement := `SELECT isContract from txs WHERE to_addr=($1)`
+	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&isContract)
+	switch {
+	case err == sql.ErrNoRows:
+		return isContract
+	default:
+		return isContract
+	}
+}
+
 //UpdateAccount updates account in Postgres Db
 func UpdateAccount(sqldb *sql.DB, addr string, balance string, accountNonce string) {
+	tx, _ := sqldb.Begin()
 	updateSQLStatement := `UPDATE accounts SET balance = ($2), accountNonce = ($3) WHERE addr = ($1)`
-	_, updateErr := sqldb.Exec(updateSQLStatement, strings.ToLower(addr), balance, accountNonce)
+	_, updateErr := tx.Exec(updateSQLStatement, strings.ToLower(addr), balance, accountNonce)
+	tx.Commit()
 	if updateErr != nil {
 		panic(updateErr)
 	}
@@ -352,8 +373,10 @@ func UpdateAccount(sqldb *sql.DB, addr string, balance string, accountNonce stri
 
 //InsertBlock writes block to Postgres Db
 func InsertBlock(sqldb *sql.DB, blockData stypes.SBlock) {
+	tx, _ := sqldb.Begin()
 	sqlStatement := `INSERT INTO blocks(hash, coinbase, number, gasUsed, gasLimit, txCount, uncleCount, age, parentHash, uncleHash, difficulty, size, rewards, nonce) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12),($13), ($14)) RETURNING number`
-	qerr := sqldb.QueryRow(sqlStatement, strings.ToLower(blockData.Hash), blockData.Coinbase, blockData.Number, blockData.GasUsed, blockData.GasLimit, blockData.TxCount, blockData.UncleCount, blockData.Age, blockData.ParentHash, blockData.UncleHash, blockData.Difficulty, blockData.Size, blockData.Rewards, blockData.Nonce).Scan(&blockData.Number)
+	qerr := tx.QueryRow(sqlStatement, strings.ToLower(blockData.Hash), blockData.Coinbase, blockData.Number, blockData.GasUsed, blockData.GasLimit, blockData.TxCount, blockData.UncleCount, blockData.Age, blockData.ParentHash, blockData.UncleHash, blockData.Difficulty, blockData.Size, blockData.Rewards, blockData.Nonce).Scan(&blockData.Number)
+	tx.Commit()
 	if qerr != nil {
 		panic(qerr)
 	}
@@ -361,19 +384,23 @@ func InsertBlock(sqldb *sql.DB, blockData stypes.SBlock) {
 
 //InsertTx writes tx to Postgres Db
 func InsertTx(sqldb *sql.DB, txData stypes.ShyftTxEntryPretty) {
+	tx, _ := sqldb.Begin()
 	var retNonce string
 	sqlStatement := `INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15)) RETURNING nonce`
-	err := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To.String()), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
-	if err != nil {
-		panic(err)
+	err2 := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To.String()), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
+	tx.Commit()
+	if err2 != nil {
+		panic(err2)
 	}
 }
 
 //InsertInternalTx writes internal tx to Postgres Db
 func InsertInternalTx(sqldb *sql.DB, i stypes.InteralWrite) {
 	var returnValue string
+	tx, _ := sqldb.Begin()
 	sqlStatement := `INSERT INTO internaltxs(action, txhash, from_addr, to_addr, amount, gas, gasUsed, time, input, output) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10)) RETURNING txHash`
-	qerr := sqldb.QueryRow(sqlStatement, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output).Scan(&returnValue)
+	qerr := tx.QueryRow(sqlStatement, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output).Scan(&returnValue)
+	tx.Commit()
 	if qerr != nil {
 		fmt.Println(qerr)
 		panic(qerr)
