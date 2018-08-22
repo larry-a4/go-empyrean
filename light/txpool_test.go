@@ -90,6 +90,7 @@ func TestTxPool(t *testing.T) {
 	// Assemble the test environment
 	blockchain, _ := core.NewBlockChain(sdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{})
 	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), sdb, poolTestBlocks, txPoolTestChainGen)
+	// @SHYFT NOTE: Clear PG DB before test
 	core.TruncateTables()
 	if _, err := blockchain.InsertChain(gchain); err != nil {
 		panic(err)
