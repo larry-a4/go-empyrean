@@ -22,8 +22,8 @@ class AccountTable extends Component {
     }
 
     render() {
-         let startNum = 1;
-         let table;    
+        let startNum = 1;
+        let table;    
         const sorted = [...this.state.data];
         sorted.sort((a, b) => Number(a.Balance) > Number(b.Balance)); 
         table = sorted.reverse().map((data, i) => {
