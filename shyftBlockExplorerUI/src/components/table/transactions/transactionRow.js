@@ -22,7 +22,6 @@ class TransactionTable extends Component {
     }
 
     render() {
-
         const table = this.state.data.map((data, i) => {
             const conversion = data.Cost / 10000000000000000000;
             return <TransactionsTable

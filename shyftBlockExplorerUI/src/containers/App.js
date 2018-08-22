@@ -3,8 +3,6 @@ import axios from 'axios';
 import Nav from "../components/nav/nav";
 import { BrowserRouter, Route } from 'react-router-dom'
 
-import { Link } from 'react-router-dom'
-
 import Modal from 'react-bootstrap/lib/Modal';
 import Button from 'react-bootstrap/lib/Button';
 import Grid from 'react-bootstrap/lib/Grid';
@@ -16,7 +14,6 @@ import Home from '../components/home/home';
 
 ///**TRANSACTIONS**///
 import TransactionRow from '../components/table/transactions/transactionRow';
-import TransactionDetailHeader from "../components/nav/transactionHeader/transactionDetailHeader";
 import DetailTransactionTable from "../components/table/transactions/transactionDetailsRow";
 import BlockTxs from "../components/table/transactions/blockTx";
 
@@ -29,14 +26,10 @@ import BlocksRow from '../components/table/blocks/blockRows';
 import DetailBlockTable from '../components/table/blocks/blocksDetailsRow';
 import BlockDetailHeader from "../components/nav/blockHeaders/blockDetailHeader";
 import BlocksMinedTable from "../components/table/blocks/blocksMined";
-import BlockCoinbaseHeader from "../components/nav/blockHeaders/blockCoinbaseHeader";
 
 ///**ACCOUNTS**///
 import AccountsRow from '../components/table/accounts/accountRows';
 import DetailAccountsTable from "../components/table/accounts/detailAccountsRow";
-import AccountDetailHeader from "../components/nav/accountHeaders/accountDetailHeader";
-
-import classes from './App.css';
 
 
 class App extends Component {
@@ -120,8 +113,6 @@ class App extends Component {
             console.log(error)
         }
     };
-    
-    
 
     getBlockTransactions = async(blockNumber) => {
         try {
@@ -195,8 +186,6 @@ class App extends Component {
     renderOverlay = () => {
         const page = this.state.overlayContent;
         let data, title;
-        let keys = [];
-        let values = [];
         switch (page) {
             case "block" : 
                 title = "BLOCK OVERVIEW";

@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import BlockTable from './blockTable';
-import Loading from '../../UI materials/loading'
 import classes from './table.css';
 import axios from "axios/index";
 

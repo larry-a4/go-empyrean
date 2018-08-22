@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import InternalTable from './internalTable';
-import Loading from '../../UI materials/loading'
 import classes from './table.css';
 import axios from "axios/index";
 
@@ -22,8 +21,7 @@ class InternalTransactionsTable extends Component {
     }
 
     render() {
-        const table = this.state.data.map((data, i) => {  
-            const conversion = data.Rewards / 10000000000000000000;
+        const table = this.state.data.map((data, i) => {              
             return <InternalTable
                 key={`${data.TxHash}${i}`}
                 Hash={data.Hash}

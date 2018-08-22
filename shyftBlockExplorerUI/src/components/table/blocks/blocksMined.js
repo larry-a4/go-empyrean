@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import MinedBlockTable from './blocksMinedTable';
-import Loading from '../../UI materials/loading'
 import classes from './table.css';
 
 class BlocksMinedTable extends Component {
