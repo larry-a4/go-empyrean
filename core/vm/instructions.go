@@ -887,3 +887,39 @@ func makeSwap(size int64) executionFunc {
 		return nil, nil
 	}
 }
+
+
+func merkleProve(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
+	proofLocation, leaf, root := stack.pop(), stack.pop(), stack.pop()
+	proofLen := new(big.Int).SetBytes(memory.Get(proofLocation.Int64(), big.NewInt(32).Int64()))
+
+	// Ensure proof consists of 1 or more 32byte hash + 1byte left/right
+	if proofLen.Mod(proofLen, big.NewInt(33)) != big.NewInt(0) {
+		return nil, errors.New("evm: MERKLEPROVE proof length invalid")
+	}
+
+	i := big.NewInt(33)
+	computedHash := leaf
+
+	for i.Cmp(proofLen) == -1 {
+		// Load element from memory[proofLocation + i]
+		proofElement := memory.Get(proofLocation.Add(i).Int64(), big.NewInt(32).Int64())
+		// Load left/right from memory[proofLocation + i - 1]
+		isRight := new(big.Int).SetBytes(memory.Get(proofLocation.Add(proofLocation, i.Sub(i, big.NewInt(1))).Int64(), big.NewInt(1).Int64()))
+
+		if isRight.Cmp(big.NewInt(1)) == 0 {
+			computedHash = crypto.Keccak256(computedHash, proofElement)
+		} else {
+			computedHash = crypto.Keccak256(proofElement, computedHash)
+		}
+		i.Add(i, big.NewInt(33))
+	}
+
+	if computedHash.Cmp(root) == 0 {
+		stack.push(big.NewInt(1))
+	} else {
+		stack.push(big.NewInt(0))
+	}
+
+	return nil, nil
+}
