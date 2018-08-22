@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/cespare/cp"
+	"fmt"
 )
 
 // These tests are 'smoke tests' for the account related
@@ -50,6 +51,7 @@ func TestAccountListEmpty(t *testing.T) {
 func TestAccountList(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
 	geth := runGeth(t, "account", "list", "--datadir", datadir)
+	fmt.Printf("%+v\n", geth)
 	defer geth.ExpectExit()
 	if runtime.GOOS == "windows" {
 		geth.Expect(`
