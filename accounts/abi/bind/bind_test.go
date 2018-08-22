@@ -836,6 +836,7 @@ func TestBindings(t *testing.T) {
 	defer os.RemoveAll(ws)
 
 	pkg := filepath.Join(ws, "bindtest")
+	fmt.Println("[PACKAGE]",pkg)
 	if err = os.MkdirAll(pkg, 0700); err != nil {
 		t.Fatalf("failed to create package: %v", err)
 	}
@@ -862,6 +863,7 @@ func TestBindings(t *testing.T) {
 	// Test the entire package and report any failures
 	cmd := exec.Command(gocmd, "test", "-v", "-count", "1")
 	cmd.Dir = pkg
+	fmt.Printf("%+v",cmd.Dir)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to run binding test: %v\n%s", err, out)
 	}

@@ -26,7 +26,6 @@ func InitTracerEnv() {
 		Timeout:   nil,
 		Reexec:    nil,
 	}
-	//fmt.Println("[MADE IT TO LINE 31]")
 	TracerConfig = config
 	fullNode, _ := SNew(Global_config)
 	privateAPI := NewPrivateDebugAPI(config2, fullNode)
@@ -34,7 +33,6 @@ func InitTracerEnv() {
 }
 
 func (st ShyftTracer) GetTracerToRun(hash common.Hash) (interface{}, error) {
-	//fmt.Println("GetTracer")
 	return PrivateAPI.STraceTransaction(Context, hash, TracerConfig)
 }
 
