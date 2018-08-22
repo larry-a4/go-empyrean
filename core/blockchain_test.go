@@ -36,6 +36,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
 
+// @SHYFT NOTE: Added to clear and reset pg db before test
 // Setup DB for Testing Before Each Test
 
 func TestMain(m *testing.M) {
