@@ -66,7 +66,7 @@ func main() {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
-		fmt.Println("client ", conn.RemoteAddr().String(), "connected.")
+		fmt.Println("client", conn.RemoteAddr().String(), "connected.")
 		// Handle connections in a new goroutine.
 		go handleRequest(conn)
 	}
