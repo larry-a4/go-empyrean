@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import InternalTable from './internalTable';
 import classes from './table.css';
 import axios from "axios/index";
+import ErrorMessage from './errorMessage';
 
 class InternalTransactionsTable extends Component {
     constructor(props) {
@@ -41,25 +42,29 @@ class InternalTransactionsTable extends Component {
 
         let combinedClasses = ['responsive-table', classes.table];
         return (
-            <div>
-                <table className={combinedClasses.join(' ')}>
-                    <thead>
-                    <tr>                    
-                        <th scope="col" className={classes.thItem}> Block Hash </th>
-                        <th scope="col" className={classes.thItem}> Action </th>
-                        <th scope="col" className={classes.thItem}> To </th>
-                        <th scope="col" className={classes.thItem}> From </th>
-                        <th scope="col" className={classes.thItem}> Gas </th>
-                        <th scope="col" className={classes.thItem}> Gas Used</th>
-                        <th scope="col" className={classes.thItem}> ID </th>
-                        <th scope="col" className={classes.thItem}> Input </th>
-                        <th scope="col" className={classes.thItem}> Output </th>
-                        <th scope="col" className={classes.thItem}> Time </th>
-                        <th scope="col" className={classes.thItem}> Value </th>
-                    </tr>
-                    </thead>
-                    {table}
-                </table>
+            <div>     
+                {
+                    this.state.data.length > 0 ?  
+                    <table className={combinedClasses.join(' ')}>
+                        <thead>
+                            <tr>                    
+                                <th scope="col" className={classes.thItem}> Block Hash </th>
+                                <th scope="col" className={classes.thItem}> Action </th>
+                                <th scope="col" className={classes.thItem}> To </th>
+                                <th scope="col" className={classes.thItem}> From </th>
+                                <th scope="col" className={classes.thItem}> Gas </th>
+                                <th scope="col" className={classes.thItem}> Gas Used</th>
+                                <th scope="col" className={classes.thItem}> ID </th>
+                                <th scope="col" className={classes.thItem}> Input </th>
+                                <th scope="col" className={classes.thItem}> Output </th>
+                                <th scope="col" className={classes.thItem}> Time </th>
+                                <th scope="col" className={classes.thItem}> Value </th>
+                            </tr>
+                        </thead>
+                        {table}
+                    </table>
+                    : <ErrorMessage />
+                } 
             </div>
         );
     }
