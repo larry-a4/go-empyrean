@@ -283,7 +283,7 @@ func testGetCode(t *testing.T, protocol int) {
 
 	eth.SetGlobalConfig(ethConf)
 	eth.InitTracerEnv()
-	
+
 	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
