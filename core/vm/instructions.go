@@ -903,14 +903,14 @@ func merkleProve(pc *uint64, evm *EVM, contract *Contract, memory *Memory, stack
 
 	for i.Cmp(proofLen) == -1 {
 		// Load element from memory[proofLocation + i]
-		proofElement := memory.Get(proofLocation.Add(i).Int64(), big.NewInt(32).Int64())
+		proofElement := memory.Get(proofLocation.Add(proofLocation, i).Int64(), big.NewInt(32).Int64())
 		// Load left/right from memory[proofLocation + i - 1]
 		isRight := new(big.Int).SetBytes(memory.Get(proofLocation.Add(proofLocation, i.Sub(i, big.NewInt(1))).Int64(), big.NewInt(1).Int64()))
 
 		if isRight.Cmp(big.NewInt(1)) == 0 {
-			computedHash = crypto.Keccak256(computedHash, proofElement)
+			computedHash = new(big.Int).SetBytes(crypto.Keccak256(computedHash.Bytes(), proofElement))
 		} else {
-			computedHash = crypto.Keccak256(proofElement, computedHash)
+			computedHash = new(big.Int).SetBytes(crypto.Keccak256(proofElement, computedHash.Bytes()))
 		}
 		i.Add(i, big.NewInt(33))
 	}
