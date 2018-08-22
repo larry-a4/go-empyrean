@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"flag"
 )
 
 const (
@@ -42,7 +43,10 @@ func signHash(data []byte) []byte {
 }
 
 func main() {
-	cer, err := tls.LoadX509KeyPair("server_test.crt", "server_test.key")
+	var serverPrivateKeyPath = flag.String("ring-key", "server_test.key", "the private key path for the ring node")
+	var serverCertPath = flag.String("ring-certificate", "server_test.crt", "the tls certificate path for the ring node")
+	flag.Parse()
+	cer, err := tls.LoadX509KeyPair(*serverCertPath, *serverPrivateKeyPath)
 	if err != nil {
 		log.Println(err)
 		return
@@ -62,6 +66,7 @@ func main() {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
+		fmt.Println("client ", conn.RemoteAddr().String(), "connected.")
 		// Handle connections in a new goroutine.
 		go handleRequest(conn)
 	}
