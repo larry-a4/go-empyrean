@@ -45,6 +45,7 @@ func signHash(data []byte) []byte {
 func main() {
 	var serverPrivateKeyPath = flag.String("ring-key", "server_test.key", "the private key path for the ring node")
 	var serverCertPath = flag.String("ring-certificate", "server_test.crt", "the tls certificate path for the ring node")
+	var connectionHost = flag.String("host", "localhost", "public ip address or domain name of the ring server")
 	flag.Parse()
 	cer, err := tls.LoadX509KeyPair(*serverCertPath, *serverPrivateKeyPath)
 	if err != nil {
@@ -52,7 +53,7 @@ func main() {
 		return
 	}
 	config := &tls.Config{Certificates: []tls.Certificate{cer}}
-	l, err := tls.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT, config)
+	l, err := tls.Listen(CONN_TYPE, *connectionHost+":"+CONN_PORT, config)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
