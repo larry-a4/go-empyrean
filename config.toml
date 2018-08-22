@@ -52,8 +52,8 @@ WSModules = ["net", "web3", "eth", "shh"]
 [Node.P2P]
 MaxPeers = 25
 NoDiscovery = false
-BootstrapNodes = ["enode://f47940a18bcb63740a795f057757560c60dffe07589766aabe665d92b8e5b808b7bd1103c70c44d25b5bd7ec21020f0883de4a06ade4277dff65a7b250e9c110@54.157.70.195:30301"]
-BootstrapNodesV5 = ["enode://f47940a18bcb63740a795f057757560c60dffe07589766aabe665d92b8e5b808b7bd1103c70c44d25b5bd7ec21020f0883de4a06ade4277dff65a7b250e9c110@54.157.70.195:30301"]
+BootstrapNodes = []
+BootstrapNodesV5 = []
 StaticNodes = []
 TrustedNodes = []
 ListenAddr = ":31333"
