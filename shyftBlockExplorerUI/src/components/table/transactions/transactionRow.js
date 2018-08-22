@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import TransactionsTable from './transactionTable';
 import classes from './table.css';
 import axios from "axios/index";
+import ErrorMessage from './errorMessage';
 
 class TransactionTable extends Component {
     constructor(props) {
@@ -41,20 +42,27 @@ class TransactionTable extends Component {
 
         let combinedClasses = ['responsive-table', classes.table];
         return (
-            <table key={this.state.data.TxHash} className={combinedClasses.join(' ')}>
-                <thead>
-                    <tr>
-                        <th scope="col" className={classes.thItem}> TxHash </th>
-                        <th scope="col" className={classes.thItem}> Block </th>
-                        <th scope="col" className={classes.thItem}> Age </th>
-                        <th scope="col" className={classes.thItem}> From </th>                      
-                        <th scope="col" className={classes.thItem}> To </th>
-                        <th scope="col" className={classes.thItem}> Value </th>
-                        <th scope="col" className={classes.thItem}> TxFee </th>
-                    </tr>
-                </thead>
-                {table}
-            </table>
+
+            <div>     
+            {
+                this.state.data.length > 0 ?  
+                    <table key={this.state.data.TxHash} className={combinedClasses.join(' ')}>
+                        <thead>
+                            <tr>
+                                <th scope="col" className={classes.thItem}> TxHash </th>
+                                <th scope="col" className={classes.thItem}> Block </th>
+                                <th scope="col" className={classes.thItem}> Age </th>
+                                <th scope="col" className={classes.thItem}> From </th>                      
+                                <th scope="col" className={classes.thItem}> To </th>
+                                <th scope="col" className={classes.thItem}> Value </th>
+                                <th scope="col" className={classes.thItem}> TxFee </th>
+                            </tr>
+                        </thead>
+                        {table}
+                    </table>
+                : <ErrorMessage />
+            } 
+        </div>           
         );
     }
 }
