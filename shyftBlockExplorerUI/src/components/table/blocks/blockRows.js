@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import BlockTable from './blockTable';
 import classes from './table.css';
 import axios from "axios/index";
+import ErrorMessage from './errorMessage';
 
 class BlocksTable extends Component {
     constructor(props) {
@@ -41,25 +42,29 @@ class BlocksTable extends Component {
 
         let combinedClasses = ['responsive-table', classes.table];
         return (
-            <div>
-                <table className={combinedClasses.join(' ')}>
-                    <thead>
-                        <tr>
-                            <th scope="col" className={classes.thItem}> Height </th>
-                            <th scope="col" className={classes.thItem}> Block Hash </th>
-                            <th scope="col" className={classes.thItem}> Age </th>
-                            <th scope="col" className={classes.thItem}> Txn </th>
-                            <th scope="col" className={classes.thItem}> Uncles </th>
-                            <th scope="col" className={classes.thItem}> Coinbase </th>
-                            <th scope="col" className={classes.thItem}> GasUsed </th>
-                            <th scope="col" className={classes.thItem}> GasLimit </th>
-                            <th scope="col" className={classes.thItem}> Avg.GasPrice </th>
-                            <th scope="col" className={classes.thItem}> Reward </th>
-                        </tr>
-                    </thead>
-                    {table}
-                </table>
-            </div>
+            <div>     
+                {
+                    this.state.data.length > 0 ?  
+                        <table className={combinedClasses.join(' ')}>
+                            <thead>
+                                <tr>
+                                    <th scope="col" className={classes.thItem}> Height </th>
+                                    <th scope="col" className={classes.thItem}> Block Hash </th>
+                                    <th scope="col" className={classes.thItem}> Age </th>
+                                    <th scope="col" className={classes.thItem}> Txn </th>
+                                    <th scope="col" className={classes.thItem}> Uncles </th>
+                                    <th scope="col" className={classes.thItem}> Coinbase </th>
+                                    <th scope="col" className={classes.thItem}> GasUsed </th>
+                                    <th scope="col" className={classes.thItem}> GasLimit </th>
+                                    <th scope="col" className={classes.thItem}> Avg.GasPrice </th>
+                                    <th scope="col" className={classes.thItem}> Reward </th>
+                                </tr>
+                            </thead>
+                            {table}
+                        </table>
+                    : <ErrorMessage />
+                } 
+            </div>           
         );
     }
 }
