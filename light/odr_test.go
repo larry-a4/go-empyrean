@@ -290,6 +290,8 @@ func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 
 	eth.SetGlobalConfig(ethConf)
 	eth.InitTracerEnv()
+	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
+	core.TruncateTables()
 	var (
 		sdb, _  = ethdb.NewMemDatabase()
 		ldb, _  = ethdb.NewMemDatabase()
@@ -298,8 +300,7 @@ func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 	)
 	gspec.MustCommit(ldb)
 	// Assemble the test environment
-	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	core.TruncateTables()
+
 	blockchain, _ := core.NewBlockChain(sdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{})
 	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), sdb, 4, testChainGen)
 	if _, err := blockchain.InsertChain(gchain); err != nil {
