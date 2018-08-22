@@ -211,6 +211,11 @@ const (
 	SELFDESTRUCT = 0xff
 )
 
+const (
+	// Shyft Opcodes
+	MERKLEPROVE = 0xe3
+)
+
 // Since the opcodes aren't all in order we can't use a regular slice
 var opCodeToString = map[OpCode]string{
 	// 0x0 range - arithmetic ops
@@ -373,6 +378,9 @@ var opCodeToString = map[OpCode]string{
 	PUSH: "PUSH",
 	DUP:  "DUP",
 	SWAP: "SWAP",
+
+	// Shyft Opcodes
+	MERKLEPROVE: "MERKLEPROVE",
 }
 
 func (o OpCode) String() string {
@@ -522,6 +530,9 @@ var stringToOp = map[string]OpCode{
 	"CALLCODE":       CALLCODE,
 	"REVERT":         REVERT,
 	"SELFDESTRUCT":   SELFDESTRUCT,
+
+	// Shyft opcodes
+	"MERKLEPROVE":	MERKLEPROVE,
 }
 
 func StringToOp(str string) OpCode {
