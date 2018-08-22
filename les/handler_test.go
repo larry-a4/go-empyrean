@@ -35,6 +35,11 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/trie"
+	"github.com/ShyftNetwork/go-empyrean/eth"
+)
+
+const (
+	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
 
 func expectResponse(r p2p.MsgReader, msgcode, reqID, bv uint64, data interface{}) error {
@@ -261,7 +266,24 @@ func TestGetCodeLes2(t *testing.T) { testGetCode(t, 2) }
 func testGetCode(t *testing.T, protocol int) {
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
+
+	//@SHYFT //SETS UP OUR TEST ENV
 	core.TruncateTables()
+	eth.NewShyftTestLDB()
+	shyftTracer := new(eth.ShyftTracer)
+	core.SetIShyftTracer(shyftTracer)
+
+	ethConf := &eth.Config{
+		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+		Etherbase: common.HexToAddress(testAddress),
+		Ethash: ethash.Config{
+			PowMode: ethash.ModeTest,
+		},
+	}
+
+	eth.SetGlobalConfig(ethConf)
+	eth.InitTracerEnv()
+	
 	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
@@ -389,6 +411,7 @@ func testGetCHTProofs(t *testing.T, protocol int) {
 	}
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
+	core.TruncateTables()
 	pm := newTestProtocolManagerMust(t, false, int(frequency)+light.HelperTrieProcessConfirmations, testChainGen, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)

@@ -47,7 +47,7 @@ func connectionStr() string {
 			return connStrDocker
 		}
 	} else {
-		fmt.Println("test run")
+		fmt.Println("Test Instance")
 		return connStrTest
 	}
 }

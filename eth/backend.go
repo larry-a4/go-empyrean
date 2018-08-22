@@ -117,7 +117,6 @@ func SNew(config *Config) (*Ethereum, error) {
 		bloomRequests:  make(chan chan *bloombits.Retrieval),
 		bloomIndexer:   NewBloomIndexer(Chaindb_global, params.BloomBitsBlocks),
 	}
-
 	eth.blockchain = BlockchainObject
 
 	return eth, nil
