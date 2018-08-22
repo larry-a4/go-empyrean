@@ -23,7 +23,6 @@ import (
 )
 
 const (
-	CONN_HOST     = "localhost"
 	CONN_PORT     = "3333"
 	CONN_TYPE     = "tcp"
 	NEW_LINE_BYTE = 0x0a
