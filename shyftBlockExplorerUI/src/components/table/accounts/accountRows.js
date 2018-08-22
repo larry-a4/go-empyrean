@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import AccountsTable from './accountsTable';
 import classes from './accounts.css';
 import axios from "axios/index";
+import ErrorMessage from './errorMessage';
 
 class AccountTable extends Component {
     constructor(props) {
@@ -21,11 +22,11 @@ class AccountTable extends Component {
     }
 
     render() {
-        let startNum = 1;
+         let startNum = 1;
+         let table;    
         const sorted = [...this.state.data];
-            sorted.sort((a, b) => Number(a.Balance) > Number(b.Balance));
-            console.log(sorted);
-        const table = sorted.reverse().map((data, i) => {
+        sorted.sort((a, b) => Number(a.Balance) > Number(b.Balance)); 
+        table = sorted.reverse().map((data, i) => {
             const conversion = Number(data.Balance) / 10000000000000000000;
             const total = sorted
                 .map(num => Number(num.Balance) / 10000000000000000000)
@@ -41,21 +42,27 @@ class AccountTable extends Component {
                 detailAccountHandler={this.props.detailAccountHandler}
             />
         });
-
+          
         let combinedClasses = ['responsive-table', classes.table];
-        return (
-            <table className={combinedClasses.join(' ')}>
-                <thead>
-                    <tr>
-                        <th scope="col" className={classes.thItem}>Rank</th>
-                        <th scope="col" className={classes.thItem}>Address</th>
-                        <th scope="col" className={classes.thItem}>Balance</th>
-                        <th scope="col" className={classes.thItem}>Percentage</th>
-                        <th scope="col" className={classes.thItem}>TxCount</th>
-                    </tr>
-                </thead>
-                {table}
-            </table>
+        return (      
+            <div>     
+                {
+                    this.state.data.length > 0 ?  
+                        <table className={combinedClasses.join(' ')}>
+                            <thead>
+                                <tr>
+                                    <th scope="col" className={classes.thItem}>Rank</th>
+                                    <th scope="col" className={classes.thItem}>Address</th>
+                                    <th scope="col" className={classes.thItem}>Balance</th>
+                                    <th scope="col" className={classes.thItem}>Percentage</th>
+                                    <th scope="col" className={classes.thItem}>TxCount</th>
+                                </tr>
+                            </thead>
+                            { table } 
+                        </table>
+                    : <ErrorMessage />
+                } 
+            </div>
         );
     }
 }
