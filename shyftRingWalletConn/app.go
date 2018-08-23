@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"context"
 	"crypto/tls"
+	"flag"
 	"fmt"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
@@ -19,7 +20,6 @@ import (
 	"net/http"
 	"os"
 	"sync"
-	"flag"
 )
 
 const (
@@ -57,6 +57,7 @@ func main() {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
 	}
+	fmt.Println("Ring node listening on", *connectionHost+":"+CONN_PORT)
 	defer l.Close()
 
 	for {
@@ -66,7 +67,7 @@ func main() {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
-		fmt.Println("client", conn.RemoteAddr().String(), "connected.")
+		fmt.Println("Client", conn.RemoteAddr().String(), "connected.")
 		// Handle connections in a new goroutine.
 		go handleRequest(conn)
 	}
