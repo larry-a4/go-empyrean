@@ -39,7 +39,6 @@ func InitDB() (*sql.DB, error) {
 func connectionStr() string {
 	dbEnv := os.Getenv("DBENV")
 	if flag.Lookup("test.v") == nil {
-		fmt.Println("normal run")
 		switch dbEnv {
 		default:
 			return connStrDefault

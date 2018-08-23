@@ -105,7 +105,6 @@ func runGeth(t *testing.T, args ...string) *testgeth {
 		case arg == "-datadir" || arg == "--datadir":
 			if i < len(args)-1 {
 				tt.Datadir = args[i+1]
-				fmt.Printf("%+v\n",tt.Datadir)
 			}
 		case arg == "-etherbase" || arg == "--etherbase":
 			if i < len(args)-1 {
