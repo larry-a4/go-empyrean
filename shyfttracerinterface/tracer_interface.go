@@ -7,4 +7,3 @@ import (
 type IShyftTracer interface {
 	GetTracerToRun(hash common.Hash) (interface{}, error)
 }
-

@@ -20,10 +20,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"testing"
 
-	"github.com/docker/docker/pkg/reexec"
 	"github.com/ShyftNetwork/go-empyrean/internal/cmdtest"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 func tmpdir(t *testing.T) string {
@@ -54,11 +55,44 @@ func init() {
 }
 
 func TestMain(m *testing.M) {
+	// Reset Pg DB
+	pgTestDbSetup()
 	// check if we have been reexec'd
+
 	if reexec.Init() {
 		return
 	}
-	os.Exit(m.Run())
+	retCode := m.Run()
+	pgTestTearDown()
+	os.Exit(retCode)
+}
+
+//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+// pgTestDbSetup - reinitializes the pg database
+func pgTestDbSetup() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+	pgRecreateTables()
+	if err != nil {
+		println(err.Error())
+		return
+	}
+}
+
+func pgTestTearDown() {
+	pgTestDbSetup()
+}
+
+func pgRecreateTables() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+
+	if err != nil {
+		println(err.Error())
+		return
+	}
 }
 
 // spawns geth with the given command line args. If the args don't set --datadir, the
@@ -71,6 +105,7 @@ func runGeth(t *testing.T, args ...string) *testgeth {
 		case arg == "-datadir" || arg == "--datadir":
 			if i < len(args)-1 {
 				tt.Datadir = args[i+1]
+				fmt.Printf("%+v\n",tt.Datadir)
 			}
 		case arg == "-etherbase" || arg == "--etherbase":
 			if i < len(args)-1 {

@@ -19,6 +19,8 @@ package bind_test
 import (
 	"context"
 	"math/big"
+	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -51,6 +53,43 @@ var waitDeployedTests = map[string]struct {
 	},
 }
 
+// Setup DB for Testing Before Each Test
+
+func TestMain(m *testing.M) {
+	pgTestDbSetup()
+	retCode := m.Run()
+	pgTestTearDown()
+	os.Exit(retCode)
+}
+
+// @SHYFT NOTE: - ensure pg database is cleared prior to test
+// pgTestDbSetup - reinitializes the pg database
+func pgTestDbSetup() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+	pgRecreateTables()
+	if err != nil {
+		println(err.Error())
+		return
+	}
+}
+
+func pgTestTearDown() {
+	pgTestDbSetup()
+}
+
+func pgRecreateTables() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+
+	if err != nil {
+		println(err.Error())
+		return
+	}
+}
+
 func TestWaitDeployed(t *testing.T) {
 	for name, test := range waitDeployedTests {
 		backend := backends.NewSimulatedBackend(core.GenesisAlloc{
@@ -74,6 +113,7 @@ func TestWaitDeployed(t *testing.T) {
 		}()
 
 		// Send and mine the transaction.
+		core.TruncateTables()
 		backend.SendTransaction(ctx, tx)
 		backend.Commit()
 

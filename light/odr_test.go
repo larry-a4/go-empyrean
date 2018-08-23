@@ -21,6 +21,8 @@ import (
 	"context"
 	"errors"
 	"math/big"
+	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -32,11 +34,52 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/trie"
 )
+
+const (
+	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
+)
+
+//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+func TestMain(m *testing.M) {
+	pgTestDbSetup()
+	retCode := m.Run()
+	pgTestTearDown()
+	os.Exit(retCode)
+}
+
+// pgTestDbSetup - reinitializes the pg database
+func pgTestDbSetup() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+	pgRecreateTables()
+	if err != nil {
+		println(err.Error())
+		return
+	}
+}
+
+// pgTestTearDown - resets test database to a clean state
+func pgTestTearDown() {
+	pgTestDbSetup()
+}
+
+func pgRecreateTables() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+
+	if err != nil {
+		println(err.Error())
+		return
+	}
+}
 
 var (
 	testBankKey, _  = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
@@ -231,6 +274,24 @@ func testChainGen(i int, block *core.BlockGen) {
 }
 
 func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
+	//@SHYFT //SETS UP OUR TEST ENV
+	core.TruncateTables()
+	eth.NewShyftTestLDB()
+	shyftTracer := new(eth.ShyftTracer)
+	core.SetIShyftTracer(shyftTracer)
+
+	ethConf := &eth.Config{
+		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+		Etherbase: common.HexToAddress(testAddress),
+		Ethash: ethash.Config{
+			PowMode: ethash.ModeTest,
+		},
+	}
+
+	eth.SetGlobalConfig(ethConf)
+	eth.InitTracerEnv()
+	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
+	core.TruncateTables()
 	var (
 		sdb, _  = ethdb.NewMemDatabase()
 		ldb, _  = ethdb.NewMemDatabase()
@@ -239,6 +300,7 @@ func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 	)
 	gspec.MustCommit(ldb)
 	// Assemble the test environment
+
 	blockchain, _ := core.NewBlockChain(sdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{})
 	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), sdb, 4, testChainGen)
 	if _, err := blockchain.InsertChain(gchain); err != nil {
