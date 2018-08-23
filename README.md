@@ -315,7 +315,7 @@ __The Postgresql Database Container will persist the database data to a docker v
 
 From your local machine you can view the database by connecting to the database in the container at 127.0.0.1:8001. To access the shyftBlockExplorer open a browser and visit http://localhost:3000
 
-__Blockchain data is persisted to ./privatenet/.ethash__. If you would like to reset the test blockchain you will need to delete the ./privatenet directory.
+__Blockchain data is persisted to ./ethash/.ethash and ./shyftData__. If you would like to reset the test blockchain you will need to delete the __./ethash & ./shyftData__ directory.
 
 The docker container for the ShyftBlockExplorerApi utilizes govendor to minimize its image size. __If you would like the docker image for this container to reflect any uncommitted changes which may have occurred in the go-empyrean repository, ie. changes with respect to go-empyrean core (ie. cryptographic functions and database). Prior to launching the docker containers you should rebuild the vendor directory for the shyftBlockExplorerApi - by executing the following steps:__
 
