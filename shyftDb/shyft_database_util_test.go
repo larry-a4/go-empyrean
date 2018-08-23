@@ -3,6 +3,8 @@ package shyftdb
 import (
 	"encoding/json"
 	"math/big"
+	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -21,6 +23,42 @@ const (
 	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
 
+// @SHYFT NOTE: Added to clear and reset pg db before test
+// Setup DB for Testing Before Each Test
+
+func TestMain(m *testing.M) {
+	pgTestDbSetup()
+	retCode := m.Run()
+	pgTestTearDown()
+	os.Exit(retCode)
+}
+
+// pgTestDbSetup - reinitializes the pg database
+func pgTestDbSetup() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+	pgRecreateTables()
+	if err != nil {
+		println(err.Error())
+		return
+	}
+}
+
+func pgTestTearDown() {
+	pgTestDbSetup()
+}
+
+func pgRecreateTables() {
+	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+	_, err := cmd.Output()
+
+	if err != nil {
+		println(err.Error())
+		return
+	}
+}
 func TestBlock(t *testing.T) {
 	//SET UP FOR TEST FUNCTIONS
 	eth.NewShyftTestLDB()
