@@ -41,11 +41,11 @@ UserIdent = "ShyftTestnetNode"
 DataDir = "shyftData"
 KeyStoreDir = "."
 IPCPath = "geth.ipc"
-HTTPHost = "127.0.0.1"
+HTTPHost = "0.0.0.0"
 HTTPPort = 8545
 HTTPCors = ["*"]
 HTTPVirtualHosts = ["localhost"]
-HTTPModules = ["net", "web3", "eth", "shh", "admin", "debug"]
+HTTPModules = ["net", "web3", "eth", "shh", "admin", "debug", "miner"]
 WSPort = 8546
 WSModules = ["net", "web3", "eth", "shh"]
 
