@@ -37,6 +37,7 @@ func TestBlockchain(t *testing.T) {
 	bt.skipLoad(`^bcWalletTest.*_Byzantium$`)
 
 	bt.walk(t, blockTestDir, func(t *testing.T, name string, test *BlockTest) {
+		// core.TruncateTables()
 		if err := bt.checkFailure(t, name, test.Run()); err != nil {
 			t.Error(err)
 		}
