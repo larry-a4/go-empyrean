@@ -54,7 +54,7 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt) error {
 		Size:       block.Size().String(),
 		Nonce:      block.Nonce(),
 		Rewards:    rewards,
-		Age:        age.String(),
+		Age:        age,
 	}
 
 	//Inserts block data into DB
@@ -114,7 +114,7 @@ func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.H
 		GasLimit:    gasLimit,
 		Gas:         tx.Gas(),
 		Nonce:       tx.Nonce(),
-		Age:         age.String(),
+		Age:         age,
 		Data:        tx.Data(),
 		Status:      statusFromReciept,
 		IsContract:  isContract,

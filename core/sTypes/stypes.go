@@ -1,10 +1,14 @@
 package stypes
 
+import (
+	"time"
+)
+
 //SBlock type
 type SBlock struct {
 	Hash       string
 	Coinbase   string
-	Age        string
+	Age        time.Time
 	ParentHash string
 	UncleHash  string
 	Difficulty string
@@ -75,7 +79,7 @@ type ShyftTxEntryPretty struct {
 	Nonce       uint64
 	Status      string
 	IsContract  bool
-	Age         string
+	Age         time.Time
 	Data        []byte
 }
 

@@ -22,9 +22,10 @@ func SGetAllBlocks(sqldb *sql.DB) string {
 	defer rows.Close()
 
 	for rows.Next() {
-		var hash, coinbase, age, parentHash, uncleHash, difficulty, size, rewards, num string
+		var hash, coinbase, parentHash, uncleHash, difficulty, size, rewards, num string
 		var gasUsed, gasLimit, nonce uint64
 		var txCount, uncleCount int
+		var age time.Time
 
 		err = rows.Scan(
 			&hash, &coinbase, &gasUsed, &gasLimit, &txCount, &uncleCount, &age, &parentHash, &uncleHash, &difficulty, &size, &nonce, &rewards, &num)
@@ -36,7 +37,7 @@ func SGetAllBlocks(sqldb *sql.DB) string {
 			GasLimit:   gasLimit,
 			TxCount:    txCount,
 			UncleCount: uncleCount,
-			AgeGet:     age,
+			Age:     	age,
 			ParentHash: parentHash,
 			UncleHash:  uncleHash,
 			Difficulty: difficulty,
@@ -58,9 +59,10 @@ func SGetAllBlocks(sqldb *sql.DB) string {
 func SGetBlock(sqldb *sql.DB, blockNumber string) string {
 	sqlStatement := `SELECT * FROM blocks WHERE number=$1;`
 	row := sqldb.QueryRow(sqlStatement, blockNumber)
-	var hash, coinbase, age, parentHash, uncleHash, difficulty, size, rewards, num string
+	var hash, coinbase,parentHash, uncleHash, difficulty, size, rewards, num string
 	var gasUsed, gasLimit, nonce uint64
 	var txCount, uncleCount int
+	var age time.Time
 
 	row.Scan(
 		&hash, &coinbase, &gasUsed, &gasLimit, &txCount, &uncleCount, &age, &parentHash, &uncleHash, &difficulty, &size, &nonce, &rewards, &num)
@@ -72,7 +74,7 @@ func SGetBlock(sqldb *sql.DB, blockNumber string) string {
 		GasLimit:   gasLimit,
 		TxCount:    txCount,
 		UncleCount: uncleCount,
-		AgeGet:     age,
+		Age:     	age,
 		ParentHash: parentHash,
 		UncleHash:  uncleHash,
 		Difficulty: difficulty,
@@ -88,9 +90,10 @@ func SGetBlock(sqldb *sql.DB, blockNumber string) string {
 func SGetRecentBlock(sqldb *sql.DB) string {
 	sqlStatement := `SELECT * FROM blocks WHERE number=(SELECT MAX(number) FROM blocks);`
 	row := sqldb.QueryRow(sqlStatement)
-	var hash, coinbase, age, parentHash, uncleHash, difficulty, size, rewards, num string
+	var hash, coinbase, parentHash, uncleHash, difficulty, size, rewards, num string
 	var gasUsed, gasLimit, nonce uint64
 	var txCount, uncleCount int
+	var age time.Time
 
 	row.Scan(
 		&hash, &coinbase, &gasUsed, &gasLimit, &txCount, &uncleCount, &age, &parentHash, &uncleHash, &difficulty, &size, &nonce, &rewards, &num)
@@ -102,7 +105,7 @@ func SGetRecentBlock(sqldb *sql.DB) string {
 		GasLimit:   gasLimit,
 		TxCount:    txCount,
 		UncleCount: uncleCount,
-		AgeGet:     age,
+		Age:     	age,
 		ParentHash: parentHash,
 		UncleHash:  uncleHash,
 		Difficulty: difficulty,
@@ -171,9 +174,10 @@ func SGetAllBlocksMinedByAddress(sqldb *sql.DB, coinbase string) string {
 	defer rows.Close()
 
 	for rows.Next() {
-		var hash, coinbase, age, parentHash, uncleHash, difficulty, size, rewards, num string
+		var hash, coinbase, parentHash, uncleHash, difficulty, size, rewards, num string
 		var gasUsed, gasLimit, nonce uint64
 		var txCount, uncleCount int
+		var age time.Time
 
 		err = rows.Scan(
 			&hash, &coinbase, &gasUsed, &gasLimit, &txCount, &uncleCount, &age, &parentHash, &uncleHash, &difficulty, &size, &nonce, &rewards, &num)
@@ -185,7 +189,7 @@ func SGetAllBlocksMinedByAddress(sqldb *sql.DB, coinbase string) string {
 			GasLimit:   gasLimit,
 			TxCount:    txCount,
 			UncleCount: uncleCount,
-			AgeGet:     age,
+			Age:     	age,
 			ParentHash: parentHash,
 			UncleHash:  uncleHash,
 			Difficulty: difficulty,
