@@ -54,7 +54,7 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt) error {
 		Size:       block.Size().String(),
 		Nonce:      block.Nonce(),
 		Rewards:    rewards,
-		Age:        age,
+		Age:        age.String(),
 	}
 
 	//Inserts block data into DB
@@ -71,8 +71,7 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt) error {
 //swriteTransactions writes to sqldb, a SHYFT postgres instance
 func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.Hash, blockNumber string, receipts []*types.Receipt, age time.Time, gasLimit uint64) error {
 	var isContract bool
-	var statusFromReciept string
-	var toAddr *common.Address
+	var statusFromReciept, toAddr string
 	var contractAddressFromReciept common.Address
 
 	if tx.To() == nil {
@@ -87,7 +86,8 @@ func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.H
 			}
 		}
 		isContract = true
-		toAddr = &contractAddressFromReciept
+		tempAddr := &contractAddressFromReciept
+		toAddr = tempAddr.String()
 	} else {
 		isContract = false
 		for _, receipt := range receipts {
@@ -99,7 +99,7 @@ func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.H
 				statusFromReciept = "SUCCESS"
 			}
 		}
-		toAddr = tx.To()
+		toAddr = tx.To().String()
 	}
 
 	txData := stypes.ShyftTxEntryPretty{
@@ -114,12 +114,12 @@ func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.H
 		GasLimit:    gasLimit,
 		Gas:         tx.Gas(),
 		Nonce:       tx.Nonce(),
-		Age:         age,
+		Age:         age.String(),
 		Data:        tx.Data(),
 		Status:      statusFromReciept,
 		IsContract:  isContract,
 	}
-	isContractCheck := IsContract(sqldb, txData.To.String())
+	isContractCheck := IsContract(sqldb, txData.To)
 	if isContractCheck == true {
 		InsertTx(sqldb, txData)
 		//Runs necessary functions for tracing internal transactions through tracers.go
@@ -387,7 +387,7 @@ func InsertTx(sqldb *sql.DB, txData stypes.ShyftTxEntryPretty) {
 	tx, _ := sqldb.Begin()
 	var retNonce string
 	sqlStatement := `INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15)) RETURNING nonce`
-	err2 := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To.String()), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
+	err2 := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
 	tx.Commit()
 	if err2 != nil {
 		panic(err2)

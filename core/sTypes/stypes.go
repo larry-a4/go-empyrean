@@ -1,17 +1,10 @@
 package stypes
 
-import (
-	"time"
-
-	"github.com/ShyftNetwork/go-empyrean/common"
-)
-
 //SBlock type
 type SBlock struct {
 	Hash       string
 	Coinbase   string
-	AgeGet     string
-	Age        time.Time
+	Age        string
 	ParentHash string
 	UncleHash  string
 	Difficulty string
@@ -70,8 +63,7 @@ type TxRes struct {
 
 type ShyftTxEntryPretty struct {
 	TxHash      string
-	To          *common.Address
-	ToGet       string
+	To          string
 	From        string
 	BlockHash   string
 	BlockNumber string
@@ -83,7 +75,7 @@ type ShyftTxEntryPretty struct {
 	Nonce       uint64
 	Status      string
 	IsContract  bool
-	Age         time.Time
+	Age         string
 	Data        []byte
 }
 

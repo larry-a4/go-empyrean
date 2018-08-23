@@ -137,7 +137,7 @@ func SGetAllTransactionsFromBlock(sqldb *sql.DB, blockNumber string) string {
 
 		arr.TxEntry = append(arr.TxEntry, stypes.ShyftTxEntryPretty{
 			TxHash:      txhash,
-			ToGet:       to_addr,
+			To:          to_addr,
 			From:        from_addr,
 			BlockHash:   blockhash,
 			BlockNumber: blocknumber,
@@ -224,7 +224,7 @@ func SGetAllTransactions(sqldb *sql.DB) string {
 
 		arr.TxEntry = append(arr.TxEntry, stypes.ShyftTxEntryPretty{
 			TxHash:      txhash,
-			ToGet:       to_addr,
+			To:       	 to_addr,
 			From:        from_addr,
 			BlockHash:   blockhash,
 			BlockNumber: blocknumber,
@@ -262,7 +262,7 @@ func SGetTransaction(sqldb *sql.DB, txHash string) string {
 
 	tx := stypes.ShyftTxEntryPretty{
 		TxHash:      txhash,
-		ToGet:       to_addr,
+		To:       	 to_addr,
 		From:        from_addr,
 		BlockHash:   blockhash,
 		BlockNumber: blocknumber,
@@ -364,7 +364,7 @@ func SGetAccountTxs(sqldb *sql.DB, address string) string {
 
 		arr.TxEntry = append(arr.TxEntry, stypes.ShyftTxEntryPretty{
 			TxHash:      txhash,
-			ToGet:       to_addr,
+			To:          to_addr,
 			From:        from_addr,
 			BlockHash:   blockhash,
 			BlockNumber: blocknumber,
