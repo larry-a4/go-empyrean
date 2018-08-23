@@ -22,7 +22,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -31,44 +30,8 @@ import (
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/params"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
-
-// @SHYFT NOTE: Added to clear and reset pg db before test
-// Setup DB for Testing Before Each Test
-
-// func TestMain(m *testing.M) {
-// 	pgTestDbSetup()
-// 	retCode := m.Run()
-// 	pgTestTearDown()
-// 	os.Exit(retCode)
-// }
-
-// pgTestDbSetup - reinitializes the pg database
-func pgTestDbSetup() {
-	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
-	cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	_, err := cmd.Output()
-	pgRecreateTables()
-	if err != nil {
-		println(err.Error())
-		return
-	}
-}
-
-func pgTestTearDown() {
-	pgTestDbSetup()
-}
-
-func pgRecreateTables() {
-	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
-	cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	_, err := cmd.Output()
-
-	if err != nil {
-		println(err.Error())
-		return
-	}
-}
 
 var (
 	baseDir            = filepath.Join(".", "testdata")
@@ -79,6 +42,13 @@ var (
 	rlpTestDir         = filepath.Join(baseDir, "RLPTests")
 	difficultyTestDir  = filepath.Join(baseDir, "BasicTests")
 )
+
+// func TestMain(m *testing.M) {
+// 	shyfttest.PgTestDbSetup()
+// 	retCode := m.Run()
+// 	shyfttest.PgTestTearDown()
+// 	os.Exit(retCode)
+// }
 
 func readJson(reader io.Reader, value interface{}) error {
 	data, err := ioutil.ReadAll(reader)
@@ -220,7 +190,7 @@ func (tm *testMatcher) checkFailure(t *testing.T, name string, err error) error 
 // where TestType is the type of the test contained in test files.
 func (tm *testMatcher) walk(t *testing.T, dir string, runTest interface{}) {
 	// Walk the directory.
-	pgTestDbSetup()
+	shyfttest.PgTestDbSetup()
 	dirinfo, err := os.Stat(dir)
 	if os.IsNotExist(err) || !dirinfo.IsDir() {
 		fmt.Fprintf(os.Stderr, "can't find test files in %s, did you clone the tests submodule?\n", dir)
@@ -258,7 +228,7 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 
 	// Run all tests from the map. Don't wrap in a subtest if there is only one test in the file.
 	// @SHYFT NOTE: Clear pg database
-	pgTestDbSetup()
+	shyfttest.PgTestDbSetup()
 	keys := sortedMapKeys(m)
 	if len(keys) == 1 {
 		runTestFunc(runTest, t, name, m, keys[0])

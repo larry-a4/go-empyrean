@@ -116,7 +116,7 @@ func (t *BlockTest) Run() error {
 	}
 	defer chain.Stop()
 	// @SHYFT NOTE: Clear pg database
-	core.TruncateTables()
+	// core.TruncateTables()
 	validBlocks, err := t.insertBlocks(chain)
 	if err != nil {
 		return err
@@ -176,9 +176,6 @@ func (t *BlockTest) insertBlocks(blockchain *core.BlockChain) ([]btBlock, error)
 		}
 		// RLP decoding worked, try to insert into chain:
 		blocks := types.Blocks{cb}
-		// // @SHYFT NOTE: Clear pg database
-		// core.TruncateTables()
-		// insert the test blocks, which will execute all transactions
 		i, err := blockchain.InsertChain(blocks)
 		if err != nil {
 			if b.BlockHeader == nil {

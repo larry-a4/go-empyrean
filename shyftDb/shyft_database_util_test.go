@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"math/big"
 	"os"
-	"os/exec"
 	"strings"
 	"testing"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"github.com/ShyftNetwork/go-empyrean/eth"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
 
 type ShyftTracer struct{}
@@ -27,38 +27,12 @@ const (
 // Setup DB for Testing Before Each Test
 
 func TestMain(m *testing.M) {
-	pgTestDbSetup()
+	shyfttest.PgTestDbSetup()
 	retCode := m.Run()
-	pgTestTearDown()
+	shyfttest.PgTestTearDown()
 	os.Exit(retCode)
 }
 
-// pgTestDbSetup - reinitializes the pg database
-func pgTestDbSetup() {
-	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
-	cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	_, err := cmd.Output()
-	pgRecreateTables()
-	if err != nil {
-		println(err.Error())
-		return
-	}
-}
-
-func pgTestTearDown() {
-	pgTestDbSetup()
-}
-
-func pgRecreateTables() {
-	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
-	cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	_, err := cmd.Output()
-
-	if err != nil {
-		println(err.Error())
-		return
-	}
-}
 func TestBlock(t *testing.T) {
 	//SET UP FOR TEST FUNCTIONS
 	eth.NewShyftTestLDB()
@@ -75,7 +49,7 @@ func TestBlock(t *testing.T) {
 	}
 
 	eth.SetGlobalConfig(ethConf)
-
+	core.TruncateTables()
 	eth.InitTracerEnv()
 	core.TruncateTables()
 
@@ -243,7 +217,7 @@ func TestBlock(t *testing.T) {
 			if tx.Hash().String() != data.TxHash {
 				t.Fatalf("txHash [%v]: tx Hash not found", tx.Hash().String())
 			}
-			if contractAddressFromReciept != data.ToGet {
+			if contractAddressFromReciept != data.To {
 				t.Fatalf("Contract Addr [%v]: Contract addr not found", contractAddressFromReciept)
 			}
 			if strings.ToLower(tx.From().String()) != data.From {
@@ -309,7 +283,7 @@ func TestBlock(t *testing.T) {
 			if strings.ToLower(tx.From().String()) != data.From {
 				t.Fatalf("From Addr [%v]: From addr not found", tx.From().String())
 			}
-			if strings.ToLower(tx.To().String()) != data.ToGet {
+			if strings.ToLower(tx.To().String()) != data.To {
 				t.Fatalf("To Addr [%v]: To addr not found", tx.To().String())
 			}
 			if tx.Nonce() != data.Nonce {

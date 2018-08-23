@@ -18,10 +18,11 @@ package eth
 
 import (
 	"os"
-	"os/exec"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
@@ -31,37 +32,10 @@ import (
 
 //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
 func TestMain(m *testing.M) {
-	pgTestDbSetup()
+	shyfttest.PgTestDbSetup()
 	retCode := m.Run()
-	pgTestTearDown()
+	shyfttest.PgTestTearDown()
 	os.Exit(retCode)
-}
-
-// pgTestDbSetup - reinitializes the pg database
-func pgTestDbSetup() {
-	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
-	cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	_, err := cmd.Output()
-	pgRecreateTables()
-	if err != nil {
-		println(err.Error())
-		return
-	}
-}
-
-func pgTestTearDown() {
-	pgTestDbSetup()
-}
-
-func pgRecreateTables() {
-	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
-	cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	_, err := cmd.Output()
-
-	if err != nil {
-		println(err.Error())
-		return
-	}
 }
 
 // Tests that fast sync gets disabled as soon as a real block is successfully
