@@ -18,22 +18,27 @@ package core
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
+	"strconv"
 	"strings"
+	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethdb"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/params"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
+	"github.com/ShyftNetwork/go-empyrean/common/math"
+	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/core/state"
+	"github.com/ShyftNetwork/go-empyrean/core/types"
+	"github.com/ShyftNetwork/go-empyrean/ethdb"
+	"github.com/ShyftNetwork/go-empyrean/log"
+	"github.com/ShyftNetwork/go-empyrean/params"
+	"github.com/ShyftNetwork/go-empyrean/rlp"
+	_ "github.com/lib/pq"
 )
 
 //go:generate gencodec -type Genesis -field-override genesisSpecMarshaling -out gen_genesis.go
@@ -136,6 +141,101 @@ func (e *GenesisMismatchError) Error() string {
 	return fmt.Sprintf("database already contains an incompatible genesis block (have %x, new %x)", e.Stored[:8], e.New[:8])
 }
 
+//WriteShyftGen writes the genesis block to Shyft db
+//@NOTE:SHYFT
+func WriteShyftGen(gen *Genesis, block *types.Block) {
+	sqldb, _ := DBConnection()
+	for k, v := range gen.Alloc {
+		_, _, err := AccountExists(sqldb, k.String())
+		switch {
+		case err == sql.ErrNoRows:
+			var toAddr *common.Address
+			var data []byte
+			var cost, gasPrice uint64
+			//Initializing proper types for tx struct
+			toAddr = &k
+			cost = 0
+			gasPrice = 0
+			//Appending GENESIS to address stored as txHash and From Addr
+			Genesis := []string{"GENESIS_", k.String()}
+			GENESIS := "GENESIS"
+			txHash := strings.Join(Genesis, k.String())
+			//Create the accountNonce, set to 1 (1 incoming tx), format type
+			accountNonce := v.Nonce + 1
+			accountNoncee := strconv.FormatUint(accountNonce, 10)
+
+			i, err := strconv.ParseInt(block.Time().String(), 10, 64)
+			if err != nil {
+				panic(err)
+			}
+			age := time.Unix(i, 0)
+
+			txData := stypes.ShyftTxEntryPretty{
+				TxHash:      txHash,
+				From:        GENESIS,
+				To:          toAddr,
+				BlockHash:   block.Header().Hash().Hex(),
+				BlockNumber: block.Header().Number.String(),
+				Amount:      v.Balance.String(),
+				Cost:        cost,
+				GasPrice:    gasPrice,
+				GasLimit:    block.GasLimit(),
+				Gas:         block.GasUsed(),
+				Nonce:       accountNonce,
+				Age:         age,
+				Data:        data,
+				Status:      "SUCCESS",
+				IsContract:  false,
+			}
+			//Create account and store tx
+			CreateAccount(sqldb, k.String(), v.Balance.String(), accountNoncee)
+			InsertTx(sqldb, txData)
+
+		default:
+			log.Info("Found Genesis Block")
+		}
+	}
+}
+
+//WriteShyftBlockZero writes block 0 to postgres db
+func WriteShyftBlockZero(block *types.Block, gen *Genesis) error {
+	sqldb, _ := DBConnection()
+
+	i, error := strconv.ParseInt(block.Time().String(), 10, 64)
+	if error != nil {
+		panic(error)
+	}
+	age := time.Unix(i, 0)
+
+	blockData := stypes.SBlock{
+		Hash:       block.Header().Hash().Hex(),
+		Coinbase:   block.Header().Coinbase.String(),
+		Number:     block.Header().Number.String(),
+		GasUsed:    block.Header().GasUsed,
+		GasLimit:   block.Header().GasLimit,
+		TxCount:    len(gen.Alloc),
+		UncleCount: len(block.Uncles()),
+		Age:        age,
+		ParentHash: block.ParentHash().String(),
+		UncleHash:  block.UncleHash().String(),
+		Difficulty: block.Difficulty().String(),
+		Size:       block.Size().String(),
+		Nonce:      block.Nonce(),
+		Rewards:    "0",
+	}
+
+	err := BlockExists(sqldb, blockData.Hash)
+	switch {
+	case err == sql.ErrNoRows:
+		InsertBlock(sqldb, blockData)
+	case err != nil:
+		panic(err)
+	default:
+		log.Info("Block zero written to DB")
+	}
+	return nil
+}
+
 // SetupGenesisBlock writes or updates the genesis block in db.
 // The block that will be used is:
 //
@@ -153,7 +253,6 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 	if genesis != nil && genesis.Config == nil {
 		return params.AllEthashProtocolChanges, common.Hash{}, errGenesisNoConfig
 	}
-
 	// Just commit the new block if there is no stored genesis block.
 	stored := GetCanonicalHash(db, 0)
 	if (stored == common.Hash{}) {
@@ -164,6 +263,20 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 			log.Info("Writing custom genesis block")
 		}
 		block, err := genesis.Commit(db)
+		//@NOTE:SHYFT SWITCH CASE ENSURES SHYFT GENESIS FUNCTIONS ARE ONLY CALLED ONCE
+		sqldb, _ := DBConnection()
+		serror := BlockExists(sqldb, block.Hash().String())
+		switch {
+		case serror == sql.ErrNoRows:
+			//@NOTE:SHYFT WRITE TO BLOCK ZERO DB
+			WriteShyftBlockZero(block, genesis)
+			//@NOTE:SHYFT WRITE TO DB
+			WriteShyftGen(genesis, block)
+		case serror != nil:
+			panic(serror)
+		default:
+			log.Info("Genesis Block Written")
+		}
 		return genesis.Config, block.Hash(), err
 	}
 

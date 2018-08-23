@@ -24,13 +24,13 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/consensus"
-	"github.com/ethereum/go-ethereum/consensus/misc"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/common/math"
+	"github.com/ShyftNetwork/go-empyrean/consensus"
+	"github.com/ShyftNetwork/go-empyrean/consensus/misc"
+	"github.com/ShyftNetwork/go-empyrean/core/state"
+	"github.com/ShyftNetwork/go-empyrean/core/types"
+	"github.com/ShyftNetwork/go-empyrean/params"
 	set "gopkg.in/fatih/set.v0"
 )
 
@@ -40,6 +40,13 @@ var (
 	ByzantiumBlockReward   *big.Int = big.NewInt(3e+18) // Block reward in wei for successfully mining a block upward from Byzantium
 	maxUncles                       = 2                 // Maximum number of uncles allowed in a single block
 	allowedFutureBlockTime          = 15 * time.Second  // Max time from current time allowed for blocks, before they're considered future blocks
+	//@note: @shyft This is the Shyft block reward numbers
+	// ShyftNetworkBlockReward    = Block reward for the shyft conduit contract.
+	// ShyftMinerBlockReward      = Block reward for the miner.
+	// ShyftNetworkConduitAddress = Shyft conduit contract
+	ShyftNetworkBlockReward	   *big.Int = big.NewInt(2.5e+18) // Block reward in wei for successfully mining a block, for the Shyft Network
+	ShyftMinerBlockReward  *big.Int = big.NewInt(2.5e+18) // Block reward in wei for successfully mining a block, for the Shyft Network
+	ShyftNetworkConduitAddress = common.HexToAddress("9db76b4bbaea76dfda4552b7b9d4e9d43abc55fd")
 )
 
 // Various error messages to mark blocks invalid. These should be private to
@@ -537,6 +544,9 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 	if config.IsByzantium(header.Number) {
 		blockReward = ByzantiumBlockReward
 	}
+	if (config.IsShyftNetwork(header.Number)) {
+		blockReward = ShyftMinerBlockReward
+	}
 	// Accumulate the rewards for the miner and any included uncles
 	reward := new(big.Int).Set(blockReward)
 	r := new(big.Int)
@@ -546,9 +556,13 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 		r.Mul(r, blockReward)
 		r.Div(r, big8)
 		state.AddBalance(uncle.Coinbase, r)
-
+		
 		r.Div(blockReward, big32)
 		reward.Add(reward, r)
 	}
 	state.AddBalance(header.Coinbase, reward)
+
+	if (config.IsShyftNetwork(header.Number)) {
+		state.AddBalance(ShyftNetworkConduitAddress, ShyftNetworkBlockReward)
+	}
 }

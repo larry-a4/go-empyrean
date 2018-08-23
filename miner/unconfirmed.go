@@ -20,9 +20,9 @@ import (
 	"container/ring"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/log"
+	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/core/types"
+	"github.com/ShyftNetwork/go-empyrean/log"
 )
 
 // headerRetriever is used by the unconfirmed block set to verify whether a previously
@@ -72,7 +72,6 @@ func (set *unconfirmedBlocks) Insert(index uint64, hash common.Hash) {
 	// Set as the initial ring or append to the end
 	set.lock.Lock()
 	defer set.lock.Unlock()
-
 	if set.blocks == nil {
 		set.blocks = item
 	} else {

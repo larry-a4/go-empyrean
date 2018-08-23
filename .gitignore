@@ -14,7 +14,7 @@
 */**/*tx_database*
 */**/*dapps*
 build/_vendor/pkg
-
+ethash/
 #*
 .#*
 *#
@@ -45,3 +45,17 @@ profile.cov
 /dashboard/assets/package-lock.json
 
 **/yarn-error.log
+# Remove Shyft Data
+shyftData/*
+shyft-cli/web3/token_test/node_modules
+shyft-cli/web3/transfer-through-master/node_modules
+shyft-cli/web3/transfer-through-master/build
+
+# Remove pg data
+pg-data/*
+
+# Ignore shyftBlockExplorerApi vendored dependencies used for docker build
+shyftBlockExplorerApi/vendor/**/.git
+shyftBlockExplorerApi/vendor/*
+!shyftBlockExplorerApi/vendor/*.json
+
