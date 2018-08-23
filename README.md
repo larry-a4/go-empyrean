@@ -309,13 +309,13 @@ docker-compose up -d --no-deps --build <docker compose file service name>
 # ie. for shyftBlockExplorerApi:
 # docker-compose up -d --no-deps --build shyft_block_api
 ```
-__The Postgresql Database Container will persist the database data to a docker volume "go-empyrean_pg-data" __. So if you do want to reinitialize the database you should delete this docker container prior to launching the docker containers. To delete this docker volume and have it recreated you should input the following command:
+__The Postgresql Database Container will persist the database data to a folder in the root of the project directory - pg-data" __. So if you do want to reinitialize the database you should delete this docker container prior to launching the docker containers. To delete this docker volume and have it recreated you should input the following command:
 
 ```docker volume rm go-empyrean_pg-data```
 
 From your local machine you can view the database by connecting to the database in the container at 127.0.0.1:8001. To access the shyftBlockExplorer open a browser and visit http://localhost:3000
 
-__Blockchain data is persisted to ./privatenet/.ethash__. If you would like to reset the test blockchain you will need to delete the ./privatenet directory.
+__Blockchain data is persisted to ./ethash/.ethash__ and ./shyftData. If you would like to reset the test blockchain you will need to delete the ./ethash and ./shyftData directories.
 
 The docker container for the ShyftBlockExplorerApi utilizes govendor to minimize its image size. __If you would like the docker image for this container to reflect any uncommitted changes which may have occurred in the go-empyrean repository, ie. changes with respect to go-empyrean core (ie. cryptographic functions and database). Prior to launching the docker containers you should rebuild the vendor directory for the shyftBlockExplorerApi - by executing the following steps:__
 

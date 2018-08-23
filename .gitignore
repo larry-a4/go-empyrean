@@ -14,7 +14,7 @@
 */**/*tx_database*
 */**/*dapps*
 build/_vendor/pkg
-privatenet/
+ethash/
 #*
 .#*
 *#
@@ -45,8 +45,6 @@ profile.cov
 /dashboard/assets/package-lock.json
 
 **/yarn-error.log
-$HOME
-
 # Remove Shyft Data
 shyftData/*
 shyft-cli/web3/token_test/node_modules
