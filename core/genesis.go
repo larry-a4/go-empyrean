@@ -173,7 +173,7 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 			txData := stypes.ShyftTxEntryPretty{
 				TxHash:      txHash,
 				From:        GENESIS,
-				To:          toAddr,
+				To:          toAddr.String(),
 				BlockHash:   block.Header().Hash().Hex(),
 				BlockNumber: block.Header().Number.String(),
 				Amount:      v.Balance.String(),

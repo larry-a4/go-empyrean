@@ -20,7 +20,6 @@ import (
 	"context"
 	"math/big"
 	"os"
-	"os/exec"
 	"testing"
 	"time"
 
@@ -30,6 +29,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
 
 var testKey, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
@@ -53,43 +53,13 @@ var waitDeployedTests = map[string]struct {
 	},
 }
 
-// Setup DB for Testing Before Each Test
-
+// @SHYFT NOTE: Setup DB for Testing Before Each Test
 func TestMain(m *testing.M) {
-	pgTestDbSetup()
+	shyfttest.PgTestDbSetup()
 	retCode := m.Run()
-	pgTestTearDown()
+	shyfttest.PgTestTearDown()
 	os.Exit(retCode)
 }
-
-// @SHYFT NOTE: - ensure pg database is cleared prior to test
-// pgTestDbSetup - reinitializes the pg database
-func pgTestDbSetup() {
-	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
-	cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	_, err := cmd.Output()
-	pgRecreateTables()
-	if err != nil {
-		println(err.Error())
-		return
-	}
-}
-
-func pgTestTearDown() {
-	pgTestDbSetup()
-}
-
-func pgRecreateTables() {
-	cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
-	cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	_, err := cmd.Output()
-
-	if err != nil {
-		println(err.Error())
-		return
-	}
-}
-
 func TestWaitDeployed(t *testing.T) {
 	for name, test := range waitDeployedTests {
 		backend := backends.NewSimulatedBackend(core.GenesisAlloc{
