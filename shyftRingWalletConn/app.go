@@ -5,6 +5,8 @@ package main
 import (
 	"bufio"
 	"context"
+	"crypto/tls"
+	"flag"
 	"fmt"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
@@ -13,6 +15,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/ethclient"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -20,7 +23,6 @@ import (
 )
 
 const (
-	CONN_HOST     = "localhost"
 	CONN_PORT     = "3333"
 	CONN_TYPE     = "tcp"
 	NEW_LINE_BYTE = 0x0a
@@ -40,11 +42,22 @@ func signHash(data []byte) []byte {
 }
 
 func main() {
-	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	var serverPrivateKeyPath = flag.String("ring-key", "server_test.key", "the private key path for the ring node")
+	var serverCertPath = flag.String("ring-certificate", "server_test.crt", "the tls certificate path for the ring node")
+	var connectionHost = flag.String("host", "localhost", "public ip address or domain name of the ring server")
+	flag.Parse()
+	cer, err := tls.LoadX509KeyPair(*serverCertPath, *serverPrivateKeyPath)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	config := &tls.Config{Certificates: []tls.Certificate{cer}}
+	l, err := tls.Listen(CONN_TYPE, *connectionHost+":"+CONN_PORT, config)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
 	}
+	fmt.Println("Ring node listening on", *connectionHost+":"+CONN_PORT)
 	defer l.Close()
 
 	for {
@@ -54,6 +67,7 @@ func main() {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
+		fmt.Println("Client", conn.RemoteAddr().String(), "connected.")
 		// Handle connections in a new goroutine.
 		go handleRequest(conn)
 	}
