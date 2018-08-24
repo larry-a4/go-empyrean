@@ -51,13 +51,6 @@ const (
 	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
 
-func TestMain(m *testing.M) {
-	shyfttest.PgTestDbSetup()
-	retCode := m.Run()
-	shyfttest.PgTestTearDown()
-	os.Exit(retCode)
-}
-
 func readJson(reader io.Reader, value interface{}) error {
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
@@ -214,8 +207,7 @@ func (tm *testMatcher) walk(t *testing.T, dir string, runTest interface{}) {
 		}
 		if filepath.Ext(path) == ".json" {
 			// shyfttest.PgTestDbSetup()
-			core.TruncateTables()
-			t.Run(name, func(t *testing.T) { tm.runTestFile(t, path, name, runTest) })
+			t.Run(name, func(t *testing.T) { shyfttest.PgTestDbSetup(); tm.runTestFile(t, path, name, runTest) })
 		}
 		return nil
 	})
