@@ -72,8 +72,7 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt) error {
 //swriteTransactions writes to sqldb, a SHYFT postgres instance
 func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.Hash, blockNumber string, receipts []*types.Receipt, age time.Time, gasLimit uint64) error {
 	var isContract bool
-	var statusFromReciept string
-	var toAddr *common.Address
+	var statusFromReciept, toAddr string
 	var contractAddressFromReciept common.Address
 
 	if tx.To() == nil {
@@ -88,7 +87,8 @@ func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.H
 			}
 		}
 		isContract = true
-		toAddr = &contractAddressFromReciept
+		tempAddr := &contractAddressFromReciept
+		toAddr = tempAddr.String()
 	} else {
 		isContract = false
 		for _, receipt := range receipts {
@@ -100,7 +100,7 @@ func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.H
 				statusFromReciept = "SUCCESS"
 			}
 		}
-		toAddr = tx.To()
+		toAddr = tx.To().String()
 	}
 
 	txData := stypes.ShyftTxEntryPretty{
@@ -120,11 +120,15 @@ func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.H
 		Status:      statusFromReciept,
 		IsContract:  isContract,
 	}
-	//Inserts Tx into DB
-	InsertTx(sqldb, txData)
-	//Runs necessary functions for tracing internal transactions through tracers.go
-	IShyftTracer.GetTracerToRun(tx.Hash())
-
+	isContractCheck := IsContract(sqldb, txData.To)
+	if isContractCheck == true {
+		InsertTx(sqldb, txData)
+		//Runs necessary functions for tracing internal transactions through tracers.go
+		IShyftTracer.GetTracerToRun(tx.Hash())
+	} else {
+		//Inserts Tx into DB
+		InsertTx(sqldb, txData)
+	}
 	return nil
 }
 
@@ -231,7 +235,7 @@ func swriteMinerRewards(sqldb *sql.DB, block *types.Block) string {
 
 	// References:
 	// https://ethereum.stackexchange.com/questions/27172/different-uncles-reward
-	// line 551 in consensus.go (shyft_go-ethereum/consensus/ethash/consensus.go)
+	// line 551 in consensus.go (go-empyrean/consensus/ethash/consensus.go)
 	// Some weird constants to avoid constant memory allocs for them.
 	var big8 = big.NewInt(8)
 	var uncleRewards []*big.Int
@@ -341,6 +345,20 @@ func BlockExists(sqldb *sql.DB, hash string) error {
 	}
 }
 
+//IsContract checks if toAddr is from a contract in Postgres Db
+func IsContract(sqldb *sql.DB, addr string) bool {
+	var isContract bool
+	sqlExistsStatement := `SELECT isContract from txs WHERE to_addr=($1)`
+	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&isContract)
+	switch {
+	case err == sql.ErrNoRows:
+		return isContract
+	default:
+		return isContract
+	}
+}
+
+
 //UpdateAccount updates account in Postgres Db
 func UpdateAccount(sqldb *sql.DB, addr string, balance string, accountNonce string) {
 	updateSQLStatement := `UPDATE accounts SET balance = ($2), accountNonce = ($3) WHERE addr = ($1)`
@@ -363,7 +381,7 @@ func InsertBlock(sqldb *sql.DB, blockData stypes.SBlock) {
 func InsertTx(sqldb *sql.DB, txData stypes.ShyftTxEntryPretty) {
 	var retNonce string
 	sqlStatement := `INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15)) RETURNING nonce`
-	err := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To.String()), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
+	err := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
 	if err != nil {
 		panic(err)
 	}
