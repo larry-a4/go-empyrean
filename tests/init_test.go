@@ -29,6 +29,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
+	"github.com/ShyftNetwork/go-empyrean/core"
+	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
@@ -43,12 +47,16 @@ var (
 	difficultyTestDir  = filepath.Join(baseDir, "BasicTests")
 )
 
-// func TestMain(m *testing.M) {
-// 	shyfttest.PgTestDbSetup()
-// 	retCode := m.Run()
-// 	shyfttest.PgTestTearDown()
-// 	os.Exit(retCode)
-// }
+const (
+	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
+)
+
+func TestMain(m *testing.M) {
+	shyfttest.PgTestDbSetup()
+	retCode := m.Run()
+	shyfttest.PgTestTearDown()
+	os.Exit(retCode)
+}
 
 func readJson(reader io.Reader, value interface{}) error {
 	data, err := ioutil.ReadAll(reader)
@@ -205,6 +213,8 @@ func (tm *testMatcher) walk(t *testing.T, dir string, runTest interface{}) {
 			return nil
 		}
 		if filepath.Ext(path) == ".json" {
+			// shyfttest.PgTestDbSetup()
+			core.TruncateTables()
 			t.Run(name, func(t *testing.T) { tm.runTestFile(t, path, name, runTest) })
 		}
 		return nil
@@ -229,8 +239,41 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 	// Run all tests from the map. Don't wrap in a subtest if there is only one test in the file.
 	// @SHYFT NOTE: Clear pg database
 	shyfttest.PgTestDbSetup()
+	//@SHYFT //SETS UP OUR TEST ENV
+	core.TruncateTables()
+	eth.NewShyftTestLDB()
+	shyftTracer := new(eth.ShyftTracer)
+	core.SetIShyftTracer(shyftTracer)
+
+	ethConf := &eth.Config{
+		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+		Etherbase: common.HexToAddress(testAddress),
+		Ethash: ethash.Config{
+			PowMode: ethash.ModeTest,
+		},
+	}
+
+	eth.SetGlobalConfig(ethConf)
+	eth.InitTracerEnv()
 	keys := sortedMapKeys(m)
 	if len(keys) == 1 {
+		// shyfttest.PgTestDbSetup()
+		//@SHYFT //SETS UP OUR TEST ENV
+		core.TruncateTables()
+		eth.NewShyftTestLDB()
+		shyftTracer := new(eth.ShyftTracer)
+		core.SetIShyftTracer(shyftTracer)
+
+		ethConf := &eth.Config{
+			Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+			Etherbase: common.HexToAddress(testAddress),
+			Ethash: ethash.Config{
+				PowMode: ethash.ModeTest,
+			},
+		}
+
+		eth.SetGlobalConfig(ethConf)
+		eth.InitTracerEnv()
 		runTestFunc(runTest, t, name, m, keys[0])
 	} else {
 		for _, key := range keys {
@@ -239,6 +282,8 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 				if r, _ := tm.findSkip(name); r != "" {
 					t.Skip(r)
 				}
+				// shyfttest.PgTestDbSetup()
+
 				runTestFunc(runTest, t, name, m, key)
 			})
 		}
@@ -267,6 +312,7 @@ func sortedMapKeys(m reflect.Value) []string {
 }
 
 func runTestFunc(runTest interface{}, t *testing.T, name string, m reflect.Value, key string) {
+	// shyfttest.PgTestDbSetup()
 	reflect.ValueOf(runTest).Call([]reflect.Value{
 		reflect.ValueOf(t),
 		reflect.ValueOf(name),

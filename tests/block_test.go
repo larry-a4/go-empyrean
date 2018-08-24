@@ -17,18 +17,11 @@
 package tests
 
 import (
-	"os"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
 
-func TestMain(m *testing.M) {
-	shyfttest.PgTestDbSetup()
-	retCode := m.Run()
-	shyfttest.PgTestTearDown()
-	os.Exit(retCode)
-}
 func TestBlockchain(t *testing.T) {
 	t.Parallel()
 
@@ -45,6 +38,7 @@ func TestBlockchain(t *testing.T) {
 	// Still failing tests
 	bt.skipLoad(`^bcWalletTest.*_Byzantium$`)
 	bt.walk(t, blockTestDir, func(t *testing.T, name string, test *BlockTest) {
+		shyfttest.PgTestDbSetup()
 		if err := bt.checkFailure(t, name, test.Run()); err != nil {
 			t.Error(err)
 		}
