@@ -141,6 +141,7 @@ func (e *GenesisMismatchError) Error() string {
 	return fmt.Sprintf("database already contains an incompatible genesis block (have %x, new %x)", e.Stored[:8], e.New[:8])
 }
 
+// @dbkbali - why 2 methods to write block 0 - WriteShyftBlockZero/WriteShyftGen
 //WriteShyftGen writes the genesis block to Shyft db
 //@NOTE:SHYFT
 func WriteShyftGen(gen *Genesis, block *types.Block) {
@@ -197,6 +198,7 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 	}
 }
 
+// @dbkbali - why 2 methods to write block 0 - WriteShyftBlockZero/WriteShyftGen
 //WriteShyftBlockZero writes block 0 to postgres db
 func WriteShyftBlockZero(block *types.Block, gen *Genesis) error {
 	sqldb, _ := DBConnection()

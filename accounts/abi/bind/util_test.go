@@ -19,17 +19,22 @@ package bind_test
 import (
 	"context"
 	"math/big"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind/backends"
 	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
+	"github.com/ShyftNetwork/go-empyrean/eth"
+)
+
+// @SHYFT NOTE: test ShyftTracer
+const (
+	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
 
 var testKey, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
@@ -54,12 +59,12 @@ var waitDeployedTests = map[string]struct {
 }
 
 // @SHYFT NOTE: Setup DB for Testing Before Each Test
-func TestMain(m *testing.M) {
-	shyfttest.PgTestDbSetup()
-	retCode := m.Run()
-	shyfttest.PgTestTearDown()
-	os.Exit(retCode)
-}
+// func TestMain(m *testing.M) {
+// 	shyfttest.PgTestDbSetup()
+// 	retCode := m.Run()
+// 	shyfttest.PgTestTearDown()
+// 	os.Exit(retCode)
+// }
 func TestWaitDeployed(t *testing.T) {
 	for name, test := range waitDeployedTests {
 		backend := backends.NewSimulatedBackend(core.GenesisAlloc{
@@ -77,13 +82,29 @@ func TestWaitDeployed(t *testing.T) {
 			mined   = make(chan struct{})
 			ctx     = context.Background()
 		)
+		core.TruncateTables()
+		eth.NewShyftTestLDB()
+		shyftTracer := new(eth.ShyftTracer)
+		core.SetIShyftTracer(shyftTracer)
+
+		ethConf := &eth.Config{
+			Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+			Etherbase: common.HexToAddress(testAddress),
+			Ethash: ethash.Config{
+				PowMode: ethash.ModeTest,
+			},
+		}
+
+		eth.SetGlobalConfig(ethConf)
+		eth.InitTracerEnv()
 		go func() {
+
 			address, err = bind.WaitDeployed(ctx, backend, tx)
 			close(mined)
 		}()
 
 		// Send and mine the transaction.
-		core.TruncateTables()
+		// core.TruncateTables()
 		backend.SendTransaction(ctx, tx)
 		backend.Commit()
 

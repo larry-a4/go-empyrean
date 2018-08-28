@@ -48,6 +48,11 @@ var _ bind.ContractBackend = (*SimulatedBackend)(nil)
 var errBlockNumberUnsupported = errors.New("SimulatedBackend cannot access blocks other than the latest block")
 var errGasEstimationFailed = errors.New("gas required exceeds allowance or always failing transaction")
 
+// @SHYFT NOTE: test ShyftTracer
+const (
+	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
+)
+
 // SimulatedBackend implements bind.ContractBackend, simulating a blockchain in
 // the background. Its main purpose is to allow easily testing contract bindings.
 type SimulatedBackend struct {
@@ -62,19 +67,6 @@ type SimulatedBackend struct {
 
 	config *params.ChainConfig
 }
-
-// func Main(m *testing.M) {
-// 	// Reset Pg DB
-// 	shyfttest.PgTestDbSetup()
-// 	// check if we have been reexec'd
-
-// 	if reexec.Init() {
-// 		return
-// 	}
-// 	retCode := m.Run()
-// 	shyfttest.PgTestTearDown()
-// 	os.Exit(retCode)
-// }
 
 // NewSimulatedBackend creates a new binding backend using a simulated blockchain
 // for testing purposes.

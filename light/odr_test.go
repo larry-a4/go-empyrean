@@ -247,7 +247,7 @@ func testChainGen(i int, block *core.BlockGen) {
 
 func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 	//@SHYFT //SETS UP OUR TEST ENV
-	core.TruncateTables()
+	shyfttest.PgTestDbSetup()
 	eth.NewShyftTestLDB()
 	shyftTracer := new(eth.ShyftTracer)
 	core.SetIShyftTracer(shyftTracer)
@@ -262,8 +262,7 @@ func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 
 	eth.SetGlobalConfig(ethConf)
 	eth.InitTracerEnv()
-	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	core.TruncateTables()
+
 	var (
 		sdb, _  = ethdb.NewMemDatabase()
 		ldb, _  = ethdb.NewMemDatabase()
