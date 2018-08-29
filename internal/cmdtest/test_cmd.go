@@ -209,8 +209,9 @@ func (tt *TestCmd) Kill() {
 	}
 }
 
+// @SHYFT NOTE: Increase TimeOut To allow console to load
 func (tt *TestCmd) withKillTimeout(fn func()) {
-	timeout := time.AfterFunc(5*time.Second, func() {
+	timeout := time.AfterFunc(30*time.Second, func() {
 		tt.Log("killing the child process (timeout)")
 		tt.Kill()
 	})
