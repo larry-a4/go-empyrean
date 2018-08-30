@@ -19,6 +19,11 @@ class BlocksTable extends Component {
         try {
             console.log("before axios ")
             const response = await axios.get("http://localhost:8080/api/get_all_blocks/");
+            if(response.data === "\n") {
+                this.setState({emptyDataSet: true})                                   
+            } else {
+                this.setState({emptyDataSet: false})                  
+            }      
             console.log("after block rows response ")
             console.log(response.data)
             await this.setState({data: response.data});
@@ -28,29 +33,33 @@ class BlocksTable extends Component {
     }
 
     render() {
-        const table = this.state.data.map((data, i) => {
-            const conversion = data.Rewards / 10000000000000000000;
-            return <BlockTable
-                key={`${data.TxHash}${i}`}
-                Hash={data.Hash}
-                Number={data.Number}
-                Coinbase={data.Coinbase}
-                AgeGet={data.AgeGet}
-                GasUsed={data.GasUsed}
-                GasLimit={data.GasLimit}
-                UncleCount={data.UncleCount}
-                TxCount={data.TxCount}
-                Reward={conversion}
-                detailBlockHandler={this.props.detailBlockHandler}
-                getBlocksMined={this.props.getBlocksMined}
-            />
-        });
+        let table;
+        
+        if(this.state.emptyDataSet === false && this.state.data.length > 0  ) {
+            table = this.state.data.map((data, i) => {
+                const conversion = data.Rewards / 10000000000000000000;
+                return <BlockTable
+                    key={`${data.TxHash}${i}`}
+                    Hash={data.Hash}
+                    Number={data.Number}
+                    Coinbase={data.Coinbase}
+                    AgeGet={data.AgeGet}
+                    GasUsed={data.GasUsed}
+                    GasLimit={data.GasLimit}
+                    UncleCount={data.UncleCount}
+                    TxCount={data.TxCount}
+                    Reward={conversion}
+                    detailBlockHandler={this.props.detailBlockHandler}
+                    getBlocksMined={this.props.getBlocksMined}
+                />
+            });
+        }
 
         let combinedClasses = ['responsive-table', classes.table];
         return (
             <div>     
                 {
-                    this.state.data.length > 0 ?  
+                     this.state.emptyDataSet === false && this.state.data.length > 0  ?  
                         <table className={combinedClasses.join(' ')}>
                             <thead>
                                 <tr>
