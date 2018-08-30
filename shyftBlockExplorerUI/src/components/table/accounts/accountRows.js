@@ -8,13 +8,19 @@ class AccountTable extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            data: []
+            data: [],
+            emptyDataSet: true
         };
     }
 
     async componentDidMount() {
         try {
-            const response = await axios.get("http://localhost:8080/api/get_all_accounts")
+            const response = await axios.get("http://localhost:8080/api/get_all_accounts");
+            if(response.data === "\n") {
+                this.setState({emptyDataSet: true})                                   
+            } else {
+                this.setState({emptyDataSet: false})                  
+            }      
             await this.setState({data: response.data});
         } catch (err) {
             console.log(err);
@@ -24,6 +30,7 @@ class AccountTable extends Component {
     render() {
         let startNum = 1;
         let table;    
+        if(this.state.emptyDataSet === false && this.state.data.length > 0  ) {
         const sorted = [...this.state.data];
         sorted.sort((a, b) => Number(a.Balance) > Number(b.Balance)); 
         table = sorted.reverse().map((data, i) => {
@@ -42,12 +49,13 @@ class AccountTable extends Component {
                 detailAccountHandler={this.props.detailAccountHandler}
             />
         });
+    }
           
         let combinedClasses = ['responsive-table', classes.table];
         return (      
             <div>     
                 {
-                    this.state.data.length > 0 ?  
+                   this.state.emptyDataSet === false && this.state.data.length > 0  ?  
                         <table className={combinedClasses.join(' ')}>
                             <thead>
                                 <tr>

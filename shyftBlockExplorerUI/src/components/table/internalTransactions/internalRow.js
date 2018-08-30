@@ -8,13 +8,19 @@ class InternalTransactionsTable extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            data: []
+            data: [],
+            emptyDataSet: true
         };
     }
 
     async componentDidMount() {
         try {
-            const response = await axios.get("http://localhost:8080/api/get_internal_transactions/");
+            const response = await axios.get("http://localhost:8080/api/get_internal_transactions/");                     
+            if(response.data === "\n") {
+                this.setState({emptyDataSet: true})                                   
+            } else {
+                this.setState({emptyDataSet: false})                  
+            }         
             await this.setState({data: response.data});
         } catch (err) {
             console.log(err);
@@ -22,29 +28,32 @@ class InternalTransactionsTable extends Component {
     }
 
     render() {
-        const table = this.state.data.map((data, i) => {              
-            return <InternalTable
-                key={`${data.TxHash}${i}`}
-                Hash={data.Hash}
-                Action={data.Action}
-                To={data.To}
-                From= {data.From}
-                Gas={data.Gas}
-                GasUsed={data.GasUsed}
-                ID={data.ID}
-                Input={data.Input}
-                Output={data.Output}
-                Time={data.Time}
-                Value={data.Value}    
-                detailInternalHandler={this.props.detailInternalHandler}            
-            />
-        });
+        let table;
+        if(this.state.emptyDataSet === false && this.state.data.length > 0  ) {
+            table = this.state.data.map((data, i) => {              
+                return <InternalTable
+                    key={`${data.TxHash}${i}`}
+                    Hash={data.Hash}
+                    Action={data.Action}
+                    To={data.To}
+                    From= {data.From}
+                    Gas={data.Gas}
+                    GasUsed={data.GasUsed}
+                    ID={data.ID}
+                    Input={data.Input}
+                    Output={data.Output}
+                    Time={data.Time}
+                    Value={data.Value}    
+                    detailInternalHandler={this.props.detailInternalHandler}            
+                />
+            });
+       }
 
         let combinedClasses = ['responsive-table', classes.table];
         return (
             <div>     
                 {
-                    this.state.data.length > 0 ?  
+                    this.state.emptyDataSet === false && this.state.data.length > 0 ?  
                     <table className={combinedClasses.join(' ')}>
                         <thead>
                             <tr>                    

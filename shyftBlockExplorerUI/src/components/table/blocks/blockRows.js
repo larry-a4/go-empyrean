@@ -8,13 +8,19 @@ class BlocksTable extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            data: []
+            data: [],
+            emptyDataSet: true
         };
     }
 
     async componentDidMount() {
+        console.log("before try ")
+
         try {
-            const response = await axios.get("http://localhost:8080/api/get_all_blocks");
+            console.log("before axios ")
+            const response = await axios.get("http://localhost:8080/api/get_all_blocks/");
+            console.log("after block rows response ")
+            console.log(response.data)
             await this.setState({data: response.data});
         } catch (err) {
             console.log(err);
