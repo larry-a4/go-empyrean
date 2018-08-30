@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/ShyftNetwork/go-empyrean/params"
-	"fmt"
 )
 
 const (
@@ -88,7 +87,7 @@ func TestIPCAttachWelcome(t *testing.T) {
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
 		"--etherbase", coinbase, "--shh", "--ipcpath", ipc)
 
-	time.Sleep(20 * time.Second) // Simple way to wait for the RPC endpoint to open
+	time.Sleep(30 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, geth, "ipc:"+ipc, ipcAPIs)
 
 	geth.Interrupt()
@@ -102,7 +101,7 @@ func TestHTTPAttachWelcome(t *testing.T) {
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
 		"--etherbase", coinbase, "--rpc", "--rpcport", port)
 
-	time.Sleep(20 * time.Second) // Simple way to wait for the RPC endpoint to open
+	time.Sleep(30 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, geth, "http://localhost:"+port, httpAPIs)
 
 	geth.Interrupt()
@@ -117,7 +116,7 @@ func TestWSAttachWelcome(t *testing.T) {
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
 		"--etherbase", coinbase, "--ws", "--wsport", port)
 
-	time.Sleep(2 * time.Second) // Simple way to wait for the RPC endpoint to open
+	time.Sleep(30 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, geth, "ws://localhost:"+port, httpAPIs)
 
 	geth.Interrupt()
@@ -126,7 +125,6 @@ func TestWSAttachWelcome(t *testing.T) {
 
 func testAttachWelcome(t *testing.T, geth *testgeth, endpoint, apis string) {
 	// Attach to a running geth note and terminate immediately
-	fmt.Println("[testAttachWelcome]", endpoint)
 	attach := runGeth(t, "attach", endpoint)
 	defer attach.ExpectExit()
 	attach.CloseStdin()
