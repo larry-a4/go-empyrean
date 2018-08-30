@@ -74,7 +74,6 @@ type Console struct {
 }
 
 func New(config Config) (*Console, error) {
-	fmt.Println("[console.go func New]", config)
 	// Handle unset config values gracefully
 	if config.Prompter == nil {
 		config.Prompter = Stdin
@@ -94,13 +93,10 @@ func New(config Config) (*Console, error) {
 		printer:  config.Printer,
 		histPath: filepath.Join(config.DataDir, HistoryFile),
 	}
-	fmt.Println("[CONSOLE.GO func New(config)]", console)
 	if err := os.MkdirAll(config.DataDir, 0700); err != nil {
-		fmt.Println("IF CONDITION CONSOLE.GO", err)
 		return nil, err
 	}
 	if err := console.init(config.Preload); err != nil {
-		fmt.Println("SECOND IF CONDITION CONSOLE.GO", err)
 		return nil, err
 	}
 	return console, nil
