@@ -330,7 +330,7 @@ cd shyftBlockExplorerApi && govendor init
 
 # rebuild vendor.json using latest uncommitted changes
 
-govendor add -tree -uncommitted +external
+govendor add +external
 
 # due to a bug in govendor and it not being able to pull in some dependencies that are c-header files 
 # you should execute the following commands - see these issues - which whilst closed
