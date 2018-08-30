@@ -23,10 +23,10 @@ func SGetAllBlocks(sqldb *sql.DB) string {
 	defer rows.Close()
 
 	for rows.Next() {
-		var hash, coinbase, age, parentHash, uncleHash, difficulty, size, rewards, num string
+		var hash, coinbase, parentHash, uncleHash, difficulty, size, rewards, num string
 		var gasUsed, gasLimit, nonce uint64
 		var txCount, uncleCount int
-
+		var age time.Time
 		err = rows.Scan(
 			&hash, &coinbase, &gasUsed, &gasLimit, &txCount, &uncleCount, &age, &parentHash, &uncleHash, &difficulty, &size, &nonce, &rewards, &num)
 
@@ -37,7 +37,7 @@ func SGetAllBlocks(sqldb *sql.DB) string {
 			GasLimit:   gasLimit,
 			TxCount:    txCount,
 			UncleCount: uncleCount,
-			AgeGet:     age,
+			Age:     	age,
 			ParentHash: parentHash,
 			UncleHash:  uncleHash,
 			Difficulty: difficulty,
@@ -59,9 +59,10 @@ func SGetAllBlocks(sqldb *sql.DB) string {
 func SGetBlock(sqldb *sql.DB, blockNumber string) string {
 	sqlStatement := `SELECT * FROM blocks WHERE number=$1;`
 	row := sqldb.QueryRow(sqlStatement, blockNumber)
-	var hash, coinbase, age, parentHash, uncleHash, difficulty, size, rewards, num string
+	var hash, coinbase, parentHash, uncleHash, difficulty, size, rewards, num string
 	var gasUsed, gasLimit, nonce uint64
 	var txCount, uncleCount int
+	var age time.Time
 
 	row.Scan(
 		&hash, &coinbase, &gasUsed, &gasLimit, &txCount, &uncleCount, &age, &parentHash, &uncleHash, &difficulty, &size, &nonce, &rewards, &num)
@@ -73,7 +74,7 @@ func SGetBlock(sqldb *sql.DB, blockNumber string) string {
 		GasLimit:   gasLimit,
 		TxCount:    txCount,
 		UncleCount: uncleCount,
-		AgeGet:     age,
+		Age:    	age,
 		ParentHash: parentHash,
 		UncleHash:  uncleHash,
 		Difficulty: difficulty,
@@ -89,9 +90,10 @@ func SGetBlock(sqldb *sql.DB, blockNumber string) string {
 func SGetRecentBlock(sqldb *sql.DB) string {
 	sqlStatement := `SELECT * FROM blocks WHERE number=(SELECT MAX(number) FROM blocks);`
 	row := sqldb.QueryRow(sqlStatement)
-	var hash, coinbase, age, parentHash, uncleHash, difficulty, size, rewards, num string
+	var hash, coinbase, parentHash, uncleHash, difficulty, size, rewards, num string
 	var gasUsed, gasLimit, nonce uint64
 	var txCount, uncleCount int
+	var age time.Time
 
 	row.Scan(
 		&hash, &coinbase, &gasUsed, &gasLimit, &txCount, &uncleCount, &age, &parentHash, &uncleHash, &difficulty, &size, &nonce, &rewards, &num)
@@ -103,7 +105,7 @@ func SGetRecentBlock(sqldb *sql.DB) string {
 		GasLimit:   gasLimit,
 		TxCount:    txCount,
 		UncleCount: uncleCount,
-		AgeGet:     age,
+		Age:     	age,
 		ParentHash: parentHash,
 		UncleHash:  uncleHash,
 		Difficulty: difficulty,
@@ -138,7 +140,7 @@ func SGetAllTransactionsFromBlock(sqldb *sql.DB, blockNumber string) string {
 
 		arr.TxEntry = append(arr.TxEntry, stypes.ShyftTxEntryPretty{
 			TxHash:      txhash,
-			ToGet:       to_addr,
+			To:       	 to_addr,
 			From:        from_addr,
 			BlockHash:   blockhash,
 			BlockNumber: blocknumber,
@@ -172,9 +174,10 @@ func SGetAllBlocksMinedByAddress(sqldb *sql.DB, coinbase string) string {
 	defer rows.Close()
 
 	for rows.Next() {
-		var hash, coinbase, age, parentHash, uncleHash, difficulty, size, rewards, num string
+		var hash, coinbase, parentHash, uncleHash, difficulty, size, rewards, num string
 		var gasUsed, gasLimit, nonce uint64
 		var txCount, uncleCount int
+		var age time.Time
 
 		err = rows.Scan(
 			&hash, &coinbase, &gasUsed, &gasLimit, &txCount, &uncleCount, &age, &parentHash, &uncleHash, &difficulty, &size, &nonce, &rewards, &num)
@@ -186,7 +189,7 @@ func SGetAllBlocksMinedByAddress(sqldb *sql.DB, coinbase string) string {
 			GasLimit:   gasLimit,
 			TxCount:    txCount,
 			UncleCount: uncleCount,
-			AgeGet:     age,
+			Age:     	age,
 			ParentHash: parentHash,
 			UncleHash:  uncleHash,
 			Difficulty: difficulty,
@@ -225,7 +228,7 @@ func SGetAllTransactions(sqldb *sql.DB) string {
 
 		arr.TxEntry = append(arr.TxEntry, stypes.ShyftTxEntryPretty{
 			TxHash:      txhash,
-			ToGet:       to_addr,
+			To:       	 to_addr,
 			From:        from_addr,
 			BlockHash:   blockhash,
 			BlockNumber: blocknumber,
@@ -263,7 +266,7 @@ func SGetTransaction(sqldb *sql.DB, txHash string) string {
 
 	tx := stypes.ShyftTxEntryPretty{
 		TxHash:      txhash,
-		ToGet:       to_addr,
+		To:          to_addr,
 		From:        from_addr,
 		BlockHash:   blockhash,
 		BlockNumber: blocknumber,
@@ -365,7 +368,7 @@ func SGetAccountTxs(sqldb *sql.DB, address string) string {
 
 		arr.TxEntry = append(arr.TxEntry, stypes.ShyftTxEntryPretty{
 			TxHash:      txhash,
-			ToGet:       to_addr,
+			To:          to_addr,
 			From:        from_addr,
 			BlockHash:   blockhash,
 			BlockNumber: blocknumber,

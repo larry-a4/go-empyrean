@@ -45,6 +45,13 @@
 			"revisionTime": "2017-02-15T19:58:14Z"
 		},
 		{
+			"checksumSHA1": "9D9WiBEK5C3mpr6YSfD/qxApQxA=",
+			"path": "github.com/ShyftNetwork/go-empyrean/crypto/secp256k1",
+			"revision": "f6eb7e527b0ce41a0ca844bea2aa7b544df322be",
+			"revisionTime": "2018-08-23T18:46:23Z",
+			"tree": true
+		},
+		{
 			"checksumSHA1": "QC55lHNOv1+UAL2xtIHw17MJ8J8=",
 			"path": "github.com/StackExchange/wmi",
 			"revision": "5d049714c4a64225c3c79a7cf7d02f7fb5b96338",
