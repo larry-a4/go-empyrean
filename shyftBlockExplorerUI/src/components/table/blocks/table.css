@@ -1,65 +1,49 @@
 .table {
-    border-spacing: 100rem;
-    width: 100%;
-    margin-top: 50px;
-}
-
-.tHead {
-    font-size: 1rem;
+    width: 95%;
+    margin: 0 auto;  
+    background-color: white;
+    top: 107pt;
+    left: 2.5%;
+    position: absolute;
+    table-layout:fixed;
 }
 
 th {
-    background-color: aliceblue;
-    padding-right: 10px;
+    background-color: white;
+    padding: 15pt 30pt ;
+    color: #593c83;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.thItem { 
+    font-size: 8pt;
+    background-color: white; 
+    color: #4f2e7e;
 }
 
 td {
-    padding-left: 5px;
-    font-size: .5rem;
-}
-
-.addressTag {
-    display: inline-block;
-    vertical-align: bottom;
+    font-size: 6pt;
+    background-color: white;
+    font-family: 'Open Sans', sans-serif;
     text-overflow: ellipsis;
     overflow: hidden;
-    width: 132px;
 }
 
-.ageTag{
-    display: inline-block;
-    vertical-align: bottom;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    width: 80px;
+.tdItem { 
+    padding-left: 30pt;
+    padding-bottom: 7.5pt; 
+    padding-top: 7.5pt;  
 }
 
-.fromTag{
-    display: inline-block;
-    vertical-align: bottom;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    width: 100px;
+.tdLink { 
+    color: #8f67c9;
 }
 
-.toTag{
-    display: inline-block;
-    vertical-align: bottom;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    width: 100px;
+.border { 
+    border-top: 1px solid #e0defb;
 }
 
-.valueTag{
-    display: inline-block;
-    vertical-align: bottom;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    width: 80px;
-}
-
-.arrow {
-    width: 25px;
-    height: 25px;
-    margin-left: 15px;
-}
+.disabled {
+    pointer-events: none;
+    color: black;
+} 

@@ -1,24 +1,59 @@
 import React from "react";
 import classes from './nav.css';
+import { Link } from 'react-router-dom'
 
-const navBar = props => {
-    let combinedClasses = ["navbar-brand", classes.TopBar];
-  return (
-    <nav className="navbar navbar-light justify-content-between">
-      <a className={combinedClasses.join(" ")}>Block Explorer Test UI</a>
-      {/* <form className="form-inline">
-        <input
-          className="form-control mr-sm-2"
-          type="search"
-          placeholder="Search"
-          aria-label="Search"
-        />
-        <button className="btn btn-outline-success my-2 my-sm-0" type="submit">
-          Search
-        </button>
-      </form> */}
-    </nav>
-  );
+class navBar extends React.Component  {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      active: ""
+    };
+  }
+
+  updateActive = (page) => {
+    this.setState({ active: page  });
+  }
+
+  render() {
+    return (
+      <div>
+        <div className={classes.navHeader}>
+          <h5 className={classes.headerText}> Block Explorer </h5>
+          <div className={classes.buttonContainer}>
+            <Link to="/blocks">  
+              <button 
+                className={this.state.active === "blocks" ? classes.btnActive : classes.btn}
+                onClick={ ()=>this.updateActive("blocks") } > 
+                BLOCKS 
+              </button> 
+            </Link>   
+            <Link to="/transactions">  
+              <button 
+                className={this.state.active === "transactions" ? classes.btnActive : classes.btn}
+                onClick={ ()=>this.updateActive("transactions") }> 
+                TRANSACTIONS 
+              </button>
+            </Link> 
+            <Link to="/internalTransactions">   
+            <button 
+              className={this.state.active === "internal" ? classes.btnActive : classes.btn}
+              onClick={ ()=> this.updateActive("internal") }> 
+              INTERNAL TX 
+            </button>     
+            </Link> 
+            <Link to="/accounts">  
+              <button 
+               className={this.state.active === "accounts" ? classes.btnActive : classes.btn}
+                onClick={ ()=>this.updateActive("accounts") }>                 
+                ACCOUNTS 
+              </button>
+            </Link>   
+          </div>
+        </div>
+      </div>
+    )
+  };
 };
 
 export default navBar;

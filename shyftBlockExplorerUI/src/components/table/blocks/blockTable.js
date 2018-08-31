@@ -4,20 +4,26 @@ import { Link } from 'react-router-dom'
 
 const BlockTable = (props) => {
     return (
-          <tbody>
-            <tr>
-                <td><Link to="/blocks/detail" onClick={() => props.detailBlockHandler(props.Number)}>
-                    {props.Number}
-                </Link></td>
-                <td className={classes.addressTag}>{props.Hash}</td>
-                <td>{props.AgeGet}</td>
-                <td>{props.TxCount}</td>
-                <td>{props.UncleCount}</td>
-                <td className={classes.addressTag}><Link to="/mined/blocks" onClick={() => props.getBlocksMined(props.Coinbase)}>{props.Coinbase}</Link></td>
-                <td>{props.GasUsed}</td>
-                <td>{props.GasLimit}</td>
-                <td>TBD</td>
-                <td>{props.Reward}</td>
+        <tbody>
+            <tr className={classes.border}>
+                <td className={classes.tdItem}>
+                    <Link to="/blocks" style={{ color: '#8f67c9' }} onClick={() => props.detailBlockHandler(props.Number)}>
+                        {props.Number}
+                    </Link>
+                </td>
+                <td className={classes.tdItem}> {props.Hash} </td>
+                <td className={classes.tdItem}> {props.AgeGet} </td>
+                <td className={classes.tdItem}> {props.TxCount} </td>
+                <td className={classes.tdItem}> {props.UncleCount} </td>
+                <td className={classes.tdItem}>
+                    <Link to="/mined/blocks" style={{ color: '#8f67c9' }} onClick={() => props.getBlocksMined(props.Coinbase)}>
+                        {props.Coinbase}
+                    </Link>
+                </td>
+                <td className={classes.tdItem}> {props.GasUsed} </td>
+                <td className={classes.tdItem}> {props.GasLimit} </td>
+                <td style={{paddingLeft: '30pt', paddingBottom: '7.5pt', paddingTop: '7.5pt'   }}>TBD</td>
+                <td style={{paddingLeft: '30pt', paddingBottom: '7.5pt', paddingTop: '7.5pt'  }}>{props.Reward}</td>
             </tr>
             </tbody>
     )

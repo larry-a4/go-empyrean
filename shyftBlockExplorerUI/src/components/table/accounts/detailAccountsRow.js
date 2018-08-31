@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
 import DetailAccountsTable from './detailAccountsTable';
-import ErrorHandler from "./errorMessage";
+import ErrorMessage from "./errorMessage";
 import classes from './table.css';
 
 class AccountTransactionTable extends Component {
     render() {
+        console.log(this.props);
         let table;
-        if(this.props.data.length <= 1) {
-           return <ErrorHandler />
-        }else {
+        if(this.props.data.length < 1) {
+           return <ErrorMessage />
+        } else {
             table = this.props.data.map((data, i) => {
                 const costConversion = data.Cost / 10000000000000000000;
                 const amountConversion = data.Amount / 10000000000000000000;
@@ -29,21 +30,27 @@ class AccountTransactionTable extends Component {
 
         let combinedClasses = ['responsive-table', classes.table];
         return (
-            <table key={this.props.data.TxHash} className={combinedClasses.join(' ')}>
-                <thead className={classes.tHead}>
-                <tr>
-                    <th scope="col">TxHash</th>
-                    <th scope="col">Block</th>
-                    <th scope="col">Age</th>
-                    <th scope="col">From</th>
-                    <th scope="col"></th>
-                    <th scope="col">To</th>
-                    <th scope="col">Value</th>
-                    <th scope="col">TxFee</th>
-                </tr>
-                </thead>
-                {table}
-            </table>
+            <div>
+                {
+                    this.props.data.length > 0 ?
+                    <table key={this.props.data.TxHash} className={combinedClasses.join(' ')}>
+                        <thead className={classes.tHead}>
+                        <tr>
+                            <th scope="col" className={classes.thItem}>TxHash</th>
+                            <th scope="col" className={classes.thItem}>Block</th>
+                            <th scope="col" className={classes.thItem}>Age</th>
+                            <th scope="col" className={classes.thItem}>From</th>
+                            <th scope="col" className={classes.thItem}> </th>
+                            <th scope="col" className={classes.thItem}>To</th>
+                            <th scope="col" className={classes.thItem}>Value</th>
+                            <th scope="col" className={classes.thItem}>TxFee</th>
+                        </tr>
+                        </thead>
+                        {table}
+                    </table>
+                    : <ErrorMessage />
+                }
+            </div>
         );
     }
 }

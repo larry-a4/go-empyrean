@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import MinedBlockTable from './blocksMinedTable';
-import Loading from '../../UI materials/loading'
 import classes from './table.css';
+import ErrorMessage from './errorMessage';
 
 class BlocksMinedTable extends Component {
     constructor(props) {
@@ -32,23 +32,29 @@ class BlocksMinedTable extends Component {
 
         let combinedClasses = ['responsive-table', classes.table];
         return (
-            <table className={combinedClasses.join(' ')}>
-                <thead className={classes.tHead}>
-                <tr>
-                    <th scope="col">Height</th>
-                    <th scope="col">Block Hash</th>
-                    <th scope="col">Age</th>
-                    <th scope="col">Txn</th>
-                    <th scope="col">Uncles</th>
-                    <th scope="col">Coinbase</th>
-                    <th scope="col">GasUsed</th>
-                    <th scope="col">GasLimit</th>
-                    <th scope="col">Avg.GasPrice</th>
-                    <th scope="col">Reward</th>
-                </tr>
-                </thead>
-                {table}
-            </table>
+            <div>     
+                {
+                    this.props.data.length > 0 ?  
+                        <table className={combinedClasses.join(' ')}>
+                            <thead>
+                                <tr>
+                                    <th scope="col" className={classes.thItem}> Height </th>
+                                    <th scope="col" className={classes.thItem}> Block Hash </th>
+                                    <th scope="col" className={classes.thItem}> Age </th>
+                                    <th scope="col" className={classes.thItem}> Txn </th>
+                                    <th scope="col" className={classes.thItem}> Uncles </th>
+                                    <th scope="col" className={classes.thItem}> Coinbase </th>
+                                    <th scope="col" className={classes.thItem}> GasUsed </th>
+                                    <th scope="col" className={classes.thItem}> GasLimit </th>
+                                    <th scope="col" className={classes.thItem}> Avg.GasPrice </th>
+                                    <th scope="col" className={classes.thItem}> Reward </th>
+                                </tr>
+                            </thead>
+                          {table}
+                        </table>
+                    : <ErrorMessage />
+                } 
+            </div>
         );
     }
 }

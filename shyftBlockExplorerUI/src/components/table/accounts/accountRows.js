@@ -2,18 +2,25 @@ import React, { Component } from 'react';
 import AccountsTable from './accountsTable';
 import classes from './accounts.css';
 import axios from "axios/index";
+import ErrorMessage from './errorMessage';
 
 class AccountTable extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            data: []
+            data: [],
+            emptyDataSet: true
         };
     }
 
     async componentDidMount() {
         try {
-            const response = await axios.get("http://localhost:8080/api/get_all_accounts")
+            const response = await axios.get("http://localhost:8080/api/get_all_accounts");
+            if(response.data === "\n") {
+                this.setState({emptyDataSet: true})                                   
+            } else {
+                this.setState({emptyDataSet: false})                  
+            }      
             await this.setState({data: response.data});
         } catch (err) {
             console.log(err);
@@ -22,10 +29,11 @@ class AccountTable extends Component {
 
     render() {
         let startNum = 1;
+        let table;    
+        if(this.state.emptyDataSet === false && this.state.data.length > 0  ) {
         const sorted = [...this.state.data];
-            sorted.sort((a, b) => Number(a.Balance) > Number(b.Balance));
-            console.log(sorted);
-        const table = sorted.reverse().map((data, i) => {
+        sorted.sort((a, b) => Number(a.Balance) > Number(b.Balance)); 
+        table = sorted.reverse().map((data, i) => {
             const conversion = Number(data.Balance) / 10000000000000000000;
             const total = sorted
                 .map(num => Number(num.Balance) / 10000000000000000000)
@@ -41,21 +49,28 @@ class AccountTable extends Component {
                 detailAccountHandler={this.props.detailAccountHandler}
             />
         });
-
+    }
+          
         let combinedClasses = ['responsive-table', classes.table];
-        return (
-            <table className={combinedClasses.join(' ')}>
-                <thead className={classes.tHead}>
-                <tr>
-                    <th scope="col">Rank</th>
-                    <th scope="col">Address</th>
-                    <th scope="col">Balance</th>
-                    <th scope="col">Percentage</th>
-                    <th scope="col">TxCount</th>
-                </tr>
-                </thead>
-                {table}
-            </table>
+        return (      
+            <div>     
+                {
+                   this.state.emptyDataSet === false && this.state.data.length > 0  ?  
+                        <table className={combinedClasses.join(' ')}>
+                            <thead>
+                                <tr>
+                                    <th scope="col" className={classes.thItem}>Rank</th>
+                                    <th scope="col" className={classes.thItem}>Address</th>
+                                    <th scope="col" className={classes.thItem}>Balance</th>
+                                    <th scope="col" className={classes.thItem}>Percentage</th>
+                                    <th scope="col" className={classes.thItem}>TxCount</th>
+                                </tr>
+                            </thead>
+                            { table } 
+                        </table>
+                    : <ErrorMessage />
+                } 
+            </div>
         );
     }
 }

@@ -1,8 +1,7 @@
 import React from 'react';
 import classes from './table.css';
-import { Link } from 'react-router-dom'
 
-const DetailAccountsTable = (props) => {
+const DetailAccountsTable = (props) => {    
     let flag;
         if(props.addr === props.to) {
             flag = true
@@ -16,21 +15,26 @@ const DetailAccountsTable = (props) => {
         genFlag = true
     }
     return (
-          <tbody>
-            <tr>
-                <td className={classes.addressTag}>
-                    <Link to="/transaction/details" className={genFlag ? "" : classes.disabled} onClick={() => props.detailTransactionHandler(props.txHash)}>
-                        {props.txHash}</Link>
+        <tbody>
+            <tr className={classes.border}>
+                <td className={classes.tdItem}>
+                    <div className={[genFlag ? "" : classes.disabled, classes.tdLink]} onClick={() => props.detailTransactionHandler(props.txHash)}>
+                        {props.txHash}
+                    </div>
                 </td>
-                <td>{props.blockNumber}</td>
-                <td>{props.age}</td>
-                <td className={classes.fromTag}>{props.from}</td>
-                <td><div className={ flag ? classes.incoming : classes.out }>{ flag ? "IN" : "OUT" }</div></td>
-                <td>{props.to}</td>
-                <td>{props.value}</td>
-                <td>{props.cost}</td>
+                <td className={classes.tdItem}> {props.blockNumber} </td>
+                <td className={classes.tdItem}> {props.age} </td>
+                <td className={classes.tdItem}> {props.from} </td>
+                <td>
+                    <div className={ [flag ? classes.incoming : classes.out, classes.tdItem ]}>
+                        { flag ? "IN" : "OUT" }
+                    </div>
+                </td>
+                <td className={classes.tdItem}> {props.to} </td>
+                <td className={classes.tdItem}> {props.value} </td>
+                <td className={classes.tdItem}> {props.cost} </td>
             </tr>
-            </tbody>
+        </tbody>
     )
 };
 
