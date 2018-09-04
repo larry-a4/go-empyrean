@@ -704,9 +704,14 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 
 	// Configure a subchain to roll back
 	remove := []common.Hash{}
+	stringRemove := []string{}
+	blockNumber := []string{}
 	for _, block := range blocks[height/2:] {
 		remove = append(remove, block.Hash())
-		fmt.Println("[BLOCKCHAIN_TEST.GO ::],", remove)
+		blockNumber = append(blockNumber, block.Number().String())
+		stringRemove = append(stringRemove, block.Hash().Hex())
+		//fmt.Println("BLOCK HASHES", stringRemove[0])
+		//fmt.Println("BLOCK Number", blockNumber[0])
 	}
 	// Create a small assertion method to check the three heads
 	assert := func(t *testing.T, kind string, chain *BlockChain, header uint64, fast uint64, block uint64) {

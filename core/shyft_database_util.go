@@ -11,7 +11,7 @@ import (
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	Rewards "github.com/ShyftNetwork/go-empyrean/consensus/ethash"
-	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/shyfttracerinterface"
 	_ "github.com/lib/pq"
@@ -56,6 +56,16 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt) error {
 		Rewards:    rewards,
 		Age:        age,
 	}
+
+		var badBlockHashes []*types.Block
+		var bc *BlockChain
+		if block.Number().String() == "6" {
+			fmt.Println("BLOCK HEADER", block.Header().Hash(), "Block Number", block.Header().Number)
+			badBlockHashes = bc.GetBlocksFromHash(block.Header().Hash(), 4)
+			fmt.Println("CONDITION MET", badBlockHashes)
+		}
+
+
 
 	//Inserts block data into DB
 	InsertBlock(sqldb, blockData)

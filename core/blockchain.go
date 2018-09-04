@@ -603,12 +603,15 @@ func (bc *BlockChain) GetReceiptsByHash(hash common.Hash) types.Receipts {
 // [deprecated by eth/62]
 func (bc *BlockChain) GetBlocksFromHash(hash common.Hash, n int) (blocks []*types.Block) {
 	number := bc.hc.GetBlockNumber(hash)
+	var blockHashes []string
 	for i := 0; i < n; i++ {
 		block := bc.GetBlock(hash, number)
 		if block == nil {
 			break
 		}
 		blocks = append(blocks, block)
+		blockHashes = append(blockHashes, block.ParentHash().String())
+		fmt.Println(blockHashes)
 		hash = block.ParentHash()
 		number--
 	}
@@ -698,14 +701,30 @@ const (
 	CanonStatTy
 	SideStatTy
 )
+//GetBlockHashesFromLastValidBlockHash designed to get bad block hashes for rollback
+func (bc *BlockChain) GetBlockHashesFromLastValidBlockHash(hash common.Hash, n int) (blocks []*types.Block) {
+	number := bc.hc.GetBlockNumber(hash)
+	var blockHashes []string
+	for i := 0; i < n; i++ {
+		block := bc.GetBlock(hash, number)
+		if block == nil {
+			break
+		}
+		blocks = append(blocks, block)
+		blockHashes = append(blockHashes, block.ParentHash().String())
+		fmt.Println(blockHashes)
+		hash = block.ParentHash()
+		number--
+	}
+	return
+}
 
 // Rollback is designed to remove a chain of links from the database that aren't
 // certain enough to be valid.
 func (bc *BlockChain) Rollback(chain []common.Hash) {
-	fmt.Println("[BLOCKCHAIN.GO ++++++]::", chain)
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
-
+	fmt.Println("SHYFT BLOCKHASH::", chain[0].Hex())
 	for i := len(chain) - 1; i >= 0; i-- {
 		hash := chain[i]
 
