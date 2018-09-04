@@ -1,4 +1,4 @@
-DROP TABLE internalTxs;
-DROP TABLE txs;
-DROP TABLE blocks;
-DROP TABLE accounts;
+DROP TABLE IF EXISTS internalTxs;
+DROP TABLE IF EXISTS txs;
+DROP TABLE IF EXISTS blocks;
+DROP TABLE IF EXISTS accounts;

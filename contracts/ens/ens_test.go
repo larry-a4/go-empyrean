@@ -18,6 +18,7 @@ package ens
 
 import (
 	"math/big"
+	"os"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
@@ -25,6 +26,8 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/contracts/ens/contract"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 var (
@@ -34,14 +37,27 @@ var (
 	addr   = crypto.PubkeyToAddress(key.PublicKey)
 )
 
+func TestMain(m *testing.M) {
+	// Reset Pg DB
+	shyfttest.PgTestDbSetup()
+	// check if we have been reexec'd
+
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	shyfttest.PgTestTearDown()
+	os.Exit(retCode)
+}
+
 func TestENS(t *testing.T) {
 	contractBackend := backends.NewSimulatedBackend(core.GenesisAlloc{addr: {Balance: big.NewInt(1000000000)}})
 	transactOpts := bind.NewKeyedTransactor(key)
-
 	ensAddr, ens, err := DeployENS(transactOpts, contractBackend)
 	if err != nil {
 		t.Fatalf("can't deploy root registry: %v", err)
 	}
+	core.TruncateTables()
 	contractBackend.Commit()
 
 	// Set ourself as the owner of the name.

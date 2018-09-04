@@ -17,14 +17,26 @@
 package eth
 
 import (
+	"os"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
+
+	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/p2p/discover"
 )
+
+//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+func TestMain(m *testing.M) {
+	shyfttest.PgTestDbSetup()
+	retCode := m.Run()
+	shyfttest.PgTestTearDown()
+	os.Exit(retCode)
+}
 
 // Tests that fast sync gets disabled as soon as a real block is successfully
 // imported into the blockchain.
@@ -41,7 +53,7 @@ func TestFastSyncDisabling(t *testing.T) {
 	}
 	// Sync up the two peers
 	io1, io2 := p2p.MsgPipe()
-
+	core.TruncateTables()
 	go pmFull.handle(pmFull.newPeer(63, p2p.NewPeer(discover.NodeID{}, "empty", nil), io2))
 	go pmEmpty.handle(pmEmpty.newPeer(63, p2p.NewPeer(discover.NodeID{}, "full", nil), io1))
 
