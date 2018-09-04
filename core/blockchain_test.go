@@ -670,6 +670,7 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 	remove := []common.Hash{}
 	for _, block := range blocks[height/2:] {
 		remove = append(remove, block.Hash())
+		fmt.Println("[BLOCKCHAIN_TEST.GO ::],", remove)
 	}
 	// Create a small assertion method to check the three heads
 	assert := func(t *testing.T, kind string, chain *BlockChain, header uint64, fast uint64, block uint64) {

@@ -702,6 +702,7 @@ const (
 // Rollback is designed to remove a chain of links from the database that aren't
 // certain enough to be valid.
 func (bc *BlockChain) Rollback(chain []common.Hash) {
+	fmt.Println("[BLOCKCHAIN.GO ++++++]::", chain)
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
 
