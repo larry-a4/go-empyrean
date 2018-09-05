@@ -1388,3 +1388,11 @@ func TestLargeReorgTrieGC(t *testing.T) {
 		}
 	}
 }
+//GetBlocksFromHash tests blockhashes being popped off
+func GetBlocksFromHash (t *testing.T) {
+	//given a VALID blockhash
+	//find all blockhashes after the VALID hash
+	//should return a []slice of blocks that were created after the valid blockhash
+
+
+}
