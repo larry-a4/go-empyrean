@@ -15,7 +15,6 @@ import (
 func SGetAllBlocks(sqldb *sql.DB) string {
 	var arr stypes.BlockRes
 	var blockArr string
-	fmt.Println("SGetAllBlocks SQL QUERT NEXT -> ",  sqldb)
 	rows, err := sqldb.Query(`SELECT * FROM blocks`)
 	if err != nil {
 		fmt.Println("err")
