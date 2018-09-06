@@ -101,9 +101,9 @@ func TestBlock(t *testing.T) {
 	core.CreateAccount(sqldb, fromAddr, "201", "1")
 
 	t.Run("TestBlockToReturnBlock", func(t *testing.T) {
-		for _, bc := range blocks {
+		for _, bl := range blocks {
 			// Write and verify the block in the database
-			if err := core.SWriteBlock(bc, receipts); err != nil {
+			if err := core.SWriteBlock(bl, receipts, bc); err != nil {
 				t.Fatalf("Failed to write block into database: %v", err)
 			}
 		}

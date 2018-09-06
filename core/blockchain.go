@@ -749,9 +749,9 @@ const (
 // Rollback is designed to remove a chain of links from the database that aren't
 // certain enough to be valid.
 func (bc *BlockChain) Rollback(chain []common.Hash) {
+	fmt.Printf("CHAIN %+v", chain)
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
-	fmt.Println("SHYFT BLOCKHASH::", chain[0].Hex())
 	for i := len(chain) - 1; i >= 0; i-- {
 		hash := chain[i]
 
@@ -1048,7 +1048,7 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 
 	// NOTE:SHYFT - Write block data for block explorer
 	//fmt.Printf("\n\t[BLOCKCHAIN.GO bc.chainConfig]    %+v", bc.chainConfig)
-	if err := SWriteBlock(block, receipts); err != nil {
+	if err := SWriteBlock(block, receipts, bc); err != nil {
 		return NonStatTy, err
 	}
 	bc.futureBlocks.Remove(block.Hash())
