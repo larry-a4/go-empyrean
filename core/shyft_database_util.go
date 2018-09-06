@@ -57,13 +57,16 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt) error {
 		Age:        age,
 	}
 
-		var badBlockHashes []*types.Block
-		var bc *BlockChain
-		if block.Number().String() == "6" {
-			fmt.Println("BLOCK HEADER", block.Header().Hash(), "Block Number", block.Header().Number)
-			badBlockHashes = bc.GetBlocksFromHash(block.Header().Hash(), 4)
-			fmt.Println("CONDITION MET", badBlockHashes)
-		}
+		////var badBlockHashes []*types.Block
+		//var bc *BlockChain
+		//fmt.Println(block.Number().Int64())
+		//if block.Number().Int64() == 6 {
+		//	fmt.Println("BLOCK HEADER", block.Header().Hash(), "Block Number", block.Header().Number)
+		//	fmt.Println("BLOCK HEADER", block.Header().Hash().String(), "Block Number", block.Header().Number)
+		//	//badBlockHashes := bc.GetBlocksFromHash(block.Header().Hash(), 4)
+		//	//badBlockHashes = bc.GetBlocksFromHash(block.Header().Hash(), 4)
+		//	fmt.Println("CONDITION MET", badBlockHashes)
+		//}
 
 
 

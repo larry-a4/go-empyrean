@@ -273,6 +273,7 @@ func BlockHashMessage (w http.ResponseWriter, r *http.Request) {
 	var badBlockHashes []*types.Block
 	var validBlockHash common.Hash
 	var bc *core.BlockChain
+
 	validBlockHash = bc.GetBlockByNumber(uint64(2)).Hash()
 	fmt.Println(validBlockHash)
 	badBlockHashes = bc.GetBlocksFromHash(validBlockHash, 10)

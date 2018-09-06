@@ -503,6 +503,34 @@ func (bc *BlockChain) insert(block *types.Block) {
 func (bc *BlockChain) Genesis() *types.Block {
 	return bc.genesisBlock
 }
+//GetInvalidBlockHashes returns a slice of invalid blockHashes
+func (bc *BlockChain) GetInvalidBlockHashes(validHash common.Hash) (blockHashes []common.Hash) {
+	//bNumber is VALID blockNumber
+	bNumber := bc.hc.GetBlockNumber(validHash)
+	//hNumber is the Current Header Block Number
+	hNumber := bc.hc.CurrentHeader().Number.Uint64()
+	//hash is the current Headers block hash
+	hash := bc.hc.CurrentHeader().Hash()
+	var blocks []*types.Block
+	//Starting at block height bNumber loop until i <= hNumber
+	for i := bNumber; i <= hNumber; i++ {
+		block := bc.GetBlock(hash, hNumber)
+		if block == nil {
+			break
+		}
+		//blocks will be a slice of all invalid blocks (carries all block data)
+		blocks = append(blocks, block)
+		//blockHashes will be a slice of all invalid blockhashes this is returned
+		//to be passed into Rollback()
+		blockHashes = append(blockHashes, block.Hash())
+		//set the new hash to the parentHash and continue loop
+		hash = block.ParentHash()
+		//decrease the hNumber to align with above parentHash
+		//necessary for GetBlock LN 517
+		hNumber--
+	}
+	return blockHashes
+}
 
 // GetBody retrieves a block body (transactions and uncles) from the database by
 // hash, caching it if found.
@@ -602,16 +630,14 @@ func (bc *BlockChain) GetReceiptsByHash(hash common.Hash) types.Receipts {
 // GetBlocksFromHash returns the block corresponding to hash and up to n-1 ancestors.
 // [deprecated by eth/62]
 func (bc *BlockChain) GetBlocksFromHash(hash common.Hash, n int) (blocks []*types.Block) {
+	fmt.Println(n)
 	number := bc.hc.GetBlockNumber(hash)
-	var blockHashes []string
 	for i := 0; i < n; i++ {
 		block := bc.GetBlock(hash, number)
 		if block == nil {
 			break
 		}
 		blocks = append(blocks, block)
-		blockHashes = append(blockHashes, block.ParentHash().String())
-		fmt.Println(blockHashes)
 		hash = block.ParentHash()
 		number--
 	}
@@ -701,23 +727,24 @@ const (
 	CanonStatTy
 	SideStatTy
 )
-//GetBlockHashesFromLastValidBlockHash designed to get bad block hashes for rollback
-func (bc *BlockChain) GetBlockHashesFromLastValidBlockHash(hash common.Hash, n int) (blocks []*types.Block) {
-	number := bc.hc.GetBlockNumber(hash)
-	var blockHashes []string
-	for i := 0; i < n; i++ {
-		block := bc.GetBlock(hash, number)
-		if block == nil {
-			break
-		}
-		blocks = append(blocks, block)
-		blockHashes = append(blockHashes, block.ParentHash().String())
-		fmt.Println(blockHashes)
-		hash = block.ParentHash()
-		number--
-	}
-	return
-}
+
+////GetBlockHashesFromLastValidBlockHash designed to get bad block hashes for rollback
+//func (bc *BlockChain) GetBlockHashesFromLastValidBlockHash(hash common.Hash, n int) (blocks []*types.Block) {
+//	number := bc.hc.GetBlockNumber(hash)
+//	var blockHashes []string
+//	for i := 0; i < n; i++ {
+//		block := bc.GetBlock(hash, number)
+//		if block == nil {
+//			break
+//		}
+//		blocks = append(blocks, block)
+//		blockHashes = append(blockHashes, block.ParentHash().String())
+//		fmt.Println(blockHashes)
+//		hash = block.ParentHash()
+//		number--
+//	}
+//	return
+//}
 
 // Rollback is designed to remove a chain of links from the database that aren't
 // certain enough to be valid.
