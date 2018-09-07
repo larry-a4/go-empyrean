@@ -347,7 +347,7 @@ func BlockExists(hash string) bool {
 func IsContract(addr string) bool {
 	sqldb, _ := DBConnection()
 	var isContract bool
-	sqlExistsStatement := `SELECT isContract from txs WHERE to_addr=($1)`
+	sqlExistsStatement := `SELECT isContract from txs WHERE to_addr=($1);`
 	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&isContract)
 	switch {
 	case err == sql.ErrNoRows:
@@ -360,7 +360,7 @@ func IsContract(addr string) bool {
 //UpdateAccount updates account in Postgres Db
 func UpdateAccount(addr string, balance string, accountNonce string) {
 	sqldb, _ := DBConnection()
-	updateSQLStatement := `UPDATE accounts SET balance = ($2), accountNonce = ($3) WHERE addr = ($1)`
+	updateSQLStatement := `UPDATE accounts SET balance = ($2), accountNonce = ($3) WHERE addr = ($1);`
 	_, updateErr := sqldb.Exec(updateSQLStatement, strings.ToLower(addr), balance, accountNonce)
 	if updateErr != nil {
 		panic(updateErr)
@@ -370,7 +370,7 @@ func UpdateAccount(addr string, balance string, accountNonce string) {
 //InsertBlock writes block to Postgres Db
 func InsertBlock(blockData stypes.SBlock) {
 	sqldb, _ := DBConnection()
-	sqlStatement := `INSERT INTO blocks(hash, coinbase, number, gasUsed, gasLimit, txCount, uncleCount, age, parentHash, uncleHash, difficulty, size, rewards, nonce) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12),($13), ($14)) RETURNING number`
+	sqlStatement := `INSERT INTO blocks(hash, coinbase, number, gasUsed, gasLimit, txCount, uncleCount, age, parentHash, uncleHash, difficulty, size, rewards, nonce) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12),($13), ($14)) RETURNING number;`
 	qerr := sqldb.QueryRow(sqlStatement, strings.ToLower(blockData.Hash), blockData.Coinbase, blockData.Number, blockData.GasUsed, blockData.GasLimit, blockData.TxCount, blockData.UncleCount, blockData.Age, blockData.ParentHash, blockData.UncleHash, blockData.Difficulty, blockData.Size, blockData.Rewards, blockData.Nonce).Scan(&blockData.Number)
 	if qerr != nil {
 		panic(qerr)
@@ -381,7 +381,7 @@ func InsertBlock(blockData stypes.SBlock) {
 func InsertTx(txData stypes.ShyftTxEntryPretty) {
 	sqldb, _ := DBConnection()
 	var retNonce string
-	sqlStatement := `INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15)) RETURNING nonce`
+	sqlStatement := `INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15)) RETURNING nonce;`
 	err := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
 	if err != nil {
 		panic(err)
@@ -391,7 +391,7 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) {
 //InsertInternalTx writes internal tx to Postgres Db
 func InsertInternalTx(sqldb *sql.DB, i stypes.InteralWrite) {
 	var returnValue string
-	sqlStatement := `INSERT INTO internaltxs(action, txhash, from_addr, to_addr, amount, gas, gasUsed, time, input, output) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10)) RETURNING txHash`
+	sqlStatement := `INSERT INTO internaltxs(action, txhash, from_addr, to_addr, amount, gas, gasUsed, time, input, output) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10)) RETURNING txHash;`
 	qerr := sqldb.QueryRow(sqlStatement, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output).Scan(&returnValue)
 	if qerr != nil {
 		fmt.Println(qerr)

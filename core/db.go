@@ -83,12 +83,12 @@ func DeletePgDb(dbName string) {
 	q1 := fmt.Sprintf(`SELECT pg_terminate_backend(pid)FROM pg_stat_activity WHERE datname = '%s';`, dbName)
 	_, err1 := conn.Exec(q1)
 	if err1 != nil || err1 == sql.ErrNoRows {
-		fmt.Println(err1)
+		panic(err1)
 	}
 	q2 := fmt.Sprintf(`DROP DATABASE IF EXISTS %s;`, dbName)
 	_, err2 := conn.Exec(q2)
 	if err2 != nil || err2 == sql.ErrNoRows {
-		fmt.Println(err2)
+		panic(err2)
 	}
 	conn.Close()
 }
