@@ -1388,11 +1388,18 @@ func TestLargeReorgTrieGC(t *testing.T) {
 		}
 	}
 }
-//GetBlocksFromHash tests blockhashes being popped off
-func GetBlocksFromHash (t *testing.T) {
+//GetInvalidBlockHashes tests blockhashes being popped off
+func GetInvalidBlockHashes (t *testing.T) {
 	//given a VALID blockhash
 	//find all blockhashes after the VALID hash
 	//should return a []slice of blocks that were created after the valid blockhash
 
-
+	block4Header := bc.GetHeaderByNumber(10)
+	if block.Number().Int64() == 20 {
+		invalidBlockHashes := bc.GetInvalidBlockHashes(block4Header.Hash())
+		bc.Rollback(invalidBlockHashes)
+	}
+	if block.Number().Int64() == 10 {
+		fmt.Println("CURRENT HEADER HASH AFTER ROLLBACK?", bc.hc.currentHeaderHash.String())
+	}
 }

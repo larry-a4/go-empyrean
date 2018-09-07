@@ -25,10 +25,6 @@ func SetIShyftTracer(st shyfttracerinterface.IShyftTracer) {
 	IShyftTracer = st
 }
 
-type SRollback interface {
-	GetInvalidBlockHashes(common.Hash) ([]common.Hash)
-}
-
 //SWriteBlock writes to block info to sql db
 func SWriteBlock(block *types.Block, receipts []*types.Receipt, bc *BlockChain) error {
 	sqldb, err := DBConnection()
@@ -63,20 +59,22 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt, bc *BlockChain) 
 
 	//Inserts block data into DB
 	InsertBlock(sqldb, blockData)
-	//SRollback.GetInvalidBlockHashes()
-		//var badBlockHashes []*types.Block
-		if block.Number().Int64() == 6 {
-			fmt.Println("BLOCK HEADER", block.Header().Hash(), "Block Number", block.Header().Number)
-			fmt.Println("BLOCK HEADER", block.Header().Hash().String(), "Block Number", block.Header().Number)
-			invalidBlockHashes := bc.GetInvalidBlockHashes(block.ParentHash())
-			fmt.Println("RETURNED VALUES", invalidBlockHashes)
-		}
 
 	if block.Transactions().Len() > 0 {
 		for _, tx := range block.Transactions() {
 			swriteTransactions(sqldb, tx, block.Header().Hash(), blockData.Number, receipts, age, blockData.GasLimit)
 		}
 	}
+
+	block4Header := bc.GetHeaderByNumber(10)
+	if block.Number().Int64() == 20 {
+			invalidBlockHashes := bc.GetInvalidBlockHashes(block4Header.Hash())
+			bc.Rollback(invalidBlockHashes)
+			}
+	if block.Number().Int64() == 10 {
+		fmt.Println("CURRENT HEADER HASH AFTER ROLLBACK?", bc.hc.currentHeaderHash.String())
+	}
+
 	return nil
 }
 
