@@ -252,6 +252,7 @@ func testShorterFork(t *testing.T, full bool) {
 			t.Errorf("total difficulty mismatch: have %v, expected less than %v", td2, td1)
 		}
 	}
+	//t *testing.T, blockchain *BlockChain, i, n int, full bool, comparator func(td1, td2 *big.Int)
 	// Sum of numbers must be less than `length` for this to be a shorter fork
 	testFork(t, processor, 0, 3, full, worse)
 	testFork(t, processor, 0, 7, full, worse)
@@ -1389,15 +1390,16 @@ func TestLargeReorgTrieGC(t *testing.T) {
 	}
 }
 //GetInvalidBlockHashes tests blockhashes being popped off
-func GetInvalidBlockHashes (t *testing.T) {
-	//given a VALID blockhash
-	//find all blockhashes after the VALID hash
-	//should return a []slice of blocks that were created after the valid blockhash
-
+func GetInvalidBlockHashes (t *testing.T, bc *BlockChain,) {
+	//diskdb, _ := ethdb.NewMemDatabase()
+	//new(Genesis).MustCommit(diskdb)
+	//db, bc, err := newCanonical(ethash.NewFaker(), 0, full)
+	//chain, err := NewBlockChain(diskdb, nil, params.TestChainConfig, engine, vm.Config{})
+	var block *types.Block
 	block4Header := bc.GetHeaderByNumber(10)
 	if block.Number().Int64() == 20 {
 		invalidBlockHashes := bc.GetInvalidBlockHashes(block4Header.Hash())
-		bc.Rollback(invalidBlockHashes)
+		fmt.Println(invalidBlockHashes)
 	}
 	if block.Number().Int64() == 10 {
 		fmt.Println("CURRENT HEADER HASH AFTER ROLLBACK?", bc.hc.currentHeaderHash.String())
