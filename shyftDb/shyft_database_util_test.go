@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 func TestBlock(t *testing.T) {
 	//SET UP FOR TEST FUNCTIONS
 	eth.NewShyftTestLDB()
-	// db, _ := core.DBConnection()
+	core.InitDB()
 	shyftTracer := new(eth.ShyftTracer)
 	core.SetIShyftTracer(shyftTracer)
 
@@ -94,6 +94,7 @@ func TestBlock(t *testing.T) {
 		panic(err)
 	}
 
+<<<<<<< HEAD
 	fromAddr := "0x71562b71999873db5b286df957af199ec94617f7"
 	// fromAddrEndBalance := "75"
 	// fromAddrEndNonce := "5"
@@ -334,6 +335,7 @@ func TestBlock(t *testing.T) {
 			t.Fatalf("GetAllTransactions [%v]: GetAllTransactions did not return correctly", getAllTx)
 		}
 	})
+<<<<<<< HEAD
 	// t.Run("TestAccountsToReturnAccounts", func(t *testing.T) {
 	// 	for _, tx := range txs {
 	// 		fmt.Println("test account", tx.To().String())

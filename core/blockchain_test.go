@@ -1399,24 +1399,18 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 	height := uint64(1024)
 	blocks, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), gendb, int(height), nil)
 
-	// Create a small assertion method to check the three heads
-	//assert := func(t *testing.T, kind string, chain *BlockChain, header uint64, block uint64) {
-	//	currentH := chain.CurrentBlock().NumberU64()
-	//	currentB := chain.GetBlockByNumber(currentH)
-	//	currentHash := currentB.Hash().String()
-	//	fmt.Println("CHAIN CURRENT HEIGHT", currentH)
-	//	fmt.Println("CHAIN CURRENT HASH", currentHash)
-	//
-	//	if num := chain.CurrentBlock().NumberU64(); num != block {
-	//		t.Errorf("%s head block mismatch: have #%v, want #%v", kind, num, block)
-	//	}
-	//	//if num := chain.CurrentFastBlock().NumberU64(); num != fast {
-	//	//	t.Errorf("%s head fast-block mismatch: have #%v, want #%v", kind, num, fast)
-	//	//}
-	//	if num := chain.CurrentHeader().Number.Uint64(); num != header {
-	//		t.Errorf("%s head header mismatch: have #%v, want #%v", kind, num, header)
-	//	}
-	//}
+	//Create a small assertion method to check the three heads
+	assert := func(t *testing.T, kind string, chain *BlockChain, header uint64, block uint64) {
+		if num := chain.CurrentBlock().NumberU64(); num != block {
+			t.Errorf("%s head block mismatch: have #%v, want #%v", kind, num, block)
+		}
+		//if num := chain.CurrentFastBlock().NumberU64(); num != fast {
+		//	t.Errorf("%s head fast-block mismatch: have #%v, want #%v", kind, num, fast)
+		//}
+		if num := chain.CurrentHeader().Number.Uint64(); num != header {
+			t.Errorf("%s head header mismatch: have #%v, want #%v", kind, num, header)
+		}
+	}
 
 	archiveDb, _ := ethdb.NewMemDatabase()
 	gspec.MustCommit(archiveDb)
@@ -1427,26 +1421,26 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 	}
 	defer archive.Stop()
 
-	//assert(t, "archive", archive, height, height)
-
 	blockHeaderToTest := archive.GetHeaderByNumber(1020)
 
-	fmt.Println("VALID BLOCKHASH", blockHeaderToTest.Hash().String())
-	fmt.Println("VALID BLOCK HEIGHT", blockHeaderToTest.Number)
-	//currentH := archive.CurrentBlock().NumberU64()
-	//currentB := archive.GetBlockByNumber(currentH)
-	//currentHash := currentB.Hash().String()
-	//fmt.Println("CURRENT HEIGHT", currentH)
-	//fmt.Println("CURRENT HASH", currentHash)
+	fmt.Println("VALID BLOCKHASH         ::", blockHeaderToTest.Hash().String())
+	fmt.Println("VALID BLOCK HEIGHT      ::", blockHeaderToTest.Number)
+	fmt.Println("CURRENT BLOCKHASH       ::", archive.CurrentHeader().Hash().String())
+	fmt.Println("CURRENT BLOCK HEIGHT    ::", archive.CurrentHeader().Number)
 
 	invalidBlockHashes := archive.GetBlockHashesSinceLastValidBlockHash(blockHeaderToTest.Hash())
-	fmt.Println(invalidBlockHashes)
-	archive.Rollback(invalidBlockHashes)
-	//var archiveHeight uint64
-	//archiveHeight = 1000
-	//assert(t, "archive", archive, archiveHeight, archiveHeight)
+	archive.ShyftRollback(invalidBlockHashes)
+	var archiveHeight uint64
+	archiveHeight = 1020
+	assert(t, "archive", archive, archiveHeight, archiveHeight)
 
-	fmt.Println("AFTER ROLLBACK BLOCK NUMBER ::", archive.CurrentHeader().Number)
-	fmt.Println("AFTER ROLLBACK BLOCK HASH ::",archive.CurrentHeader().Hash().String())
+	fmt.Println("*****************************************************************")
+	fmt.Println("*                                                               *")
+	fmt.Println("*                 AFTER ROLLBACK                                *")
+	fmt.Println("*                                                               *")
+	fmt.Println("*****************************************************************")
+
+	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK NUMBER ::", archive.CurrentHeader().Number)
+	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK HASH   ::",archive.CurrentHeader().Hash().String())
 }
 

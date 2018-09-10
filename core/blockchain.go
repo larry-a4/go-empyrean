@@ -513,7 +513,7 @@ func (bc *BlockChain) GetBlockHashesSinceLastValidBlockHash(validHash common.Has
 	hash := bc.hc.CurrentHeader().Hash()
 	var blocks []*types.Block
 	//Starting at block height bNumber loop until i <= hNumber
-	for i := bNumber; i <= hNumber; i++ {
+	for i := hNumber; i > bNumber; i-- {
 		block := bc.GetBlock(hash, hNumber)
 		if block == nil {
 			break
@@ -734,10 +734,7 @@ func (bc *BlockChain) Rollback(chain []common.Hash) {
 	defer bc.mu.Unlock()
 	for i := len(chain) - 1; i >= 0; i-- {
 		hash := chain[i]
-		fmt.Println("HASH ::", hash)
 		currentHeader := bc.hc.CurrentHeader()
-		fmt.Println("CURRENT HEADER ::", currentHeader.Number)
-		fmt.Println("CURRENT HEADER ::", currentHeader.Hash())
 		if currentHeader.Hash() == hash {
 			fmt.Println("count")
 			bc.hc.SetCurrentHeader(bc.GetHeader(currentHeader.ParentHash, currentHeader.Number.Uint64()-1))
@@ -1031,7 +1028,7 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 
 	// NOTE:SHYFT - Write block data for block explorer
 	//fmt.Printf("\n\t[BLOCKCHAIN.GO bc.chainConfig]    %+v", bc.chainConfig)
-	if err := SWriteBlock(block, receipts, bc); err != nil {
+	if err := SWriteBlock(block, receipts); err != nil {
 		return NonStatTy, err
 	}
 	bc.futureBlocks.Remove(block.Hash())
@@ -1603,4 +1600,28 @@ func (bc *BlockChain) SubscribeChainSideEvent(ch chan<- ChainSideEvent) event.Su
 // SubscribeLogsEvent registers a subscription of []*types.Log.
 func (bc *BlockChain) SubscribeLogsEvent(ch chan<- []*types.Log) event.Subscription {
 	return bc.scope.Track(bc.logsFeed.Subscribe(ch))
+}
+
+// ShyftRollback is designed to remove a chain of links from the database that aren't
+// certain enough to be valid.
+func (bc *BlockChain) ShyftRollback(chain []common.Hash) {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+	for i := 0; i <= len(chain) - 1; i++ {
+		hash := chain[i]
+		currentHeader := bc.hc.CurrentHeader()
+		if currentHeader.Hash() == hash {
+			bc.hc.SetCurrentHeader(bc.GetHeader(currentHeader.ParentHash, currentHeader.Number.Uint64()-1))
+		}
+		if currentFastBlock := bc.CurrentFastBlock(); currentFastBlock.Hash() == hash {
+			newFastBlock := bc.GetBlock(currentFastBlock.ParentHash(), currentFastBlock.NumberU64()-1)
+			bc.currentFastBlock.Store(newFastBlock)
+			WriteHeadFastBlockHash(bc.db, newFastBlock.Hash())
+		}
+		if currentBlock := bc.CurrentBlock(); currentBlock.Hash() == hash {
+			newBlock := bc.GetBlock(currentBlock.ParentHash(), currentBlock.NumberU64()-1)
+			bc.currentBlock.Store(newBlock)
+			WriteHeadBlockHash(bc.db, newBlock.Hash())
+		}
+	}
 }
