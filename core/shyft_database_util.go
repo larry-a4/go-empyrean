@@ -139,8 +139,8 @@ func SWriteInternalTxBalances(sqldb *sqlx.DB, toAddr string, fromAddr string, am
 	value, _ = value.SetString(amount, 10)
 	switch {
 	case err == sql.ErrNoRows:
-		// accountNonce := "1"
-		// CreateAccount(sendAndReceiveData.To, sendAndReceiveData.Amount, accountNonce)
+		accountNonce := "1"
+		CreateAccount(sendAndReceiveData.To, sendAndReceiveData.Amount, accountNonce)
 		adjustBalanceFromAddr(sendAndReceiveData, value)
 	case err != nil:
 		log.Fatal(err)
@@ -154,7 +154,7 @@ func adjustBalanceFromAddr(s stypes.SendAndReceive, value *big.Int) {
 	fromAddressBalance, fromAccountNonce, err := AccountExists(s.From)
 	switch {
 	case err == sql.ErrNoRows:
-		// CreateAccount(s.From, "0", "1")
+		CreateAccount(s.From, "0", "1")
 		fmt.Println("New From account created")
 	}
 	if err != nil {
@@ -371,23 +371,13 @@ func Transact(db *sqlx.DB, txFunc func(*sqlx.Tx) error) (err error) {
 }
 
 //CreateAccount writes new account to Postgres Db
-func CreateAccount(addr string, balance string, nonce string, blockHash string) error {
+func CreateAccount(addr string, balance string, nonce string) error {
 	sqldb, _ := DBConnection()
 
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
 		accountStmnt := `INSERT INTO accounts(addr, balance, nonce) VALUES(($1), ($2), ($3));`
-		accountBlockStmt := `INSERT INTO accountblocks (acct, blockhash, delta) VALUES(($1), ($2), ($3));`
 		if _, err := tx.Exec(accountStmnt, addr, balance, nonce); err != nil {
 			return err
-		}
-		deltaBal, err := strconv.Atoi(balance)
-		if err != nil {
-			panic("Couldnt determine balance - in db.go CreateAccount()")
-		}
-		if deltaBal != 0 {
-			if _, err := tx.Exec(accountBlockStmt, strings.ToLower(addr), blockHash, balance); err != nil {
-				return err
-			}
 		}
 		return nil
 	})
@@ -442,6 +432,7 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) {
 	// 	return
 	// }
 	// UpdateTransactionAccounts()
+
 }
 
 //InsertInternalTx writes internal tx to Postgres Db

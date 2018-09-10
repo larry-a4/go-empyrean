@@ -1,4 +1,4 @@
 #!/bin/sh
-rm -R ./shyftData
-rm -R ./pg-data
-rm -R ./privatenet
+rm -R -f ./shyftData
+rm -R -f ./pg-data
+rm -R -f ./privatenet
