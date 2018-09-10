@@ -503,8 +503,8 @@ func (bc *BlockChain) insert(block *types.Block) {
 func (bc *BlockChain) Genesis() *types.Block {
 	return bc.genesisBlock
 }
-//GetInvalidBlockHashes returns a slice of invalid blockHashes
-func (bc *BlockChain) GetInvalidBlockHashes(validHash common.Hash) (blockHashes []common.Hash) {
+//GetBlockHashesSinceLastValidBlockHash returns a slice of invalid blockHashes
+func (bc *BlockChain) GetBlockHashesSinceLastValidBlockHash(validHash common.Hash) (blockHashes []common.Hash) {
 	//bNumber is VALID blockNumber
 	bNumber := bc.hc.GetBlockNumber(validHash)
 	//hNumber is the Current Header Block Number
@@ -730,14 +730,16 @@ const (
 // Rollback is designed to remove a chain of links from the database that aren't
 // certain enough to be valid.
 func (bc *BlockChain) Rollback(chain []common.Hash) {
-	fmt.Printf("CHAIN %+v", chain)
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
 	for i := len(chain) - 1; i >= 0; i-- {
 		hash := chain[i]
-		fmt.Println("HASH", hash)
+		fmt.Println("HASH ::", hash)
 		currentHeader := bc.hc.CurrentHeader()
+		fmt.Println("CURRENT HEADER ::", currentHeader.Number)
+		fmt.Println("CURRENT HEADER ::", currentHeader.Hash())
 		if currentHeader.Hash() == hash {
+			fmt.Println("count")
 			bc.hc.SetCurrentHeader(bc.GetHeader(currentHeader.ParentHash, currentHeader.Number.Uint64()-1))
 		}
 		if currentFastBlock := bc.CurrentFastBlock(); currentFastBlock.Hash() == hash {

@@ -66,15 +66,15 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt, bc *BlockChain) 
 		}
 	}
 
-	block4Header := bc.GetHeaderByNumber(10)
-	if block.Number().Int64() == 20 {
-			invalidBlockHashes := bc.GetInvalidBlockHashes(block4Header.Hash())
-			bc.Rollback(invalidBlockHashes)
-			}
-	if block.Number().Int64() == 10 {
-		fmt.Println("CURRENT HEADER HASH AFTER ROLLBACK?", bc.hc.currentHeaderHash.String())
-	}
-
+	//block4Header := bc.GetHeaderByNumber(20)
+	//if block.Number().Int64() == 30 {
+	//		invalidBlockHashes := bc.GetInvalidBlockHashes(block4Header.Hash())
+	//		bc.Rollback(invalidBlockHashes)
+	//		//fmt.Println(invalidBlockHashes)
+	//		}
+	//if block.Number().Int64() == 20 {
+	//	fmt.Println("CURRENT HEADER HASH AFTER ROLLBACK?", bc.hc.currentHeaderHash.String())
+	//}
 	return nil
 }
 

@@ -689,8 +689,7 @@ func TestFastVsFullChains(t *testing.T) {
 // Tests that various import methods move the chain head pointers to the correct
 // positions.
 func TestLightVsFastVsFullChainHeads(t *testing.T) {
-	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	TruncateTables()
+
 	// Configure and generate a sample block chain
 	var (
 		gendb, _ = ethdb.NewMemDatabase()
@@ -705,14 +704,8 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 
 	// Configure a subchain to roll back
 	remove := []common.Hash{}
-	stringRemove := []string{}
-	blockNumber := []string{}
 	for _, block := range blocks[height/2:] {
 		remove = append(remove, block.Hash())
-		blockNumber = append(blockNumber, block.Number().String())
-		stringRemove = append(stringRemove, block.Hash().Hex())
-		//fmt.Println("BLOCK HASHES", stringRemove[0])
-		//fmt.Println("BLOCK Number", blockNumber[0])
 	}
 	// Create a small assertion method to check the three heads
 	assert := func(t *testing.T, kind string, chain *BlockChain, header uint64, fast uint64, block uint64) {
@@ -1389,19 +1382,71 @@ func TestLargeReorgTrieGC(t *testing.T) {
 		}
 	}
 }
-//GetInvalidBlockHashes tests blockhashes being popped off
-func GetInvalidBlockHashes (t *testing.T, bc *BlockChain,) {
-	//diskdb, _ := ethdb.NewMemDatabase()
-	//new(Genesis).MustCommit(diskdb)
-	//db, bc, err := newCanonical(ethash.NewFaker(), 0, full)
-	//chain, err := NewBlockChain(diskdb, nil, params.TestChainConfig, engine, vm.Config{})
-	var block *types.Block
-	block4Header := bc.GetHeaderByNumber(10)
-	if block.Number().Int64() == 20 {
-		invalidBlockHashes := bc.GetInvalidBlockHashes(block4Header.Hash())
-		fmt.Println(invalidBlockHashes)
+
+//GetBlockHashesSinceLastValidBlockHash tests blockhashes being popped off
+func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
+	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
+	TruncateTables()
+
+	var (
+		gendb, _ = ethdb.NewMemDatabase()
+		key, _   = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+		address  = crypto.PubkeyToAddress(key.PublicKey)
+		funds    = big.NewInt(1000000000)
+		gspec    = &Genesis{Config: params.TestChainConfig, Alloc: GenesisAlloc{address: {Balance: funds}}}
+		genesis  = gspec.MustCommit(gendb)
+	)
+	height := uint64(1024)
+	blocks, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), gendb, int(height), nil)
+
+	// Create a small assertion method to check the three heads
+	//assert := func(t *testing.T, kind string, chain *BlockChain, header uint64, block uint64) {
+	//	currentH := chain.CurrentBlock().NumberU64()
+	//	currentB := chain.GetBlockByNumber(currentH)
+	//	currentHash := currentB.Hash().String()
+	//	fmt.Println("CHAIN CURRENT HEIGHT", currentH)
+	//	fmt.Println("CHAIN CURRENT HASH", currentHash)
+	//
+	//	if num := chain.CurrentBlock().NumberU64(); num != block {
+	//		t.Errorf("%s head block mismatch: have #%v, want #%v", kind, num, block)
+	//	}
+	//	//if num := chain.CurrentFastBlock().NumberU64(); num != fast {
+	//	//	t.Errorf("%s head fast-block mismatch: have #%v, want #%v", kind, num, fast)
+	//	//}
+	//	if num := chain.CurrentHeader().Number.Uint64(); num != header {
+	//		t.Errorf("%s head header mismatch: have #%v, want #%v", kind, num, header)
+	//	}
+	//}
+
+	archiveDb, _ := ethdb.NewMemDatabase()
+	gspec.MustCommit(archiveDb)
+
+	archive, _ := NewBlockChain(archiveDb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	if n, err := archive.InsertChain(blocks); err != nil {
+		t.Fatalf("failed to process block %d: %v", n, err)
 	}
-	if block.Number().Int64() == 10 {
-		fmt.Println("CURRENT HEADER HASH AFTER ROLLBACK?", bc.hc.currentHeaderHash.String())
-	}
+	defer archive.Stop()
+
+	//assert(t, "archive", archive, height, height)
+
+	blockHeaderToTest := archive.GetHeaderByNumber(1020)
+
+	fmt.Println("VALID BLOCKHASH", blockHeaderToTest.Hash().String())
+	fmt.Println("VALID BLOCK HEIGHT", blockHeaderToTest.Number)
+	//currentH := archive.CurrentBlock().NumberU64()
+	//currentB := archive.GetBlockByNumber(currentH)
+	//currentHash := currentB.Hash().String()
+	//fmt.Println("CURRENT HEIGHT", currentH)
+	//fmt.Println("CURRENT HASH", currentHash)
+
+	invalidBlockHashes := archive.GetBlockHashesSinceLastValidBlockHash(blockHeaderToTest.Hash())
+	fmt.Println(invalidBlockHashes)
+	archive.Rollback(invalidBlockHashes)
+	//var archiveHeight uint64
+	//archiveHeight = 1000
+	//assert(t, "archive", archive, archiveHeight, archiveHeight)
+
+	fmt.Println("AFTER ROLLBACK BLOCK NUMBER ::", archive.CurrentHeader().Number)
+	fmt.Println("AFTER ROLLBACK BLOCK HASH ::",archive.CurrentHeader().Hash().String())
 }
+
