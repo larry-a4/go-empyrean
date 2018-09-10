@@ -8,9 +8,10 @@ import (
 	"strings"
 
 	"github.com/ShyftNetwork/go-empyrean/shyft_schema"
+	"github.com/jmoiron/sqlx"
 )
 
-var blockExplorerDb *sql.DB
+var blockExplorerDb *sqlx.DB
 
 const (
 	defaultTestDb  = "shyftdbtest"
@@ -21,7 +22,7 @@ const (
 )
 
 // InitDB - initalizes a Postgresql Database for use by the Blockexplorer
-func InitDB() (*sql.DB, error) {
+func InitDB() (*sqlx.DB, error) {
 	// To set the environment you can run the program with an ENV variable DBENV.
 	// DBENV defaults to local for purposes of running the correct local
 	// database connection parameters but will use docker connection parameters if DBENV=docker
@@ -34,7 +35,7 @@ func InitDB() (*sql.DB, error) {
 	}
 	// connect to the designated db & create tables if necessary
 	blockExplorerDb = Connect(ShyftConnectStr())
-	blockExplorerDb.Query(shyftschema.MakeTableQuery())
+	blockExplorerDb.MustExec(shyftschema.MakeTableQuery())
 	return blockExplorerDb, nil
 }
 
@@ -44,8 +45,8 @@ func ShyftConnectStr() string {
 }
 
 // Connect - return a connection to a postgres database wi
-func Connect(connectURL string) *sql.DB {
-	db, err := sql.Open("postgres", connectURL)
+func Connect(connectURL string) *sqlx.DB {
+	db, err := sqlx.Connect("postgres", connectURL)
 	if err != nil {
 		fmt.Println("ERROR OPENING DB, NOT INITIALIZING")
 		panic(err)
@@ -83,12 +84,12 @@ func DeletePgDb(dbName string) {
 	q1 := fmt.Sprintf(`SELECT pg_terminate_backend(pid)FROM pg_stat_activity WHERE datname = '%s';`, dbName)
 	_, err1 := conn.Exec(q1)
 	if err1 != nil || err1 == sql.ErrNoRows {
-		fmt.Println(err1)
+		panic(err1)
 	}
 	q2 := fmt.Sprintf(`DROP DATABASE IF EXISTS %s;`, dbName)
 	_, err2 := conn.Exec(q2)
 	if err2 != nil || err2 == sql.ErrNoRows {
-		fmt.Println(err2)
+		panic(err2)
 	}
 	conn.Close()
 }
@@ -128,7 +129,7 @@ func DbExists(dbname string) (bool, error) {
 }
 
 // DBConnection returns a connection to the PG BlockExporer DB
-func DBConnection() (*sql.DB, error) {
+func DBConnection() (*sqlx.DB, error) {
 	if blockExplorerDb == nil {
 		_, err := InitDB()
 		if err != nil {

@@ -14,6 +14,7 @@ import (
 	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/shyfttracerinterface"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
@@ -127,7 +128,7 @@ func swriteTransactions(tx *types.Transaction, blockHash common.Hash, blockNumbe
 }
 
 //SWriteInternalTxBalances Writes internal txs and updates balances
-func SWriteInternalTxBalances(sqldb *sql.DB, toAddr string, fromAddr string, amount string) error {
+func SWriteInternalTxBalances(sqldb *sqlx.DB, toAddr string, fromAddr string, amount string) error {
 	sendAndReceiveData := stypes.SendAndReceive{
 		To:     toAddr,
 		From:   fromAddr,
@@ -138,8 +139,8 @@ func SWriteInternalTxBalances(sqldb *sql.DB, toAddr string, fromAddr string, amo
 	value, _ = value.SetString(amount, 10)
 	switch {
 	case err == sql.ErrNoRows:
-		accountNonce := "1"
-		CreateAccount(sendAndReceiveData.To, sendAndReceiveData.Amount, accountNonce)
+		// accountNonce := "1"
+		// CreateAccount(sendAndReceiveData.To, sendAndReceiveData.Amount, accountNonce)
 		adjustBalanceFromAddr(sendAndReceiveData, value)
 	case err != nil:
 		log.Fatal(err)
@@ -153,7 +154,7 @@ func adjustBalanceFromAddr(s stypes.SendAndReceive, value *big.Int) {
 	fromAddressBalance, fromAccountNonce, err := AccountExists(s.From)
 	switch {
 	case err == sql.ErrNoRows:
-		CreateAccount(s.From, "0", "1")
+		// CreateAccount(s.From, "0", "1")
 		fmt.Println("New From account created")
 	}
 	if err != nil {
@@ -171,7 +172,7 @@ func adjustBalanceFromAddr(s stypes.SendAndReceive, value *big.Int) {
 	newBalanceSender.Sub(fromBalance, value)
 	newAccountNonceSender.Add(fromNonce, nonceIncrement)
 
-	UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
+	// UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
 }
 
 func balanceHelper(s stypes.SendAndReceive, amount string) {
@@ -208,8 +209,8 @@ func balanceHelper(s stypes.SendAndReceive, amount string) {
 	newAccountNonceSender.Add(fromNonce, nonceIncrement)
 
 	//UPDATE ACCOUNTS BASED ON NEW BALANCES AND ACCOUNT NONCES
-	UpdateAccount(s.To, newBalanceReceiver.String(), newAccountNonceReceiver.String())
-	UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
+	// UpdateAccount(s.To, newBalanceReceiver.String(), newAccountNonceReceiver.String())
+	// UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
 }
 
 // @NOTE: This function is extremely complex and requires heavy testing and knowdlege of edge cases:
@@ -268,7 +269,7 @@ func sstoreReward(address string, reward *big.Int) {
 	if err == sql.ErrNoRows {
 		// Addr does not exist, thus create new entry
 		// We convert totalReward into a string and postgres converts into number
-		CreateAccount(address, reward.String(), "1")
+		// CreateAccount(address, reward.String(), "1")
 		return
 	} else if err != nil {
 		// Something went wrong panic
@@ -292,7 +293,7 @@ func sstoreReward(address string, reward *big.Int) {
 		newBalance.Add(newBalance, reward)
 		newAccountNonce.Add(currentAccountNonce, nonceIncrement)
 		//Update the balance and nonce
-		UpdateAccount(address, newBalance.String(), newAccountNonce.String())
+		// UpdateAccount(address, newBalance.String(), newAccountNonce.String())
 		return
 	}
 }
@@ -301,17 +302,8 @@ func sstoreReward(address string, reward *big.Int) {
 //DB Utility functions
 //////////////////////
 
-//CreateAccount writes new account to Postgres Db
-func CreateAccount(addr string, balance string, accountNonce string) {
-	sqldb, _ := DBConnection()
-	sqlStatement := `INSERT INTO accounts(addr, balance, accountNonce) VALUES(($1), ($2), ($3)) RETURNING addr;`
-	insertErr := sqldb.QueryRow(sqlStatement, strings.ToLower(addr), balance, accountNonce).Scan(&addr)
-	if insertErr != nil {
-		panic(insertErr)
-	}
-}
-
 //AccountExists checks if account exists in Postgres Db
+// Refactor - Transaction
 func AccountExists(addr string) (string, string, error) {
 	sqldb, _ := DBConnection()
 	var addressBalance, accountNonce string
@@ -328,6 +320,7 @@ func AccountExists(addr string) (string, string, error) {
 }
 
 //BlockExists checks if block exists in Postgres Db
+//Refactor as a transaction
 func BlockExists(hash string) bool {
 	var res bool
 	sqlExistsStatement := `SELECT exists(select hash from blocks WHERE hash= ($1));`
@@ -347,7 +340,7 @@ func BlockExists(hash string) bool {
 func IsContract(addr string) bool {
 	sqldb, _ := DBConnection()
 	var isContract bool
-	sqlExistsStatement := `SELECT isContract from txs WHERE to_addr=($1)`
+	sqlExistsStatement := `SELECT isContract from txs WHERE to_addr=($1);`
 	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&isContract)
 	switch {
 	case err == sql.ErrNoRows:
@@ -357,20 +350,73 @@ func IsContract(addr string) bool {
 	}
 }
 
-//UpdateAccount updates account in Postgres Db
-func UpdateAccount(addr string, balance string, accountNonce string) {
-	sqldb, _ := DBConnection()
-	updateSQLStatement := `UPDATE accounts SET balance = ($2), accountNonce = ($3) WHERE addr = ($1)`
-	_, updateErr := sqldb.Exec(updateSQLStatement, strings.ToLower(addr), balance, accountNonce)
-	if updateErr != nil {
-		panic(updateErr)
+// Transact - A wrapper around pg - transaction to allow a panic after a rollback
+func Transact(db *sqlx.DB, txFunc func(*sqlx.Tx) error) (err error) {
+	tx, err := db.Beginx()
+	if err != nil {
+		return
 	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // re-throw panic after Rollback
+		} else if err != nil {
+			tx.Rollback() // err is non-nil; don't change it
+		} else {
+			err = tx.Commit() // err is nil; if Commit returns error update err
+		}
+	}()
+	err = txFunc(tx)
+	return err
+}
+
+//CreateAccount writes new account to Postgres Db
+func CreateAccount(addr string, balance string, nonce string, blockHash string) error {
+	sqldb, _ := DBConnection()
+
+	return Transact(sqldb, func(tx *sqlx.Tx) error {
+		accountStmnt := `INSERT INTO accounts(addr, balance, nonce) VALUES(($1), ($2), ($3));`
+		accountBlockStmt := `INSERT INTO accountblocks (acct, blockhash, delta) VALUES(($1), ($2), ($3));`
+		if _, err := tx.Exec(accountStmnt, addr, balance, nonce); err != nil {
+			return err
+		}
+		deltaBal, err := strconv.Atoi(balance)
+		if err != nil {
+			panic("Couldnt determine balance - in db.go CreateAccount()")
+		}
+		if deltaBal != 0 {
+			if _, err := tx.Exec(accountBlockStmt, strings.ToLower(addr), blockHash, balance); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+//UpdateAccount updates account in Postgres Db and updates and or creates an AccountBlock record
+func UpdateAccount(addr string, balance string, accountNonce string, blockHash string, delta string) {
+	sqldb, _ := DBConnection()
+	tx, err := sqldb.Beginx()
+	updateAcctStmnt := `UPDATE accounts SET balance = ($2), accountNonce = ($3) WHERE addr = ($1);`
+	_, err = tx.Exec(updateAcctStmnt, strings.ToLower(addr), balance, accountNonce)
+	if err != nil {
+		fmt.Println("Rolling back transaction")
+		tx.Rollback()
+		return
+	}
+	updateAcctBlockDelta(tx, addr, blockHash, delta)
+}
+
+// updateAccountBlock - u
+func updateAcctBlockDelta(tx *sqlx.Tx, addr string, blockHash string, delta string) {
+	// blockDeltaStmt := `INSERT INTO accountblocks (acct, blockhash, delta)
+
 }
 
 //InsertBlock writes block to Postgres Db
 func InsertBlock(blockData stypes.SBlock) {
 	sqldb, _ := DBConnection()
-	sqlStatement := `INSERT INTO blocks(hash, coinbase, number, gasUsed, gasLimit, txCount, uncleCount, age, parentHash, uncleHash, difficulty, size, rewards, nonce) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12),($13), ($14)) RETURNING number`
+	sqlStatement := `INSERT INTO blocks(hash, coinbase, number, gasUsed, gasLimit, txCount, uncleCount, age, parentHash, uncleHash, difficulty, size, rewards, nonce) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12),($13), ($14)) RETURNING number;`
 	qerr := sqldb.QueryRow(sqlStatement, strings.ToLower(blockData.Hash), blockData.Coinbase, blockData.Number, blockData.GasUsed, blockData.GasLimit, blockData.TxCount, blockData.UncleCount, blockData.Age, blockData.ParentHash, blockData.UncleHash, blockData.Difficulty, blockData.Size, blockData.Rewards, blockData.Nonce).Scan(&blockData.Number)
 	if qerr != nil {
 		panic(qerr)
@@ -379,22 +425,33 @@ func InsertBlock(blockData stypes.SBlock) {
 
 //InsertTx writes tx to Postgres Db
 func InsertTx(txData stypes.ShyftTxEntryPretty) {
-	sqldb, _ := DBConnection()
-	var retNonce string
-	sqlStatement := `INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15)) RETURNING nonce`
-	err := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
-	if err != nil {
-		panic(err)
-	}
+	// sqldb, _ := DBConnection()
+	// tx, err := sqldb.Beginx()
+	// if err != nil {
+	// 	panic("Cant start create transaction")
+	// }
+	// sqlStatement := `INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15));`
+	// err := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// _, err = tx.Exec(accountStmnt, addr, balance, nonce)
+	// if err != nil {
+	// 	fmt.Println("Rolling back transaction")
+	// 	tx.Rollback()
+	// 	return
+	// }
+	// UpdateTransactionAccounts()
 }
 
 //InsertInternalTx writes internal tx to Postgres Db
-func InsertInternalTx(sqldb *sql.DB, i stypes.InteralWrite) {
-	var returnValue string
-	sqlStatement := `INSERT INTO internaltxs(action, txhash, from_addr, to_addr, amount, gas, gasUsed, time, input, output) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10)) RETURNING txHash`
-	qerr := sqldb.QueryRow(sqlStatement, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output).Scan(&returnValue)
-	if qerr != nil {
-		fmt.Println(qerr)
-		panic(qerr)
-	}
+func InsertInternalTx(sqldb *sqlx.DB, i stypes.InteralWrite) {
+	// var returnValue string
+	// sqlStatement := `INSERT INTO internaltxs(action, txhash, from_addr, to_addr, amount, gas, gasUsed, time, input, output) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10)) RETURNING txHash;`
+	// qerr := sqldb.QueryRow(sqlStatement, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output).Scan(&returnValue)
+	// if qerr != nil {
+	// 	fmt.Println(qerr)
+	// 	panic(qerr)
+	// }
+	// UpdateTransactionAccounts()
 }

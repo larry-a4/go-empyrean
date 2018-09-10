@@ -187,7 +187,7 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 				IsContract:  false,
 			}
 			//Create account and store tx
-			CreateAccount(k.String(), v.Balance.String(), accountNoncee)
+			CreateAccount(k.String(), v.Balance.String(), accountNoncee, txData.BlockHash)
 			InsertTx(txData)
 
 		default:

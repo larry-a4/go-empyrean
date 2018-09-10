@@ -67,7 +67,7 @@ type TxRes struct {
 
 type ShyftTxEntryPretty struct {
 	TxHash      string
-	To   		string
+	To          string
 	From        string
 	BlockHash   string
 	BlockNumber string
