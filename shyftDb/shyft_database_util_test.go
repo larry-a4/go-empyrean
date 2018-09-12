@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math/big"
 	"os"
+
 	"strings"
 	"testing"
 
@@ -94,17 +95,18 @@ func TestBlock(t *testing.T) {
 		panic(err)
 	}
 
-<<<<<<< HEAD
+
 	fromAddr := "0x71562b71999873db5b286df957af199ec94617f7"
 	// fromAddrEndBalance := "75"
 	// fromAddrEndNonce := "5"
 	//toAddr := common.BytesToAddress([]byte{0x11})
-	core.CreateAccount(sqldb, fromAddr, "201", "1")
+	core.CreateAccount(fromAddr, "201", "1")
+
 
 	t.Run("TestBlockToReturnBlock", func(t *testing.T) {
 		for _, bl := range blocks {
 			// Write and verify the block in the database
-			if err := core.SWriteBlock(bl, receipts, bc); err != nil {
+			if err := core.SWriteBlock(bl, receipts); err != nil {
 				t.Fatalf("Failed to write block into database: %v", err)
 			}
 		}
@@ -335,7 +337,6 @@ func TestBlock(t *testing.T) {
 			t.Fatalf("GetAllTransactions [%v]: GetAllTransactions did not return correctly", getAllTx)
 		}
 	})
-<<<<<<< HEAD
 	// t.Run("TestAccountsToReturnAccounts", func(t *testing.T) {
 	// 	for _, tx := range txs {
 	// 		fmt.Println("test account", tx.To().String())
@@ -375,4 +376,3 @@ func TestBlock(t *testing.T) {
 	// 		t.Fatalf("GetAllAccounts [%v]: GetAllAccounts did not return correctly", getAllAccounts)
 	// 	}
 	// })
-}

@@ -325,7 +325,6 @@ func CreateAccount(addr string, balance string, accountNonce string) {
 func AccountExists(addr string) (string, string, error) {
 	sqldb, _ := DBConnection()
 	var addressBalance, accountNonce string
-
 	sqlExistsStatement := `SELECT balance, accountnonce from accounts WHERE addr = ($1)`
 
 	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&addressBalance, &accountNonce)
@@ -408,7 +407,7 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) {
 
 //InsertInternalTx writes internal tx to Postgres Db
 func InsertInternalTx(sqldb *sql.DB, i stypes.InteralWrite) {
-	var returnValue string
+	var returnValue strin
 	tx, _ := sqldb.Begin()
 	sqlStatement := `INSERT INTO internaltxs(action, txhash, from_addr, to_addr, amount, gas, gasUsed, time, input, output) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10)) RETURNING txHash`
 	qerr := tx.QueryRow(sqlStatement, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output).Scan(&returnValue)
