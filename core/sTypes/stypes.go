@@ -24,17 +24,18 @@ type SBlock struct {
 }
 
 type InteralWrite struct {
-	ID      int
-	Hash    string
-	Action  string
-	From    string
-	To      string
-	Value   string
-	Gas     uint64
-	GasUsed uint64
-	Input   string
-	Output  string
-	Time    string
+	ID      	int
+	Hash    	string
+	BlockHash 	string
+	Action  	string
+	From    	string
+	To      	string
+	Value   	string
+	Gas     	uint64
+	GasUsed 	uint64
+	Input   	string
+	Output  	string
+	Time    	string
 }
 
 type InternalArray struct {

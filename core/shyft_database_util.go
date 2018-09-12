@@ -121,7 +121,7 @@ func swriteTransactions(tx *types.Transaction, blockHash common.Hash, blockNumbe
 	if isContractCheck == true {
 		InsertTx(txData)
 		//Runs necessary functions for tracing internal transactions through tracers.go
-		IShyftTracer.GetTracerToRun(tx.Hash())
+		IShyftTracer.GetTracerToRun(tx.Hash(), blockHash)
 	} else {
 		//Inserts Tx into DB
 		InsertTx(txData)
@@ -438,10 +438,7 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 			panic(err)
 		}
 		// Add Transaction Table entry
-		txStatement := `
-								INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data)
-								VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15));`
-		_, err = tx.Exec(txStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From),
+		_, err = tx.Exec(shyftschema.CreateTxTableStmnt, strings.ToLower(txData.TxHash), strings.ToLower(txData.From),
 			strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount,
 			txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract,
 			txData.Status, txData.Age, txData.Data)
@@ -464,16 +461,48 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 	return nil
 }
 
-//InsertInternalTx writes internal tx to Postgres Db
-// NOTE TODO - ensure any internal tx are included in accountblocks
-func InsertInternalTx(sqldb *sqlx.DB, i stypes.InteralWrite) {
-	var returnValue string
-	sqlStatement := `INSERT INTO internaltxs(action, txhash, from_addr, to_addr, amount, gas, gasUsed, time, input, output) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10)) RETURNING txHash;`
-	qerr := sqldb.QueryRow(sqlStatement, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output).Scan(&returnValue)
-	if qerr != nil {
-		fmt.Println(qerr)
-		panic(qerr)
+func InsertInternals(i stypes.InteralWrite) error {
+	acctAddrs := [2]string{i.To, i.From}
+	accoutNonce := "0"
+	balance := strconv.Itoa(0)
+	for _, acct := range acctAddrs {
+		CreateAccount(acct, balance, accoutNonce)
 	}
+
+	sqldb, _ := DBConnection()
+
+	//return Transact(sqldb, func(tx *sqlx.Tx) error {
+		toAcctCredit, _ := strconv.Atoi(i.Value)
+		fromAcctDebit := -1 * toAcctCredit
+		// Update account balances and account Nonces
+		// Updates/Creates Account for To
+		_, err := sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
+		if err != nil {
+			panic(err)
+		}
+		// Updates/Creates Account for From
+		_, err = sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
+		if err != nil {
+			panic(err)
+		}
+		// // Add Internal Transaction Table entry
+		_, err = sqldb.Exec(shyftschema.CreateInternalTxTableStmnt, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.BlockHash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output)
+		if err != nil {
+			panic(err)
+		}
+		//Update/Create TO accountblock
+		_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
+		if err != nil {
+			panic(err)
+		}
+		//Update/Create FROM accountblock
+		_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], i.BlockHash, fromAcctDebit)
+		if err != nil {
+			panic(err)
+		}
+		return nil
+	//})
+	//return nil
 }
 
 //RollbackPgDb - rollsback the PG database by:

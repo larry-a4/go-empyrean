@@ -135,6 +135,7 @@ const internalTxsTable = `
 CREATE TABLE IF NOT EXISTS internalTxs (
   id SERIAL PRIMARY KEY,
   txHash text references txs(txHash) ON DELETE CASCADE,
+  blockHash text references blocks(hash) ON DELETE CASCADE,
   action text,
   to_addr text,
   from_addr text,
@@ -191,4 +192,27 @@ UPDATE accounts
 	SET balance = ((SELECT balance from accounts where addr = $1) - $2), 
 		nonce = ((SELECT nonce from accounts where addr = $1) + 1) 
 WHERE addr = $1;
+`
+
+//Creates an internal transaction records in the internal tx table
+const CreateInternalTxTableStmnt = `
+INSERT INTO internaltxs(action, txhash, blockHash, from_addr, to_addr, amount, gas, gasUsed, time, input, output)
+VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11);
+`
+
+//Creates a transaction record in the tx table
+const CreateTxTableStmnt = `
+INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data)
+VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15));
+`
+
+//FindOrCreateAcctBlockStmntForInternals - query to find or create an accountblock record returning
+const FindOrCreateAcctBlockStmntForInternals = `
+INSERT INTO accountblocks(acct, blockhash, delta, txcount) VALUES($1, (()), $3, 1)
+ON CONFLICT ON CONSTRAINT accountblocks_pkey
+DO
+  UPDATE
+    SET delta = ((SELECT delta FROM accountblocks WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2) + $3),
+        txcount = ((SELECT txcount FROM accountblocks WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2) + 1)
+WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2;  
 `
