@@ -594,44 +594,39 @@ type Internals struct {
 }
 
 //@NOTE:SHYFT
-func (i *Internals) SWriteInteralTxs(hash common.Hash) {
-	sqldb, err := core.DBConnection()
-	if err != nil {
-		panic(err)
-	}
-
+func (i *Internals) SWriteInteralTxs(hash common.Hash, bHash common.Hash) {
 	gas, _ := hexutil.DecodeUint64(i.Gas)
 	gasUsed, _ := hexutil.DecodeUint64(i.GasUsed)
 	value, _ := hexutil.DecodeUint64(i.Value)
 	amount := strconv.FormatUint(value, 10)
 
 	iTx := stypes.InteralWrite{
-		Hash:    hash.Hex(),
-		Action:  i.Type,
-		From:    i.From,
-		To:      i.To,
-		Value:   amount,
-		Gas:     gas,
-		GasUsed: gasUsed,
-		Input:   i.Input,
-		Output:  i.Output,
-		Time:    i.Time,
+		Hash:    	hash.Hex(),
+		BlockHash:  bHash.Hex(),
+		Action:  	i.Type,
+		From:    	i.From,
+		To:      	i.To,
+		Value:   	amount,
+		Gas:     	gas,
+		GasUsed: 	gasUsed,
+		Input:   	i.Input,
+		Output:  	i.Output,
+		Time:    	i.Time,
 	}
 	//@TODO WRITE OVER TRANSACTION STRUCT
-	core.SWriteInternalTxBalances(sqldb, i.To, i.From, amount)
-	core.InsertInternalTx(sqldb, iTx)
+	core.InsertInternals(iTx)
 }
 
 //@NOTE:SHYFT
-func (i *Internals) InternalRecursive(hash common.Hash) {
-	i.SWriteInteralTxs(hash)
+func (i *Internals) InternalRecursive(hash common.Hash, bHash common.Hash) {
+	i.SWriteInteralTxs(hash, bHash)
 	lengthOfCalls := len(i.Calls)
 	if lengthOfCalls == 0 {
 		return
 	}
 
 	for _, val := range i.Calls {
-		val.InternalRecursive(hash)
+		val.InternalRecursive(hash, bHash)
 	}
 }
 
@@ -681,7 +676,7 @@ func (jst *Tracer) GetResult() (json.RawMessage, error) {
 // GetResult calls the Javascript 'result' function and returns its value, or any accumulated error
 
 //@NOTE:SHYFT
-func (jst *Tracer) SGetResult(hash common.Hash) (json.RawMessage, error) {
+func (jst *Tracer) SGetResult(hash common.Hash, bHash common.Hash) (json.RawMessage, error) {
 	// Transform the context into a JavaScript object and inject into the state
 	obj := jst.vm.PushObject()
 
@@ -725,7 +720,7 @@ func (jst *Tracer) SGetResult(hash common.Hash) (json.RawMessage, error) {
 	if err := json.Unmarshal(result, &dat); err != nil {
 		panic(err)
 	}
-	dat.InternalRecursive(hash)
+	dat.InternalRecursive(hash, bHash)
 
 	return result, jst.err
 }
