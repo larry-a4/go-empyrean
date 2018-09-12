@@ -161,7 +161,7 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 			txHash := strings.Join(Genesis, k.String())
 			//Create the accountNonce, set to 1 (1 incoming tx), format type
 			accountNonce := v.Nonce + 1
-			accountNoncee := strconv.FormatUint(accountNonce, 10)
+			// accountNoncee := strconv.FormatUint(accountNonce, 10)
 
 			i, err := strconv.ParseInt(block.Time().String(), 10, 64)
 			if err != nil {
@@ -187,7 +187,7 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 				IsContract:  false,
 			}
 			//Create account and store tx
-			CreateAccount(k.String(), v.Balance.String(), accountNoncee)
+			// CreateAccount(k.String(), v.Balance.String(), accountNoncee) - Removed As InsertTx Handles this now
 			InsertTx(txData)
 
 		default:

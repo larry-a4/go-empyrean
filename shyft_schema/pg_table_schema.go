@@ -27,7 +27,7 @@ type Account struct {
 const accountsTable = `
 CREATE TABLE IF NOT EXISTS accounts (
   addr text primary key unique,
-  balance bigint,
+  balance numeric,
   nonce bigint
 );
 `
@@ -71,22 +71,42 @@ CREATE TABLE IF NOT EXISTS blocks (
 
 // AccountBlock - struct for reading and writing database data
 type AccountBlock struct {
-	ID        uint64 `db:"id"`
 	Acct      string `db:"acct"`
 	Blockhash string `db:"blockhash"`
 	Delta     int64  `db:"delta"`
+	TxCount   int64  `db:"txcount"`
 }
 
 const accountBlocksTable = `
 CREATE TABLE IF NOT EXISTS accountblocks ( 
-  id SERIAL PRIMARY KEY,
-  acct text NOT NULL REFERENCES accounts(addr) ON DELETE CASCADE ON UPDATE CASCADE DEFERRABLE, 
+  acct text NOT NULL REFERENCES accounts(addr) ON DELETE CASCADE DEFERRABLE, 
   blockhash text NOT NULL,
-  delta numeric
+  delta numeric,
+  txcount bigint,
+  primary key(acct, blockhash)
 );
 CREATE INDEX IF NOT EXISTS idx_acct_ab ON accountblocks (acct);
 CREATE INDEX IF NOT EXISTS idx_block_ab ON accountblocks (blockhash);
 `
+
+// PgTransaction struct for scanning db transactions from table txs
+type PgTransaction struct {
+	TxHash      string    `db:"txhash"`
+	To          string    `db:"to_addr"`
+	From        string    `db:"from_addr"`
+	Blockhash   string    `db:"blockhash"`
+	Blocknumber string    `db:"blocknumber"`
+	Amount      string    `db:"amount"`
+	Gasprice    uint64    `db:"gasprice"`
+	Gas         uint64    `db:"gas"`
+	GasLimit    uint64    `db:"gaslimit"`
+	TxFee       uint64    `db:"txfee"`
+	Nonce       uint64    `db:"nonce"`
+	TxStatus    string    `db:"txstatus"`
+	IsContract  bool      `db:"iscontract"`
+	Age         time.Time `db:"age"`
+	Data        []byte    `db:"data"`
+}
 
 // TxsTable sql for transactions
 const txsTable = `
@@ -94,7 +114,7 @@ CREATE TABLE IF NOT EXISTS txs (
   txHash text primary key unique,
   to_addr text,
   from_addr text,
-  blockhash text references blocks(hash) ON DELETE CASCADE,
+  blockhash text,
   blocknumber text,
   amount numeric,
   gasprice numeric,
@@ -126,4 +146,49 @@ CREATE TABLE IF NOT EXISTS internalTxs (
   output text
 );
 CREATE INDEX IF NOT EXISTS idx_tx_txs ON txs (txHash);
+`
+
+// AccountRollBack - finds the relevant account and reverses the balance and nonce
+const AccountRollback = `
+UPDATE accounts
+  SET balance = ((SELECT balance FROM accounts WHERE addr = $1) - $2),
+      nonce = ((SELECT nonce FROM accounts WHERE addr = $1) - $3)
+WHERE addr = $1;
+`
+
+// TransactionRollback - deletes all transactions whose blockhash is contained in the array of blockheaders
+const TransactionRollback = `
+DELETE FROM txs WHERE blockhash IN $1;
+`
+
+// BlockRollback - deletes all blocks whose hash is contained in the array of blockheaders
+const BlockRollback = `
+DELETE FROM block WHERE hash IN $1;
+`
+
+// FindOrCreateAcctStmnt - query to create account if it doesnt exist - and return it if it does
+// Parameters are addr = $1 balance = $2 nonce = $3
+const FindOrCreateAcctStmnt = `
+INSERT INTO accounts(addr, balance, nonce) VALUES($1, $2, $3)
+ON CONFLICT ON CONSTRAINT accounts_pkey DO NOTHING;
+`
+
+//FindOrCreateAcctBlockStmnt - query to find or create an accountblock record returning
+const FindOrCreateAcctBlockStmnt = `
+INSERT INTO accountblocks(acct, blockhash, delta, txcount) VALUES($1, $2, $3, 1)
+ON CONFLICT ON CONSTRAINT accountblocks_pkey
+DO
+  UPDATE
+    SET delta = ((SELECT delta FROM accountblocks WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2) + $3),
+        txcount = ((SELECT txcount FROM accountblocks WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2) + 1)
+WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2;  
+`
+
+//UpdateBalanceNonce - query to update the balance and nonce for a transaction
+// Parameters are addr = $1 amount = $2
+const UpdateBalanceNonce = `
+UPDATE accounts 
+	SET balance = ((SELECT balance from accounts where addr = $1) - $2), 
+		nonce = ((SELECT nonce from accounts where addr = $1) + 1) 
+WHERE addr = $1;
 `

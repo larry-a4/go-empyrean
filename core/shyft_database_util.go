@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ShyftNetwork/go-empyrean/shyft_schema"
+
 	"github.com/ShyftNetwork/go-empyrean/common"
 	Rewards "github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
@@ -128,6 +130,7 @@ func swriteTransactions(tx *types.Transaction, blockHash common.Hash, blockNumbe
 }
 
 //SWriteInternalTxBalances Writes internal txs and updates balances
+//TODO: Determine best way to include in accountblocks
 func SWriteInternalTxBalances(sqldb *sqlx.DB, toAddr string, fromAddr string, amount string) error {
 	sendAndReceiveData := stypes.SendAndReceive{
 		To:     toAddr,
@@ -209,14 +212,14 @@ func balanceHelper(s stypes.SendAndReceive, amount string) {
 	newAccountNonceSender.Add(fromNonce, nonceIncrement)
 
 	//UPDATE ACCOUNTS BASED ON NEW BALANCES AND ACCOUNT NONCES
-	// UpdateAccount(s.To, newBalanceReceiver.String(), newAccountNonceReceiver.String())
-	// UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
+	UpdateAccount(s.To, newBalanceReceiver.String(), newAccountNonceReceiver.String())
+	UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
 }
 
 // @NOTE: This function is extremely complex and requires heavy testing and knowdlege of edge cases:
 // uncle blocks, account balance updates based on reorgs, diverges that get dropped.
 // Reason for this is because the accounts are not deterministic like the block and tx hashes.
-// @TODO: Calculate reorg
+// @TODO: Calculate reorg - Determine how we include in acctblocks
 func swriteMinerRewards(block *types.Block) string {
 	minerAddr := block.Coinbase().String()
 	shyftConduitAddress := Rewards.ShyftNetworkConduitAddress.String()
@@ -269,7 +272,7 @@ func sstoreReward(address string, reward *big.Int) {
 	if err == sql.ErrNoRows {
 		// Addr does not exist, thus create new entry
 		// We convert totalReward into a string and postgres converts into number
-		// CreateAccount(address, reward.String(), "1")
+		CreateAccount(address, reward.String(), "1")
 		return
 	} else if err != nil {
 		// Something went wrong panic
@@ -293,7 +296,7 @@ func sstoreReward(address string, reward *big.Int) {
 		newBalance.Add(newBalance, reward)
 		newAccountNonce.Add(currentAccountNonce, nonceIncrement)
 		//Update the balance and nonce
-		// UpdateAccount(address, newBalance.String(), newAccountNonce.String())
+		UpdateAccount(address, newBalance.String(), newAccountNonce.String())
 		return
 	}
 }
@@ -307,7 +310,7 @@ func sstoreReward(address string, reward *big.Int) {
 func AccountExists(addr string) (string, string, error) {
 	sqldb, _ := DBConnection()
 	var addressBalance, accountNonce string
-	sqlExistsStatement := `SELECT balance, accountNonce from accounts WHERE addr = ($1);`
+	sqlExistsStatement := `SELECT balance, nonce from accounts WHERE addr = ($1);`
 	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&addressBalance, &accountNonce)
 	switch {
 	case err == sql.ErrNoRows:
@@ -375,7 +378,8 @@ func CreateAccount(addr string, balance string, nonce string) error {
 	sqldb, _ := DBConnection()
 
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
-		accountStmnt := `INSERT INTO accounts(addr, balance, nonce) VALUES(($1), ($2), ($3));`
+
+		accountStmnt := shyftschema.FindOrCreateAcctStmnt
 		if _, err := tx.Exec(accountStmnt, addr, balance, nonce); err != nil {
 			return err
 		}
@@ -383,24 +387,17 @@ func CreateAccount(addr string, balance string, nonce string) error {
 	})
 }
 
-//UpdateAccount updates account in Postgres Db and updates and or creates an AccountBlock record
-func UpdateAccount(addr string, balance string, accountNonce string, blockHash string, delta string) {
+//UpdateAccount updates account in Postgres Db
+func UpdateAccount(addr string, balance string, accountNonce string) {
 	sqldb, _ := DBConnection()
 	tx, err := sqldb.Beginx()
-	updateAcctStmnt := `UPDATE accounts SET balance = ($2), accountNonce = ($3) WHERE addr = ($1);`
+	updateAcctStmnt := `UPDATE accounts SET balance = ($2), nonce = ($3) WHERE addr = ($1);`
 	_, err = tx.Exec(updateAcctStmnt, strings.ToLower(addr), balance, accountNonce)
 	if err != nil {
 		fmt.Println("Rolling back transaction")
 		tx.Rollback()
 		return
 	}
-	updateAcctBlockDelta(tx, addr, blockHash, delta)
-}
-
-// updateAccountBlock - u
-func updateAcctBlockDelta(tx *sqlx.Tx, addr string, blockHash string, delta string) {
-	// blockDeltaStmt := `INSERT INTO accountblocks (acct, blockhash, delta)
-
 }
 
 //InsertBlock writes block to Postgres Db
@@ -414,35 +411,113 @@ func InsertBlock(blockData stypes.SBlock) {
 }
 
 //InsertTx writes tx to Postgres Db
-func InsertTx(txData stypes.ShyftTxEntryPretty) {
-	// sqldb, _ := DBConnection()
-	// tx, err := sqldb.Beginx()
-	// if err != nil {
-	// 	panic("Cant start create transaction")
-	// }
-	// sqlStatement := `INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15));`
-	// err := sqldb.QueryRow(sqlStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From), strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount, txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract, txData.Status, txData.Age, txData.Data).Scan(&retNonce)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// _, err = tx.Exec(accountStmnt, addr, balance, nonce)
-	// if err != nil {
-	// 	fmt.Println("Rolling back transaction")
-	// 	tx.Rollback()
-	// 	return
-	// }
-	// UpdateTransactionAccounts()
+func InsertTx(txData stypes.ShyftTxEntryPretty) error {
+	acctAddrs := [2]string{txData.To, txData.From}
+	// NOTE: Confirm this - If account doesnt exist before reflecting transaction sets nonce to 0
+	accountNonce := "0"
+	balance := strconv.Itoa(0)
+	for _, acct := range acctAddrs {
+		CreateAccount(acct, balance, accountNonce)
+	}
 
+	sqldb, _ := DBConnection()
+	// toAcctCredit, _ := strconv.Atoi(txData.Amount)
+
+	return Transact(sqldb, func(tx *sqlx.Tx) error {
+		toAcctCredit, _ := strconv.Atoi(txData.Amount)
+		fromAcctDebit := -1 * toAcctCredit
+		// Update account balances and account Nonces
+		// Updates/Creates Account for To
+		_, err := tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
+		if err != nil {
+			panic(err)
+		}
+		// Updates/Creates Account for From
+		_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
+		if err != nil {
+			panic(err)
+		}
+		// Add Transaction Table entry
+		txStatement := `
+								INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data)
+								VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15));`
+		_, err = tx.Exec(txStatement, strings.ToLower(txData.TxHash), strings.ToLower(txData.From),
+			strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount,
+			txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract,
+			txData.Status, txData.Age, txData.Data)
+		if err != nil {
+			panic(err)
+		}
+		//Update/Create TO accountblock
+		_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], txData.BlockHash, toAcctCredit)
+		if err != nil {
+			panic(err)
+		}
+		//Update/Create FROM accountblock
+		_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], txData.BlockHash, fromAcctDebit)
+		if err != nil {
+			panic(err)
+		}
+		//
+		return nil
+	})
+	return nil
 }
 
 //InsertInternalTx writes internal tx to Postgres Db
+// NOTE TODO - ensure any internal tx are included in accountblocks
 func InsertInternalTx(sqldb *sqlx.DB, i stypes.InteralWrite) {
-	// var returnValue string
-	// sqlStatement := `INSERT INTO internaltxs(action, txhash, from_addr, to_addr, amount, gas, gasUsed, time, input, output) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10)) RETURNING txHash;`
-	// qerr := sqldb.QueryRow(sqlStatement, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output).Scan(&returnValue)
-	// if qerr != nil {
-	// 	fmt.Println(qerr)
-	// 	panic(qerr)
-	// }
-	// UpdateTransactionAccounts()
+	var returnValue string
+	sqlStatement := `INSERT INTO internaltxs(action, txhash, from_addr, to_addr, amount, gas, gasUsed, time, input, output) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10)) RETURNING txHash;`
+	qerr := sqldb.QueryRow(sqlStatement, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output).Scan(&returnValue)
+	if qerr != nil {
+		fmt.Println(qerr)
+		panic(qerr)
+	}
+}
+
+//RollbackPgDb - rollsback the PG database by:
+// deleting blocks designated by the passed in Blockheaders
+// deleting all transactions contained in the foregoing Blockheaders
+// reversing each account balance by the delta included in the account blocks table
+// reversing the account nonce values by the transaction count included in the accountblocks table
+func RollbackPgDb(blockheaders []string) {
+	// NOTE this needs to be wrapped in a pg transaction so that on
+	// failure we dont rollback and panic - use Transact Function for this - easier to test outside of transaction first
+	acctBlockStmnt := "SELECT * FROM accountblocks WHERE accountblocks.blockhash IN $1"
+	accountBlocks := []shyftschema.AccountBlock{}
+	sqldb, _ := DBConnection()
+	// Get all accountblocks containing the blockhash
+	err := sqldb.Select(&accountBlocks, acctBlockStmnt, blockheaders)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, acctBlock := range accountBlocks {
+		// Get delta and txCount from accountblocks and adjust account balance and account nonce accordingly
+		_, err = sqldb.Exec(shyftschema.AccountRollback, acctBlock.Acct, int(acctBlock.Delta), int(acctBlock.TxCount))
+		if err != nil {
+			panic(err)
+		}
+	}
+	// Delete all transactions containing the blockhash
+	_, err = sqldb.Exec(shyftschema.TransactionRollback, blockheaders)
+	if err != nil {
+		panic(err)
+	}
+
+	// Delete all blocks whose hash is within the blockheader array
+	_, err = sqldb.Exec(shyftschema.BlockRollback, blockheaders)
+	if err != nil {
+		panic(err)
+	}
+
+	// Delete all accountblocks whose blockhash is included in the blockheader array
+	_, err = sqldb.Exec("DELETE from accountblocks WHERE blockhash IN $1;", blockheaders)
+	if err != nil {
+		panic(err)
+	}
+
+	//TODO - internalTxs - BlockRewards - Move Into a db transaction and test
+
 }
