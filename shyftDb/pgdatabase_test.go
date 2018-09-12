@@ -232,7 +232,7 @@ func TestInsertTx(t *testing.T) {
 	//         Rollback
 }
 
-func TestGenesisBlockCreation(t *testing.T) {
+func TestGenesisBlockCreationDeveloper(t *testing.T) {
 	db, _ := core.InitDB()
 	deleteAllTables(db)
 	edb, _ := eth.NewShyftTestLDB()

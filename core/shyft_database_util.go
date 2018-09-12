@@ -309,16 +309,16 @@ func sstoreReward(address string, reward *big.Int) {
 // Refactor - Transaction
 func AccountExists(addr string) (string, string, error) {
 	sqldb, _ := DBConnection()
-	var addressBalance, accountNonce string
+	var addressBalance, nonce string
 	sqlExistsStatement := `SELECT balance, nonce from accounts WHERE addr = ($1);`
-	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&addressBalance, &accountNonce)
+	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&addressBalance, &nonce)
 	switch {
 	case err == sql.ErrNoRows:
-		return addressBalance, accountNonce, err
+		return addressBalance, nonce, err
 	case err != nil:
 		panic(err)
 	default:
-		return addressBalance, accountNonce, err
+		return addressBalance, nonce, err
 	}
 }
 
@@ -380,6 +380,7 @@ func CreateAccount(addr string, balance string, nonce string) error {
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
 
 		accountStmnt := shyftschema.FindOrCreateAcctStmnt
+
 		if _, err := tx.Exec(accountStmnt, addr, balance, nonce); err != nil {
 			return err
 		}
@@ -426,8 +427,10 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 	// toAcctCredit, _ := strconv.Atoi(txData.Amount)
 
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
-		toAcctCredit, _ := strconv.Atoi(txData.Amount)
-		fromAcctDebit := -1 * toAcctCredit
+		toAcctCredit := new(big.Int)
+		toAcctCredit, _ = toAcctCredit.SetString(txData.Amount, 10)
+		var one = big.NewInt(-1)
+		fromAcctDebit := new(big.Int).Mul(toAcctCredit, one)
 		// Add Transaction Table entry
 		_, err := tx.Exec(shyftschema.CreateTxTableStmnt, strings.ToLower(txData.TxHash), strings.ToLower(txData.From),
 			strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount,
@@ -438,23 +441,23 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 		}
 		// Update account balances and account Nonces
 		// Updates/Creates Account for To
-		_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
+		_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit.String())
 		if err != nil {
 			panic(err)
 		}
 		//Update/Create TO accountblock
-		_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], txData.BlockHash, toAcctCredit)
+		_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], txData.BlockHash, toAcctCredit.String())
 		if err != nil {
 			panic(err)
 		}
 		if acctAddrs[1] != "GENESIS" {
 			// Updates/Creates Account for From
-			_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
+			_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit.String())
 			if err != nil {
 				panic(err)
 			}
 			//Update/Create FROM accountblock
-			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], txData.BlockHash, fromAcctDebit)
+			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], txData.BlockHash, fromAcctDebit.String())
 			if err != nil {
 				panic(err)
 			}
