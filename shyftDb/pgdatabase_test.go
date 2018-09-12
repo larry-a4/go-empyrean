@@ -18,6 +18,12 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type ShyftTracer struct{}
+
+const (
+	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
+)
+
 var tx, _ = types.NewTransaction(
 	3,
 	common.HexToAddress("b94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
@@ -102,7 +108,6 @@ func TestCreateAccount(t *testing.T) {
 		addr := "0x7ef5a6135f1fd6a02593eedc869c6d41d934aef8"
 		balance, _ := new(big.Int).SetString("3500000000", 10)
 		accountNonce := strconv.Itoa(int(1))
-		// blockHash := "0x656c34545f90a730a19008c0e7a7cd4fb3895064b48d6d69761bd5abad681056"
 		err = core.CreateAccount(addr, balance.String(), accountNonce)
 		if err != nil {
 			fmt.Println(err)
@@ -115,29 +120,13 @@ func TestCreateAccount(t *testing.T) {
 			return
 		}
 		fmt.Printf("account written: %+v\n", newDbAccounts[0])
-		// newDbAccountBlocks := []shyftschema.AccountBlock{}
-		// err = db.Select(&newDbAccountBlocks, "SELECT * FROM accountblocks")
-		// if err != nil {
-		// 	fmt.Println(err)
-		// 	return
-		// }
-		// fmt.Printf("accountBlock written: %+v\n", newDbAccountBlocks[0])
-
 		if len(newDbAccounts) > 1 {
 			t.Errorf("Got %v Accounts Created: Expected 1", len(newDbAccounts))
 		}
-		// if len(newDbAccountBlocks) > 1 {
-		// 	t.Errorf("Got %v Accounts Created: Expected 1", len(newDbAccounts))
-		// }
 		stringBalance := strconv.FormatInt(newDbAccounts[0].Balance, 10)
-		// stringDelta := strconv.FormatInt(newDbAccountBlocks[0].Delta, 10)
 		if newDbAccounts[0].Addr != addr || stringBalance != "3500000000" || accountNonce != "1" {
 			t.Errorf("Account: Got %v Accounts Created: Expected addr: %s balance: %d nonce %s", newDbAccounts, addr, balance, accountNonce)
 		}
-		// if newDbAccountBlocks[0].Acct != addr || stringDelta != "3500000000" || blockHash != newDbAccountBlocks[0].Blockhash {
-		// 	t.Errorf("AccountBlocks: Got %v Accounts Created: Expected acct: %s blockHash: %s delta %d", newDbAccountBlocks, addr, blockHash, balance)
-
-		// }
 	})
 }
 
@@ -193,7 +182,7 @@ func TestInsertTx(t *testing.T) {
 			panic(err)
 		}
 		if len(newDbAccounts) != 2 {
-			t.Errorf("Got %v db transactions created -  Expected 2", len(dbTransactions))
+			t.Errorf("Got %v db transactions created -  Expected 2", len(newDbAccounts))
 		}
 		toAcct := newDbAccounts[0]
 		fromAcct := newDbAccounts[1]
@@ -231,4 +220,38 @@ func TestInsertTx(t *testing.T) {
 	//         Multiple Transactions re AccountBlock Generation
 	//         Genesis Block - correct setting of pg tables
 	//         Rollback
+}
+
+func TestGenesisBlockCreation(t *testing.T) {
+	// db, _ := core.InitDB()
+	// deleteAllTables(db)
+	// edb, _ := eth.NewShyftTestLDB()
+	// shyftTracer := new(eth.ShyftTracer)
+	// core.SetIShyftTracer(shyftTracer)
+
+	// ethConf := &eth.Config{
+	// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+	// 	Etherbase: common.HexToAddress(testAddress),
+	// 	Ethash: ethash.Config{
+	// 		PowMode: ethash.ModeTest,
+	// 	},
+	// }
+
+	// eth.SetGlobalConfig(ethConf)
+
+	// eth.InitTracerEnv()
+	// // key, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+	// // signer := types.NewEIP155Signer(big.NewInt(2147483647))
+	// t.Run("SetupGenesisBlock - populates the pg accounts, transactions, and accountblocks appropriately", func(t *testing.T) {
+	// 	deleteAllTables(db)
+	// 	core.SetupGenesisBlock(edb, ethConf.Genesis)
+	// 	newDbAccounts := []shyftschema.Account{}
+	// 	err := db.Select(&newDbAccounts, "SELECT * FROM accounts")
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	if len(newDbAccounts) != 2 {
+	// 		t.Errorf("Got %v db transactions created -  Expected 2", len(newDbAccounts))
+	// 	}
+	// })
 }
