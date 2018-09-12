@@ -417,7 +417,9 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 	accountNonce := "0"
 	balance := strconv.Itoa(0)
 	for _, acct := range acctAddrs {
-		CreateAccount(acct, balance, accountNonce)
+		if acct != "GENESIS" {
+			CreateAccount(acct, balance, accountNonce)
+		}
 	}
 
 	sqldb, _ := DBConnection()
@@ -426,22 +428,17 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
 		toAcctCredit, _ := strconv.Atoi(txData.Amount)
 		fromAcctDebit := -1 * toAcctCredit
-		// Update account balances and account Nonces
-		// Updates/Creates Account for To
-		_, err := tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
-		if err != nil {
-			panic(err)
-		}
-		// Updates/Creates Account for From
-		_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
-		if err != nil {
-			panic(err)
-		}
 		// Add Transaction Table entry
-		_, err = tx.Exec(shyftschema.CreateTxTableStmnt, strings.ToLower(txData.TxHash), strings.ToLower(txData.From),
+		_, err := tx.Exec(shyftschema.CreateTxTableStmnt, strings.ToLower(txData.TxHash), strings.ToLower(txData.From),
 			strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount,
 			txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract,
 			txData.Status, txData.Age, txData.Data)
+		if err != nil {
+			panic(err)
+		}
+		// Update account balances and account Nonces
+		// Updates/Creates Account for To
+		_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
 		if err != nil {
 			panic(err)
 		}
@@ -450,10 +447,17 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 		if err != nil {
 			panic(err)
 		}
-		//Update/Create FROM accountblock
-		_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], txData.BlockHash, fromAcctDebit)
-		if err != nil {
-			panic(err)
+		if acctAddrs[1] != "GENESIS" {
+			// Updates/Creates Account for From
+			_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
+			if err != nil {
+				panic(err)
+			}
+			//Update/Create FROM accountblock
+			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], txData.BlockHash, fromAcctDebit)
+			if err != nil {
+				panic(err)
+			}
 		}
 		//
 		return nil
@@ -472,35 +476,35 @@ func InsertInternals(i stypes.InteralWrite) error {
 	sqldb, _ := DBConnection()
 
 	//return Transact(sqldb, func(tx *sqlx.Tx) error {
-		toAcctCredit, _ := strconv.Atoi(i.Value)
-		fromAcctDebit := -1 * toAcctCredit
-		// Update account balances and account Nonces
-		// Updates/Creates Account for To
-		_, err := sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
-		if err != nil {
-			panic(err)
-		}
-		// Updates/Creates Account for From
-		_, err = sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
-		if err != nil {
-			panic(err)
-		}
-		// // Add Internal Transaction Table entry
-		_, err = sqldb.Exec(shyftschema.CreateInternalTxTableStmnt, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.BlockHash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output)
-		if err != nil {
-			panic(err)
-		}
-		//Update/Create TO accountblock
-		_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
-		if err != nil {
-			panic(err)
-		}
-		//Update/Create FROM accountblock
-		_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], i.BlockHash, fromAcctDebit)
-		if err != nil {
-			panic(err)
-		}
-		return nil
+	toAcctCredit, _ := strconv.Atoi(i.Value)
+	fromAcctDebit := -1 * toAcctCredit
+	// Update account balances and account Nonces
+	// Updates/Creates Account for To
+	_, err := sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
+	if err != nil {
+		panic(err)
+	}
+	// Updates/Creates Account for From
+	_, err = sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
+	if err != nil {
+		panic(err)
+	}
+	// // Add Internal Transaction Table entry
+	_, err = sqldb.Exec(shyftschema.CreateInternalTxTableStmnt, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.BlockHash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output)
+	if err != nil {
+		panic(err)
+	}
+	//Update/Create TO accountblock
+	_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
+	if err != nil {
+		panic(err)
+	}
+	//Update/Create FROM accountblock
+	_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], i.BlockHash, fromAcctDebit)
+	if err != nil {
+		panic(err)
+	}
+	return nil
 	//})
 	//return nil
 }

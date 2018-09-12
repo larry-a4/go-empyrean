@@ -5,14 +5,19 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/eth"
 
 	"github.com/ShyftNetwork/go-empyrean/shyft_schema"
 	"github.com/jmoiron/sqlx"
@@ -23,6 +28,12 @@ type ShyftTracer struct{}
 const (
 	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
+
+var GenesisAcctAddresses = []string{"0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000001",
+	"0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000003",
+	"0x0000000000000000000000000000000000000004", "0x0000000000000000000000000000000000000005",
+	"0x0000000000000000000000000000000000000006", "0x0000000000000000000000000000000000000007",
+	"0x0000000000000000000000000000000000000008"}
 
 var tx, _ = types.NewTransaction(
 	3,
@@ -218,40 +229,85 @@ func TestInsertTx(t *testing.T) {
 	})
 	//TODO: Add tests for:
 	//         Multiple Transactions re AccountBlock Generation
-	//         Genesis Block - correct setting of pg tables
 	//         Rollback
 }
 
 func TestGenesisBlockCreation(t *testing.T) {
-	// db, _ := core.InitDB()
-	// deleteAllTables(db)
-	// edb, _ := eth.NewShyftTestLDB()
-	// shyftTracer := new(eth.ShyftTracer)
-	// core.SetIShyftTracer(shyftTracer)
+	db, _ := core.InitDB()
+	deleteAllTables(db)
+	edb, _ := eth.NewShyftTestLDB()
+	shyftTracer := new(eth.ShyftTracer)
+	core.SetIShyftTracer(shyftTracer)
 
-	// ethConf := &eth.Config{
-	// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-	// 	Etherbase: common.HexToAddress(testAddress),
-	// 	Ethash: ethash.Config{
-	// 		PowMode: ethash.ModeTest,
-	// 	},
-	// }
+	ethConf := &eth.Config{
+		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+		Etherbase: common.HexToAddress(testAddress),
+		Ethash: ethash.Config{
+			PowMode: ethash.ModeTest,
+		},
+	}
 
-	// eth.SetGlobalConfig(ethConf)
+	eth.SetGlobalConfig(ethConf)
 
-	// eth.InitTracerEnv()
-	// // key, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-	// // signer := types.NewEIP155Signer(big.NewInt(2147483647))
-	// t.Run("SetupGenesisBlock - populates the pg accounts, transactions, and accountblocks appropriately", func(t *testing.T) {
-	// 	deleteAllTables(db)
-	// 	core.SetupGenesisBlock(edb, ethConf.Genesis)
-	// 	newDbAccounts := []shyftschema.Account{}
-	// 	err := db.Select(&newDbAccounts, "SELECT * FROM accounts")
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	if len(newDbAccounts) != 2 {
-	// 		t.Errorf("Got %v db transactions created -  Expected 2", len(newDbAccounts))
-	// 	}
-	// })
+	t.Run("SetupGenesisBlock - populates the pg accounts, transactions, and accountblocks appropriately", func(t *testing.T) {
+		deleteAllTables(db)
+		core.SetupGenesisBlock(edb, ethConf.Genesis)
+		newDbAccounts := []shyftschema.Account{}
+		err := db.Select(&newDbAccounts, "SELECT * FROM accounts")
+		if err != nil {
+			panic(err)
+		}
+		if len(newDbAccounts) != 9 {
+			t.Errorf("Got %v db transactions created -  Expected 9", len(newDbAccounts))
+		}
+		accountAddresses := []string{}
+		sqlStmnt := "SELECT addr FROM accounts WHERE addr = ANY($1)"
+		err = db.Select(&accountAddresses, sqlStmnt, pq.StringArray(GenesisAcctAddresses))
+		if err != nil {
+			panic(err)
+		}
+		if len(accountAddresses) != 9 {
+			t.Errorf("Got the following acct addresses %+v \n Expected %+v \n", accountAddresses, GenesisAcctAddresses)
+		}
+		var bal int
+		sqlStmnt = "SELECT balance FROM accounts WHERE addr = $1"
+		for _, addr := range GenesisAcctAddresses {
+			err = db.Get(&bal, sqlStmnt, addr)
+			if err != nil {
+				panic(err)
+			}
+			genesisBal := 9223372036854775807
+			if addr == "0x0000000000000000000000000000000000000000" {
+				if bal != genesisBal {
+					t.Errorf("Got for Genesis Account Balance %+v \n Expected %d", bal, genesisBal)
+				}
+			} else {
+				if bal != 1 {
+					t.Errorf("Got balance for acct %s: %+v \n Expected %d", addr, bal, genesisBal)
+				}
+			}
+		}
+		for _, acct := range newDbAccounts {
+			if acct.Nonce != 1 {
+				t.Errorf("For acct: %s - got Nonce of %d \n Expected %d", acct.Addr, acct.Nonce, 1)
+			}
+		}
+		dbTransactions := []shyftschema.PgTransaction{}
+		err = db.Select(&dbTransactions, "SELECT * FROM txs")
+		if err != nil {
+			panic(err)
+		}
+		if len(dbTransactions) != 9 {
+			t.Errorf("Got %v db transactions created \nExpected 9", len(dbTransactions))
+		}
+		// genesisFaucetBal := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))
+		for _, acct := range dbTransactions {
+			if acct.To != "0x0000000000000000000000000000000000000000" {
+				if acct.From != "genesis" || acct.Blocknumber != "0" || acct.Amount != "1" ||
+					!strings.Contains(acct.TxHash, "genesis") {
+					t.Errorf("Got %+v \n Expected DeveloperGenesisBlock", acct)
+				}
+			}
+		}
+	})
 }

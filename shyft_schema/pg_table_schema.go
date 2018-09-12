@@ -189,7 +189,7 @@ WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2;
 // Parameters are addr = $1 amount = $2
 const UpdateBalanceNonce = `
 UPDATE accounts 
-	SET balance = ((SELECT balance from accounts where addr = $1) - $2), 
+	SET balance = ((SELECT balance from accounts where addr = $1) + $2), 
 		nonce = ((SELECT nonce from accounts where addr = $1) + 1) 
 WHERE addr = $1;
 `
