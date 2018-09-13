@@ -75,7 +75,7 @@ type ShyftTxEntryPretty struct {
 	GasPrice    uint64
 	Gas         uint64
 	GasLimit    uint64
-	Cost        uint64
+	Cost        string
 	Nonce       uint64
 	Status      string
 	IsContract  bool

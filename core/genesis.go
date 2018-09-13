@@ -151,10 +151,11 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 		case err == sql.ErrNoRows:
 			var toAddr *common.Address
 			var data []byte
-			var cost, gasPrice uint64
+			var gasPrice uint64
+			var cost string
 			//Initializing proper types for tx struct
 			toAddr = &k
-			cost = 0
+			cost = "0"
 			gasPrice = 0
 			//Appending GENESIS to address stored as txHash and From Addr
 			Genesis := []string{"GENESIS_", k.String()}
@@ -264,19 +265,19 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 		}
 		block, err := genesis.Commit(db)
 		//@NOTE:SHYFT SWITCH CASE ENSURES SHYFT GENESIS FUNCTIONS ARE ONLY CALLED ONCE
-		sqldb, _ := DBConnection()
-		serror := BlockExists(sqldb, block.Hash().String())
-		switch {
-		case serror == sql.ErrNoRows:
-			//@NOTE:SHYFT WRITE TO BLOCK ZERO DB
-			WriteShyftBlockZero(block, genesis)
-			//@NOTE:SHYFT WRITE TO DB
-			WriteShyftGen(genesis, block)
-		case serror != nil:
-			panic(serror)
-		default:
-			log.Info("Genesis Block Written")
-		}
+		//sqldb, _ := DBConnection()
+		//serror := BlockExists(sqldb, block.Hash().String())
+		//switch {
+		//case serror == sql.ErrNoRows:
+		//	//@NOTE:SHYFT WRITE TO BLOCK ZERO DB
+		//	WriteShyftBlockZero(block, genesis)
+		//	//@NOTE:SHYFT WRITE TO DB
+		//	WriteShyftGen(genesis, block)
+		//case serror != nil:
+		//	panic(serror)
+		//default:
+		//	log.Info("Genesis Block Written")
+		//}
 		return genesis.Config, block.Hash(), err
 	}
 

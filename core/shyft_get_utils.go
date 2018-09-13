@@ -128,8 +128,8 @@ func SGetAllTransactionsFromBlock(sqldb *sql.DB, blockNumber string) string {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var txhash, to_addr, from_addr, blockhash, blocknumber, amount, status string
-		var gasprice, gas, gasLimit, txfee, nonce uint64
+		var txhash, to_addr, from_addr, txfee, blockhash, blocknumber, amount, status string
+		var gasprice, gas, gasLimit, nonce uint64
 		var isContract bool
 		var age time.Time
 		var data []byte
@@ -216,8 +216,8 @@ func SGetAllTransactions(sqldb *sql.DB) string {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var txhash, to_addr, from_addr, blockhash, blocknumber, amount, status string
-		var gasprice, gas, gasLimit, txfee, nonce uint64
+		var txhash, to_addr, from_addr, txfee, blockhash, blocknumber, amount, status string
+		var gasprice, gas, gasLimit, nonce uint64
 		var isContract bool
 		var age time.Time
 		var data []byte
@@ -255,8 +255,8 @@ func SGetAllTransactions(sqldb *sql.DB) string {
 func SGetTransaction(sqldb *sql.DB, txHash string) string {
 	sqlStatement := `SELECT * FROM txs WHERE txhash=$1;`
 	row := sqldb.QueryRow(sqlStatement, txHash)
-	var txhash, to_addr, from_addr, blockhash, blocknumber, amount, status string
-	var gasprice, gas, gasLimit, txfee, nonce uint64
+	var txhash, to_addr, from_addr, txfee,blockhash, blocknumber, amount, status string
+	var gasprice, gas, gasLimit, nonce uint64
 	var isContract bool
 	var age time.Time
 	var data []byte
@@ -356,8 +356,8 @@ func SGetAccountTxs(sqldb *sql.DB, address string) string {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var txhash, to_addr, from_addr, blockhash, blocknumber, amount, status string
-		var gasprice, gas, gasLimit, txfee, nonce uint64
+		var txhash, to_addr, from_addr,  txfee, blockhash, blocknumber, amount, status string
+		var gasprice, gas, gasLimit, nonce uint64
 		var isContract bool
 		var age time.Time
 		var data []byte

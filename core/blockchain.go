@@ -1001,9 +1001,9 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 
 	// NOTE:SHYFT - Write block data for block explorer
 	//fmt.Printf("\n\t[BLOCKCHAIN.GO bc.chainConfig]    %+v", bc.chainConfig)
-	if err := SWriteBlock(block, receipts); err != nil {
-		return NonStatTy, err
-	}
+	//if err := SWriteBlock(block, receipts); err != nil {
+	//	return NonStatTy, err
+	//}
 	bc.futureBlocks.Remove(block.Hash())
 	return status, nil
 }

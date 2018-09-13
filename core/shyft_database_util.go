@@ -110,7 +110,7 @@ func swriteTransactions(sqldb *sql.DB, tx *types.Transaction, blockHash common.H
 		BlockHash:   blockHash.Hex(),
 		BlockNumber: blockNumber,
 		Amount:      tx.Value().String(),
-		Cost:        tx.Cost().Uint64(),
+		Cost:        tx.Cost().String(),
 		GasPrice:    tx.GasPrice().Uint64(),
 		GasLimit:    gasLimit,
 		Gas:         tx.Gas(),
