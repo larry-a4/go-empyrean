@@ -376,12 +376,16 @@ func Transact(db *sqlx.DB, txFunc func(*sqlx.Tx) error) (err error) {
 //CreateAccount writes new account to Postgres Db
 func CreateAccount(addr string, balance string, nonce string) error {
 	sqldb, _ := DBConnection()
-
+	addr = strings.ToLower(addr)
+	bal := new(big.Int)
+	numericBalance, _ := bal.SetString(balance, 10)
+	non := new(big.Int)
+	intNonce, _ := non.SetString(nonce, 10)
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
 
 		accountStmnt := shyftschema.FindOrCreateAcctStmnt
 
-		if _, err := tx.Exec(accountStmnt, addr, balance, nonce); err != nil {
+		if _, err := tx.Exec(accountStmnt, addr, numericBalance, intNonce); err != nil {
 			return err
 		}
 		return nil
@@ -392,8 +396,14 @@ func CreateAccount(addr string, balance string, nonce string) error {
 func UpdateAccount(addr string, balance string, accountNonce string) {
 	sqldb, _ := DBConnection()
 	tx, err := sqldb.Beginx()
+	addr = strings.ToLower(addr)
+	bal := new(big.Int)
+	numericBalance, _ := bal.SetString(balance, 10)
+	non := new(big.Int)
+	intNonce, _ := non.SetString(accountNonce, 10)
+
 	updateAcctStmnt := `UPDATE accounts SET balance = ($2), nonce = ($3) WHERE addr = ($1);`
-	_, err = tx.Exec(updateAcctStmnt, strings.ToLower(addr), balance, accountNonce)
+	_, err = tx.Exec(updateAcctStmnt, addr, numericBalance, intNonce)
 	if err != nil {
 		fmt.Println("Rolling back transaction")
 		tx.Rollback()
@@ -413,18 +423,11 @@ func InsertBlock(blockData stypes.SBlock) {
 
 //InsertTx writes tx to Postgres Db
 func InsertTx(txData stypes.ShyftTxEntryPretty) error {
-	acctAddrs := [2]string{txData.To, txData.From}
+	acctAddrs := [2]string{strings.ToLower(txData.To), strings.ToLower(txData.From)}
 	// NOTE: Confirm this - If account doesnt exist before reflecting transaction sets nonce to 0
-	accountNonce := "0"
-	balance := strconv.Itoa(0)
-	for _, acct := range acctAddrs {
-		if acct != "GENESIS" {
-			CreateAccount(acct, balance, accountNonce)
-		}
-	}
-
+	// accountNonce := "0"
+	// balance := "0"
 	sqldb, _ := DBConnection()
-	// toAcctCredit, _ := strconv.Atoi(txData.Amount)
 
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
 		toAcctCredit := new(big.Int)
@@ -450,7 +453,7 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 		if err != nil {
 			panic(err)
 		}
-		if acctAddrs[1] != "GENESIS" {
+		if acctAddrs[1] != "genesis" {
 			// Updates/Creates Account for From
 			_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit.String())
 			if err != nil {
@@ -470,46 +473,49 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 
 func InsertInternals(i stypes.InteralWrite) error {
 	acctAddrs := [2]string{i.To, i.From}
-	accoutNonce := "0"
-	balance := strconv.Itoa(0)
-	for _, acct := range acctAddrs {
-		CreateAccount(acct, balance, accoutNonce)
-	}
+	// accoutNonce := "0"
+	// balance := strconv.Itoa(0)
+	// for _, acct := range acctAddrs {
+	// 	CreateAccount(acct, balance, accoutNonce)
+	// }
 
 	sqldb, _ := DBConnection()
 
-	//return Transact(sqldb, func(tx *sqlx.Tx) error {
-	toAcctCredit, _ := strconv.Atoi(i.Value)
-	fromAcctDebit := -1 * toAcctCredit
-	// Update account balances and account Nonces
-	// Updates/Creates Account for To
-	_, err := sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
-	if err != nil {
-		panic(err)
-	}
-	// Updates/Creates Account for From
-	_, err = sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
-	if err != nil {
-		panic(err)
-	}
-	// // Add Internal Transaction Table entry
-	_, err = sqldb.Exec(shyftschema.CreateInternalTxTableStmnt, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.BlockHash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output)
-	if err != nil {
-		panic(err)
-	}
-	//Update/Create TO accountblock
-	_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
-	if err != nil {
-		panic(err)
-	}
-	//Update/Create FROM accountblock
-	_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], i.BlockHash, fromAcctDebit)
-	if err != nil {
-		panic(err)
-	}
+	return Transact(sqldb, func(tx *sqlx.Tx) error {
+
+		toAcctCredit, _ := strconv.Atoi(i.Value)
+		fromAcctDebit := -1 * toAcctCredit
+		// Update account balances and account Nonces
+		// Updates/Creates Account for To
+		_, err := sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
+		if err != nil {
+			panic(err)
+		}
+		// Updates/Creates Account for From
+		_, err = sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
+		if err != nil {
+			panic(err)
+		}
+		// // Add Internal Transaction Table entry
+		_, err = sqldb.Exec(shyftschema.CreateInternalTxTableStmnt, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.BlockHash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output)
+		if err != nil {
+			panic(err)
+		}
+		if i.Value != "0" {
+			//Update/Create TO accountblock
+			_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
+			if err != nil {
+				panic(err)
+			}
+			//Update/Create FROM accountblock
+			_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], i.BlockHash, fromAcctDebit)
+			if err != nil {
+				panic(err)
+			}
+		}
+		return nil
+	})
 	return nil
-	//})
-	//return nil
 }
 
 //RollbackPgDb - rollsback the PG database by:

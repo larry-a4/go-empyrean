@@ -79,7 +79,7 @@ type AccountBlock struct {
 
 const accountBlocksTable = `
 CREATE TABLE IF NOT EXISTS accountblocks ( 
-  acct text NOT NULL REFERENCES accounts(addr) ON DELETE CASCADE DEFERRABLE, 
+  acct text NOT NULL REFERENCES accounts(addr) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED, 
   blockhash text NOT NULL,
   delta numeric,
   txcount bigint,
@@ -188,16 +188,18 @@ WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2;
 //UpdateBalanceNonce - query to update the balance and nonce for a transaction
 // Parameters are addr = $1 amount = $2
 const UpdateBalanceNonce = `
-UPDATE accounts 
-	SET balance = ((SELECT balance from accounts where addr = $1) + $2), 
-		nonce = ((SELECT nonce from accounts where addr = $1) + 1) 
-WHERE addr = $1;
+INSERT INTO accounts (addr, balance, nonce) VALUES($1, $2, 1) 
+ON CONFLICT ON CONSTRAINT accounts_pkey DO 
+UPDATE 
+	SET balance = ((SELECT balance from accounts where accounts.addr = $1) + $2), 
+		nonce = ((SELECT nonce from accounts where accounts.addr = $1) + 1) 
+WHERE accounts.addr = $1
 `
 
 //Creates an internal transaction records in the internal tx table
 const CreateInternalTxTableStmnt = `
 INSERT INTO internaltxs(action, txhash, blockHash, from_addr, to_addr, amount, gas, gasUsed, time, input, output)
-VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11);
+VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11));
 `
 
 //Creates a transaction record in the tx table
