@@ -2,8 +2,6 @@ package core
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 	"math/big"
 	"strconv"
 	"strings"
@@ -17,7 +15,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/shyfttracerinterface"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 //IShyftTracer Used to initialize ShyftTracer
@@ -131,90 +129,90 @@ func swriteTransactions(tx *types.Transaction, blockHash common.Hash, blockNumbe
 
 //SWriteInternalTxBalances Writes internal txs and updates balances
 //TODO: Determine best way to include in accountblocks
-func SWriteInternalTxBalances(sqldb *sqlx.DB, toAddr string, fromAddr string, amount string) error {
-	sendAndReceiveData := stypes.SendAndReceive{
-		To:     toAddr,
-		From:   fromAddr,
-		Amount: amount,
-	}
-	_, _, err := AccountExists(sendAndReceiveData.To)
-	value := new(big.Int)
-	value, _ = value.SetString(amount, 10)
-	switch {
-	case err == sql.ErrNoRows:
-		accountNonce := "1"
-		CreateAccount(sendAndReceiveData.To, sendAndReceiveData.Amount, accountNonce)
-		adjustBalanceFromAddr(sendAndReceiveData, value)
-	case err != nil:
-		log.Fatal(err)
-	default:
-		balanceHelper(sendAndReceiveData, amount)
-	}
-	return nil
-}
+// func SWriteInternalTxBalances(sqldb *sqlx.DB, toAddr string, fromAddr string, amount string) error {
+// 	sendAndReceiveData := stypes.SendAndReceive{
+// 		To:     toAddr,
+// 		From:   fromAddr,
+// 		Amount: amount,
+// 	}
+// 	_, _, err := AccountExists(sendAndReceiveData.To)
+// 	value := new(big.Int)
+// 	value, _ = value.SetString(amount, 10)
+// 	switch {
+// 	case err == sql.ErrNoRows:
+// 		accountNonce := "1"
+// 		CreateAccount(sendAndReceiveData.To, sendAndReceiveData.Amount, accountNonce)
+// 		adjustBalanceFromAddr(sendAndReceiveData, value)
+// 	case err != nil:
+// 		log.Fatal(err)
+// 	default:
+// 		balanceHelper(sendAndReceiveData, amount)
+// 	}
+// 	return nil
+// }
 
-func adjustBalanceFromAddr(s stypes.SendAndReceive, value *big.Int) {
-	fromAddressBalance, fromAccountNonce, err := AccountExists(s.From)
-	switch {
-	case err == sql.ErrNoRows:
-		CreateAccount(s.From, "0", "1")
-		fmt.Println("New From account created")
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
-	var newBalanceSender, newAccountNonceSender big.Int
-	var nonceIncrement = big.NewInt(1)
+// func adjustBalanceFromAddr(s stypes.SendAndReceive, value *big.Int) {
+// 	fromAddressBalance, fromAccountNonce, err := AccountExists(s.From)
+// 	switch {
+// 	case err == sql.ErrNoRows:
+// 		CreateAccount(s.From, "0", "1")
+// 		fmt.Println("New From account created")
+// 	}
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	var newBalanceSender, newAccountNonceSender big.Int
+// 	var nonceIncrement = big.NewInt(1)
 
-	fromBalance := new(big.Int)
-	fromBalance, _ = fromBalance.SetString(fromAddressBalance, 10)
+// 	fromBalance := new(big.Int)
+// 	fromBalance, _ = fromBalance.SetString(fromAddressBalance, 10)
 
-	fromNonce := new(big.Int)
-	fromNonce, _ = fromNonce.SetString(fromAccountNonce, 10)
+// 	fromNonce := new(big.Int)
+// 	fromNonce, _ = fromNonce.SetString(fromAccountNonce, 10)
 
-	newBalanceSender.Sub(fromBalance, value)
-	newAccountNonceSender.Add(fromNonce, nonceIncrement)
+// 	newBalanceSender.Sub(fromBalance, value)
+// 	newAccountNonceSender.Add(fromNonce, nonceIncrement)
 
-	// UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
-}
+// 	// UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
+// }
 
-func balanceHelper(s stypes.SendAndReceive, amount string) {
-	fromAddressBalance, fromAccountNonce, err := AccountExists(s.From)
-	toAddressBalance, toAccountNonce, err := AccountExists(s.To)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var newBalanceReceiver, newBalanceSender, newAccountNonceReceiver, newAccountNonceSender big.Int
-	var nonceIncrement = big.NewInt(1)
+// func balanceHelper(s stypes.SendAndReceive, amount string) {
+// 	fromAddressBalance, fromAccountNonce, err := AccountExists(s.From)
+// 	toAddressBalance, toAccountNonce, err := AccountExists(s.To)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	var newBalanceReceiver, newBalanceSender, newAccountNonceReceiver, newAccountNonceSender big.Int
+// 	var nonceIncrement = big.NewInt(1)
 
-	//STRING TO BIG INT
-	//BALANCES TO AND FROM ADDR
-	toBalance := new(big.Int)
-	toBalance, _ = toBalance.SetString(toAddressBalance, 10)
+// 	//STRING TO BIG INT
+// 	//BALANCES TO AND FROM ADDR
+// 	toBalance := new(big.Int)
+// 	toBalance, _ = toBalance.SetString(toAddressBalance, 10)
 
-	fromBalance := new(big.Int)
-	fromBalance, _ = fromBalance.SetString(fromAddressBalance, 10)
+// 	fromBalance := new(big.Int)
+// 	fromBalance, _ = fromBalance.SetString(fromAddressBalance, 10)
 
-	amountValue := new(big.Int)
-	amountValue, _ = amountValue.SetString(amount, 10)
+// 	amountValue := new(big.Int)
+// 	amountValue, _ = amountValue.SetString(amount, 10)
 
-	//ACCOUNT NONCES
-	toNonce := new(big.Int)
-	toNonce, _ = toNonce.SetString(toAccountNonce, 10)
+// 	//ACCOUNT NONCES
+// 	toNonce := new(big.Int)
+// 	toNonce, _ = toNonce.SetString(toAccountNonce, 10)
 
-	fromNonce := new(big.Int)
-	fromNonce, _ = fromNonce.SetString(fromAccountNonce, 10)
+// 	fromNonce := new(big.Int)
+// 	fromNonce, _ = fromNonce.SetString(fromAccountNonce, 10)
 
-	newBalanceReceiver.Add(toBalance, amountValue)
-	newBalanceSender.Sub(fromBalance, amountValue)
+// 	newBalanceReceiver.Add(toBalance, amountValue)
+// 	newBalanceSender.Sub(fromBalance, amountValue)
 
-	newAccountNonceReceiver.Add(toNonce, nonceIncrement)
-	newAccountNonceSender.Add(fromNonce, nonceIncrement)
+// 	newAccountNonceReceiver.Add(toNonce, nonceIncrement)
+// 	newAccountNonceSender.Add(fromNonce, nonceIncrement)
 
-	//UPDATE ACCOUNTS BASED ON NEW BALANCES AND ACCOUNT NONCES
-	UpdateAccount(s.To, newBalanceReceiver.String(), newAccountNonceReceiver.String())
-	UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
-}
+// 	//UPDATE ACCOUNTS BASED ON NEW BALANCES AND ACCOUNT NONCES
+// 	UpdateAccount(s.To, newBalanceReceiver.String(), newAccountNonceReceiver.String())
+// 	UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
+// }
 
 // @NOTE: This function is extremely complex and requires heavy testing and knowdlege of edge cases:
 // uncle blocks, account balance updates based on reorgs, diverges that get dropped.
@@ -229,6 +227,7 @@ func swriteMinerRewards(block *types.Block) string {
 		totalGas.Add(totalGas, new(big.Int).Mul(tx.GasPrice(), new(big.Int).SetUint64(tx.Gas())))
 	}
 
+	blockHash := block.Hash().Hex()
 	totalMinerReward := totalGas.Add(totalGas, Rewards.ShyftMinerBlockReward)
 
 	// References:
@@ -243,19 +242,19 @@ func swriteMinerRewards(block *types.Block) string {
 	uncleReward := new(big.Int)
 	for _, uncle := range block.Uncles() {
 		uncleReward.Add(uncle.Number, big8)
+		// NOTE dbk - subtract Block Number? Clarification required
 		uncleReward.Sub(uncleReward, block.Number())
 		uncleReward.Mul(uncleReward, Rewards.ShyftMinerBlockReward)
 		uncleReward.Div(uncleReward, big8)
 		uncleRewards = append(uncleRewards, uncleReward)
 		uncleAddrs = append(uncleAddrs, uncle.Coinbase.String())
 	}
-
-	sstoreReward(minerAddr, totalMinerReward)
-	sstoreReward(shyftConduitAddress, Rewards.ShyftNetworkBlockReward)
+	updateMinerAccount(minerAddr, blockHash, totalMinerReward)
+	updateMinerAccount(shyftConduitAddress, blockHash, Rewards.ShyftNetworkBlockReward)
 	var uncRewards = new(big.Int)
 	for i := 0; i < len(uncleAddrs); i++ {
 		_ = uncleRewards[i]
-		sstoreReward(uncleAddrs[i], uncleRewards[i])
+		updateMinerAccount(uncleAddrs[i], blockHash, uncleRewards[i])
 	}
 
 	fullRewardValue := new(big.Int)
@@ -265,41 +264,41 @@ func swriteMinerRewards(block *types.Block) string {
 	return fullRewardValue.String()
 }
 
-func sstoreReward(address string, reward *big.Int) {
-	// Check if address exists
-	addressBalance, accountNonce, err := AccountExists(address)
+// func sstoreReward(address string, reward *big.Int) {
+// 	// Check if address exists
+// 	// addressBalance, accountNonce, err := AccountExists(address)
 
-	if err == sql.ErrNoRows {
-		// Addr does not exist, thus create new entry
-		// We convert totalReward into a string and postgres converts into number
-		CreateAccount(address, reward.String(), "1")
-		return
-	} else if err != nil {
-		// Something went wrong panic
-		panic(err)
-	} else {
-		// Addr exists, update existing balance
-		bigBalance := new(big.Int)
-		var nonceIncrement = big.NewInt(1)
-		currentAccountNonce := new(big.Int)
-		currentAccountNonce, errorr := currentAccountNonce.SetString(accountNonce, 10)
-		if !errorr {
-			panic(errorr)
-		}
-		bigBalance, err := bigBalance.SetString(addressBalance, 10)
-		if !err {
-			panic(err)
-		}
-		newBalance := new(big.Int)
-		newAccountNonce := new(big.Int)
-		newBalance.Add(newBalance, bigBalance)
-		newBalance.Add(newBalance, reward)
-		newAccountNonce.Add(currentAccountNonce, nonceIncrement)
-		//Update the balance and nonce
-		UpdateAccount(address, newBalance.String(), newAccountNonce.String())
-		return
-	}
-}
+// 	if err == sql.ErrNoRows {
+// 		// Addr does not exist, thus create new entry
+// 		// We convert totalReward into a string and postgres converts into number
+// 		CreateAccount(address, reward.String(), "1")
+// 		return
+// 	} else if err != nil {
+// 		// Something went wrong panic
+// 		panic(err)
+// 	} else {
+// 		// Addr exists, update existing balance
+// 		// bigBalance := new(big.Int)
+// 		// var nonceIncrement = big.NewInt(1)
+// 		// currentAccountNonce := new(big.Int)
+// 		// currentAccountNonce, errorr := currentAccountNonce.SetString(accountNonce, 10)
+// 		if !errorr {
+// 			panic(errorr)
+// 		}
+// 		bigBalance, err := bigBalance.SetString(addressBalance, 10)
+// 		if !err {
+// 			panic(err)
+// 		}
+// 		newBalance := new(big.Int)
+// 		newAccountNonce := new(big.Int)
+// 		newBalance.Add(newBalance, bigBalance)
+// 		newBalance.Add(newBalance, reward)
+// 		newAccountNonce.Add(currentAccountNonce, nonceIncrement)
+// 		//Update the balance and nonce
+// 		UpdateMinerAccount(address, newBalance.String(), newAccountNonce.String())
+// 		return
+// 	}
+// }
 
 ///////////////////////
 //DB Utility functions
@@ -392,23 +391,26 @@ func CreateAccount(addr string, balance string, nonce string) error {
 	})
 }
 
-//UpdateAccount updates account in Postgres Db
-func UpdateAccount(addr string, balance string, accountNonce string) {
+//updateMinerAccount updates account in Postgres Db
+func updateMinerAccount(addr string, blockHash string, reward *big.Int) error {
 	sqldb, _ := DBConnection()
-	tx, err := sqldb.Beginx()
+	rewardInt := reward.Int64()
 	addr = strings.ToLower(addr)
-	bal := new(big.Int)
-	numericBalance, _ := bal.SetString(balance, 10)
-	non := new(big.Int)
-	intNonce, _ := non.SetString(accountNonce, 10)
 
-	updateAcctStmnt := `UPDATE accounts SET balance = ($2), nonce = ($3) WHERE addr = ($1);`
-	_, err = tx.Exec(updateAcctStmnt, addr, numericBalance, intNonce)
-	if err != nil {
-		fmt.Println("Rolling back transaction")
-		tx.Rollback()
-		return
-	}
+	return Transact(sqldb, func(tx *sqlx.Tx) error {
+		// Updates and/or Creates Account for Miner if it doesnt exist
+		_, err := tx.Exec(shyftschema.UpdateBalanceNonce, addr, rewardInt)
+		if err != nil {
+			panic(err)
+		}
+		if rewardInt != 0 {
+			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, addr, blockHash, rewardInt)
+			if err != nil {
+				panic(err)
+			}
+		}
+		return nil
+	})
 }
 
 //InsertBlock writes block to Postgres Db
@@ -471,14 +473,10 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 	return nil
 }
 
+//InsertInternals - Inserts transactions to pg internaltxs and updates/creates accounts/accountblocks tables
+//accordingly
 func InsertInternals(i stypes.InteralWrite) error {
-	acctAddrs := [2]string{i.To, i.From}
-	// accoutNonce := "0"
-	// balance := strconv.Itoa(0)
-	// for _, acct := range acctAddrs {
-	// 	CreateAccount(acct, balance, accoutNonce)
-	// }
-
+	acctAddrs := [2]string{strings.ToLower(i.To), strings.ToLower(i.From)}
 	sqldb, _ := DBConnection()
 
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
@@ -487,28 +485,28 @@ func InsertInternals(i stypes.InteralWrite) error {
 		fromAcctDebit := -1 * toAcctCredit
 		// Update account balances and account Nonces
 		// Updates/Creates Account for To
-		_, err := sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
+		_, err := tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
 		if err != nil {
 			panic(err)
 		}
 		// Updates/Creates Account for From
-		_, err = sqldb.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
+		_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
 		if err != nil {
 			panic(err)
 		}
 		// // Add Internal Transaction Table entry
-		_, err = sqldb.Exec(shyftschema.CreateInternalTxTableStmnt, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.BlockHash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output)
+		_, err = tx.Exec(shyftschema.CreateInternalTxTableStmnt, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.BlockHash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output)
 		if err != nil {
 			panic(err)
 		}
 		if i.Value != "0" {
 			//Update/Create TO accountblock
-			_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
+			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
 			if err != nil {
 				panic(err)
 			}
 			//Update/Create FROM accountblock
-			_, err = sqldb.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], i.BlockHash, fromAcctDebit)
+			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], i.BlockHash, fromAcctDebit)
 			if err != nil {
 				panic(err)
 			}
@@ -523,43 +521,49 @@ func InsertInternals(i stypes.InteralWrite) error {
 // deleting all transactions contained in the foregoing Blockheaders
 // reversing each account balance by the delta included in the account blocks table
 // reversing the account nonce values by the transaction count included in the accountblocks table
-func RollbackPgDb(blockheaders []string) {
-	// NOTE this needs to be wrapped in a pg transaction so that on
-	// failure we dont rollback and panic - use Transact Function for this - easier to test outside of transaction first
-	acctBlockStmnt := "SELECT * FROM accountblocks WHERE accountblocks.blockhash IN $1"
-	accountBlocks := []shyftschema.AccountBlock{}
+func RollbackPgDb(blockheaders []string) error {
 	sqldb, _ := DBConnection()
-	// Get all accountblocks containing the blockhash
-	err := sqldb.Select(&accountBlocks, acctBlockStmnt, blockheaders)
-	if err != nil {
-		panic(err)
-	}
 
-	for _, acctBlock := range accountBlocks {
-		// Get delta and txCount from accountblocks and adjust account balance and account nonce accordingly
-		_, err = sqldb.Exec(shyftschema.AccountRollback, acctBlock.Acct, int(acctBlock.Delta), int(acctBlock.TxCount))
+	return Transact(sqldb, func(tx *sqlx.Tx) error {
+		acctBlockStmnt := `SELECT * FROM accountblocks WHERE accountblocks.blockhash = ANY($1)`
+		accountBlocks := []shyftschema.AccountBlock{}
+
+		// Get all accountblocks containing the blockhash
+		err := tx.Select(&accountBlocks, acctBlockStmnt, pq.Array(blockheaders))
 		if err != nil {
 			panic(err)
 		}
-	}
-	// Delete all transactions containing the blockhash
-	_, err = sqldb.Exec(shyftschema.TransactionRollback, blockheaders)
-	if err != nil {
-		panic(err)
-	}
+		// Rollback account balances
+		for _, acctBlock := range accountBlocks {
+			// Get delta and txCount from accountblocks and adjust account balance and account nonce accordingly
+			_, err = tx.Exec(shyftschema.AccountRollback, acctBlock.Acct, int(acctBlock.Delta), int(acctBlock.TxCount))
+			if err != nil {
+				panic(err)
+			}
+		}
+		// Delete all transactions containing the blockhash
+		_, err = tx.Exec(shyftschema.TransactionRollback, pq.Array(blockheaders))
+		if err != nil {
+			panic(err)
+		}
+		// Delete all internal transactions containing the blockhash
+		_, err = tx.Exec(shyftschema.InternalTransactionRollback, pq.Array(blockheaders))
+		if err != nil {
+			panic(err)
+		}
 
-	// Delete all blocks whose hash is within the blockheader array
-	_, err = sqldb.Exec(shyftschema.BlockRollback, blockheaders)
-	if err != nil {
-		panic(err)
-	}
+		// Delete all blocks whose hash is within the blockheader array
+		_, err = tx.Exec(shyftschema.BlockRollback, pq.Array(blockheaders))
+		if err != nil {
+			panic(err)
+		}
 
-	// Delete all accountblocks whose blockhash is included in the blockheader array
-	_, err = sqldb.Exec("DELETE from accountblocks WHERE blockhash IN $1;", blockheaders)
-	if err != nil {
-		panic(err)
-	}
-
-	//TODO - internalTxs - BlockRewards - Move Into a db transaction and test
-
+		// Delete all accountblocks whose blockhash is included in the blockheader array
+		_, err = tx.Exec("DELETE from accountblocks WHERE blockhash = ANY($1)", pq.Array(blockheaders))
+		if err != nil {
+			panic(err)
+		}
+		return nil
+	})
+	return nil
 }

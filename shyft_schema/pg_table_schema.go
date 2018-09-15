@@ -159,12 +159,17 @@ WHERE addr = $1;
 
 // TransactionRollback - deletes all transactions whose blockhash is contained in the array of blockheaders
 const TransactionRollback = `
-DELETE FROM txs WHERE blockhash IN $1;
+DELETE FROM txs WHERE blockhash = ANY($1);
+`
+
+// InternalTransactionRollback - deletes all transactions whose blockhash is contained in the array of blockheaders
+const InternalTransactionRollback = `
+DELETE FROM internaltxs WHERE blockhash = ANY($1);
 `
 
 // BlockRollback - deletes all blocks whose hash is contained in the array of blockheaders
 const BlockRollback = `
-DELETE FROM block WHERE hash IN $1;
+DELETE FROM block WHERE hash = ANY($1);
 `
 
 // FindOrCreateAcctStmnt - query to create account if it doesnt exist - and return it if it does
