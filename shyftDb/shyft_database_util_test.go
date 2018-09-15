@@ -3,6 +3,8 @@ package shyftdb
 import (
 	"encoding/json"
 	"math/big"
+	"os"
+
 	"strings"
 	"testing"
 
@@ -13,6 +15,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"github.com/ShyftNetwork/go-empyrean/eth"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
 
 type ShyftTracer struct{}
@@ -20,6 +23,16 @@ type ShyftTracer struct{}
 const (
 	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
+
+// @SHYFT NOTE: Added to clear and reset pg db before test
+// Setup DB for Testing Before Each Test
+
+func TestMain(m *testing.M) {
+	shyfttest.PgTestDbSetup()
+	retCode := m.Run()
+	shyfttest.PgTestTearDown()
+	os.Exit(retCode)
+}
 
 func TestBlock(t *testing.T) {
 	//SET UP FOR TEST FUNCTIONS
@@ -37,9 +50,9 @@ func TestBlock(t *testing.T) {
 	}
 
 	eth.SetGlobalConfig(ethConf)
-
+	core.TruncateTables()
 	eth.InitTracerEnv()
-	core.ClearTables()
+	core.TruncateTables()
 
 	key, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 	signer := types.NewEIP155Signer(big.NewInt(2147483647))
@@ -82,16 +95,16 @@ func TestBlock(t *testing.T) {
 		panic(err)
 	}
 
-	//fromAddr := "0x71562b71999873db5b286df957af199ec94617f7"
-	//fromAddrEndBalance := "75"
-	//fromAddrEndNonce := "5"
+	fromAddr := "0x71562b71999873db5b286df957af199ec94617f7"
+	// fromAddrEndBalance := "75"
+	// fromAddrEndNonce := "5"
 	//toAddr := common.BytesToAddress([]byte{0x11})
-	//core.CreateAccount(sqldb, fromAddr, "201", "1")
+	core.CreateAccount(fromAddr, "201", "1")
 
 	t.Run("TestBlockToReturnBlock", func(t *testing.T) {
-		for _, bc := range blocks {
+		for _, bl := range blocks {
 			// Write and verify the block in the database
-			if err := core.SWriteBlock(bc, receipts); err != nil {
+			if err := core.SWriteBlock(bl, receipts); err != nil {
 				t.Fatalf("Failed to write block into database: %v", err)
 			}
 		}
@@ -322,43 +335,43 @@ func TestBlock(t *testing.T) {
 			t.Fatalf("GetAllTransactions [%v]: GetAllTransactions did not return correctly", getAllTx)
 		}
 	})
-	//t.Run("TestAccountsToReturnAccounts", func(t *testing.T) {
-	//	for _, tx := range txs {
-	//		fmt.Println("test account", tx.To().String())
-	//		accountAddrTo := core.SGetAccount(sqldb, tx.To().String())
-	//		byts := []byte(accountAddrTo)
-	//		var accountDataTo stypes.SAccounts
-	//		json.Unmarshal(byts, &accountDataTo)
-	//
-	//		if strings.ToLower(tx.To().String()) != accountDataTo.Addr {
-	//			t.Fatalf("To address [%v]: To address not found", accountDataTo.Addr)
-	//		}
-	//		if tx.Value().String() != accountDataTo.Balance {
-	//			t.Fatalf("To address balance [%v]: To address balance not found", accountDataTo.Balance)
-	//		}
-	//		if strconv.FormatUint(tx.Nonce(), 10) != accountDataTo.AccountNonce {
-	//			t.Fatalf("To account nonce [%v]: To account nonce not found", accountDataTo.AccountNonce)
-	//		}
-	//	}
-	//	accountAddrFrom := core.SGetAccount(sqldb, fromAddr)
-	//	byts := []byte(accountAddrFrom)
-	//	var accountDataFrom stypes.SAccounts
-	//	json.Unmarshal(byts, &accountDataFrom)
-	//
-	//	if fromAddr != accountDataFrom.Addr {
-	//		t.Fatalf("To address [%v]: To address not found", accountDataFrom.Addr)
-	//	}
-	//	if fromAddrEndBalance != accountDataFrom.Balance {
-	//		t.Fatalf("To address balance [%v]: To address balance not found", accountDataFrom.Balance)
-	//	}
-	//	if fromAddrEndNonce != accountDataFrom.AccountNonce {
-	//		t.Fatalf("To account nonce [%v]: To account nonce not found", accountDataFrom.AccountNonce)
-	//	}
-	//	if getAllAccountTxs := core.SGetAccountTxs(sqldb, toAddr.String()); len(getAllAccountTxs) == 0 {
-	//		t.Fatalf("GetAccountTxs [%v]: GetAccountTxs did not return correctly", getAllAccountTxs)
-	//	}
-	//	if getAllAccounts := core.SGetAllAccounts(sqldb); len(getAllAccounts) == 0 {
-	//		t.Fatalf("GetAllAccounts [%v]: GetAllAccounts did not return correctly", getAllAccounts)
-	//	}
-	//})
 }
+	// t.Run("TestAccountsToReturnAccounts", func(t *testing.T) {
+	// 	for _, tx := range txs {
+	// 		fmt.Println("test account", tx.To().String())
+	// 		accountAddrTo := core.SGetAccount(sqldb, tx.To().String())
+	// 		byts := []byte(accountAddrTo)
+	// 		var accountDataTo stypes.SAccounts
+	// 		json.Unmarshal(byts, &accountDataTo)
+
+	// 		if strings.ToLower(tx.To().String()) != accountDataTo.Addr {
+	// 			t.Fatalf("To address [%v]: To address not found", accountDataTo.Addr)
+	// 		}
+	// 		if tx.Value().String() != accountDataTo.Balance {
+	// 			t.Fatalf("To address balance [%v]: To address balance not found", accountDataTo.Balance)
+	// 		}
+	// 		if strconv.FormatUint(tx.Nonce(), 10) != accountDataTo.AccountNonce {
+	// 			t.Fatalf("To account nonce [%v]: To account nonce not found", accountDataTo.AccountNonce)
+	// 		}
+	// 	}
+	// 	accountAddrFrom := core.SGetAccount(sqldb, fromAddr)
+	// 	byts := []byte(accountAddrFrom)
+	// 	var accountDataFrom stypes.SAccounts
+	// 	json.Unmarshal(byts, &accountDataFrom)
+
+	// 	if fromAddr != accountDataFrom.Addr {
+	// 		t.Fatalf("To address [%v]: To address not found", accountDataFrom.Addr)
+	// 	}
+	// 	if fromAddrEndBalance != accountDataFrom.Balance {
+	// 		t.Fatalf("To address balance [%v]: To address balance not found", accountDataFrom.Balance)
+	// 	}
+	// 	if fromAddrEndNonce != accountDataFrom.AccountNonce {
+	// 		t.Fatalf("To account nonce [%v]: To account nonce not found", accountDataFrom.AccountNonce)
+	// 	}
+	// 	if getAllAccountTxs := core.SGetAccountTxs(sqldb, toAddr.String()); len(getAllAccountTxs) == 0 {
+	// 		t.Fatalf("GetAccountTxs [%v]: GetAccountTxs did not return correctly", getAllAccountTxs)
+	// 	}
+	// 	if getAllAccounts := core.SGetAllAccounts(sqldb); len(getAllAccounts) == 0 {
+	// 		t.Fatalf("GetAllAccounts [%v]: GetAllAccounts did not return correctly", getAllAccounts)
+	// 	}
+	// })

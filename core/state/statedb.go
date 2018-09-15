@@ -512,6 +512,8 @@ func (self *StateDB) RevertToSnapshot(revid int) {
 		self.journal[i].undo(self)
 	}
 	self.journal = self.journal[:snapshot]
+	//fmt.Printf("%+v\n", self.journal)
+	//fmt.Println(reflect.TypeOf(self.journal))
 
 	// Remove invalidated snapshots from the stack.
 	self.validRevisions = self.validRevisions[:idx]

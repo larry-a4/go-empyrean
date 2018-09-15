@@ -503,6 +503,34 @@ func (bc *BlockChain) insert(block *types.Block) {
 func (bc *BlockChain) Genesis() *types.Block {
 	return bc.genesisBlock
 }
+//GetBlockHashesSinceLastValidBlockHash returns a slice of invalid blockHashes
+func (bc *BlockChain) GetBlockHashesSinceLastValidBlockHash(validHash common.Hash) (blockHashes []common.Hash) {
+	//bNumber is VALID blockNumber
+	bNumber := bc.hc.GetBlockNumber(validHash)
+	//hNumber is the Current Header Block Number
+	hNumber := bc.hc.CurrentHeader().Number.Uint64()
+	//hash is the current Headers block hash
+	hash := bc.hc.CurrentHeader().Hash()
+	var blocks []*types.Block
+	//Starting at block height bNumber loop until i <= hNumber
+	for i := hNumber; i > bNumber; i-- {
+		block := bc.GetBlock(hash, hNumber)
+		if block == nil {
+			break
+		}
+		//blocks will be a slice of all invalid blocks (carries all block data)
+		blocks = append(blocks, block)
+		//blockHashes will be a slice of all invalid blockhashes this is returned
+		//to be passed into Rollback()
+		blockHashes = append(blockHashes, block.Hash())
+		//set the new hash to the parentHash and continue loop
+		hash = block.ParentHash()
+		//decrease the hNumber to align with above parentHash
+		//necessary for GetBlock LN 517
+		hNumber--
+	}
+	return blockHashes
+}
 
 // GetBody retrieves a block body (transactions and uncles) from the database by
 // hash, caching it if found.
@@ -704,12 +732,11 @@ const (
 func (bc *BlockChain) Rollback(chain []common.Hash) {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
-
 	for i := len(chain) - 1; i >= 0; i-- {
 		hash := chain[i]
-
 		currentHeader := bc.hc.CurrentHeader()
 		if currentHeader.Hash() == hash {
+			fmt.Println("count")
 			bc.hc.SetCurrentHeader(bc.GetHeader(currentHeader.ParentHash, currentHeader.Number.Uint64()-1))
 		}
 		if currentFastBlock := bc.CurrentFastBlock(); currentFastBlock.Hash() == hash {
@@ -1573,4 +1600,28 @@ func (bc *BlockChain) SubscribeChainSideEvent(ch chan<- ChainSideEvent) event.Su
 // SubscribeLogsEvent registers a subscription of []*types.Log.
 func (bc *BlockChain) SubscribeLogsEvent(ch chan<- []*types.Log) event.Subscription {
 	return bc.scope.Track(bc.logsFeed.Subscribe(ch))
+}
+
+// ShyftRollback is designed to remove a chain of links from the database that aren't
+// certain enough to be valid.
+func (bc *BlockChain) ShyftRollback(chain []common.Hash) {
+	bc.mu.Lock()
+	defer bc.mu.Unlock()
+	for i := 0; i <= len(chain) - 1; i++ {
+		hash := chain[i]
+		currentHeader := bc.hc.CurrentHeader()
+		if currentHeader.Hash() == hash {
+			bc.hc.SetCurrentHeader(bc.GetHeader(currentHeader.ParentHash, currentHeader.Number.Uint64()-1))
+		}
+		if currentFastBlock := bc.CurrentFastBlock(); currentFastBlock.Hash() == hash {
+			newFastBlock := bc.GetBlock(currentFastBlock.ParentHash(), currentFastBlock.NumberU64()-1)
+			bc.currentFastBlock.Store(newFastBlock)
+			WriteHeadFastBlockHash(bc.db, newFastBlock.Hash())
+		}
+		if currentBlock := bc.CurrentBlock(); currentBlock.Hash() == hash {
+			newBlock := bc.GetBlock(currentBlock.ParentHash(), currentBlock.NumberU64()-1)
+			bc.currentBlock.Store(newBlock)
+			WriteHeadBlockHash(bc.db, newBlock.Hash())
+		}
+	}
 }

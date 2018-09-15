@@ -165,3 +165,18 @@ func ClearTables() {
 		panic(err)
 	}
 }
+
+// TruncateTables - Is primarily user to clear the pg database between unit tests
+func TruncateTables() {
+	sqldb, err := DBConnection()
+	if err != nil {
+		panic(err)
+	}
+	tx, _ := sqldb.Begin()
+	sqlStatement := `TRUNCATE TABLE txs, accounts, blocks, internaltxs RESTART IDENTITY CASCADE;`
+	_, err = tx.Exec(sqlStatement)
+	tx.Commit()
+	if err != nil {
+		panic(err)
+	}
+}

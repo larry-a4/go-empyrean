@@ -24,6 +24,7 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
+
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
@@ -106,18 +107,17 @@ func SNew(config *Config) (*Ethereum, error) {
 	stopDbUpgrade := upgradeDeduplicateData(Chaindb_global)
 	chainConfig, _, _ := core.SetupGenesisBlock(Chaindb_global, config.Genesis)
 	eth := &Ethereum{
-		config:         config,
-		chainDb:        Chaindb_global,
-		chainConfig:    chainConfig,
-		shutdownChan:   make(chan bool),
-		stopDbUpgrade:  stopDbUpgrade,
-		networkId:      config.NetworkId,
-		gasPrice:       config.GasPrice,
-		etherbase:      config.Etherbase,
-		bloomRequests:  make(chan chan *bloombits.Retrieval),
-		bloomIndexer:   NewBloomIndexer(Chaindb_global, params.BloomBitsBlocks),
+		config:        config,
+		chainDb:       Chaindb_global,
+		chainConfig:   chainConfig,
+		shutdownChan:  make(chan bool),
+		stopDbUpgrade: stopDbUpgrade,
+		networkId:     config.NetworkId,
+		gasPrice:      config.GasPrice,
+		etherbase:     config.Etherbase,
+		bloomRequests: make(chan chan *bloombits.Retrieval),
+		bloomIndexer:  NewBloomIndexer(Chaindb_global, params.BloomBitsBlocks),
 	}
-
 	eth.blockchain = BlockchainObject
 
 	return eth, nil
@@ -147,7 +147,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		return nil, genesisErr
 	}
 	log.Info("Initialised chain configuration", "config", chainConfig)
-	fmt.Println(config.GasPrice)
+	// fmt.Println(config.GasPrice)
 	eth := &Ethereum{
 		config:         config,
 		chainDb:        chainDb,
