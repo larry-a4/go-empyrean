@@ -11,7 +11,7 @@ import (
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	Rewards "github.com/ShyftNetwork/go-empyrean/consensus/ethash"
-	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/shyfttracerinterface"
 	"github.com/jmoiron/sqlx"
@@ -62,6 +62,16 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt) error {
 			swriteTransactions(tx, block.Header().Hash(), blockData.Number, receipts, age, blockData.GasLimit)
 		}
 	}
+
+	//block4Header := bc.GetHeaderByNumber(20)
+	//if block.Number().Int64() == 30 {
+	//		invalidBlockHashes := bc.GetInvalidBlockHashes(block4Header.Hash())
+	//		bc.Rollback(invalidBlockHashes)
+	//		//fmt.Println(invalidBlockHashes)
+	//		}
+	//if block.Number().Int64() == 20 {
+	//	fmt.Println("CURRENT HEADER HASH AFTER ROLLBACK?", bc.hc.currentHeaderHash.String())
+	//}
 	return nil
 }
 
@@ -308,16 +318,17 @@ func swriteMinerRewards(block *types.Block) string {
 // Refactor - Transaction
 func AccountExists(addr string) (string, string, error) {
 	sqldb, _ := DBConnection()
-	var addressBalance, nonce string
-	sqlExistsStatement := `SELECT balance, nonce from accounts WHERE addr = ($1);`
-	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&addressBalance, &nonce)
+	var addressBalance, accountNonce string
+	sqlExistsStatement := `SELECT balance, nonce from accounts WHERE addr = ($1)`
+
+	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&addressBalance, &accountNonce)
 	switch {
 	case err == sql.ErrNoRows:
-		return addressBalance, nonce, err
+		return addressBalance, accountNonce, err
 	case err != nil:
 		panic(err)
 	default:
-		return addressBalance, nonce, err
+		return addressBalance, accountNonce, err
 	}
 }
 
@@ -343,7 +354,7 @@ func IsContract(addr string) bool {
 	sqldb, _ := DBConnection()
 	var isContract bool
 	sqlExistsStatement := `SELECT isContract from txs WHERE to_addr=($1);`
-	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&isContract)
+	err := sqldb.QueryRowx(sqlExistsStatement, strings.ToLower(addr)).Scan(&isContract)
 	switch {
 	case err == sql.ErrNoRows:
 		return isContract

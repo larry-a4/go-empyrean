@@ -2,7 +2,6 @@ package eth
 
 import (
 	"context"
-
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
