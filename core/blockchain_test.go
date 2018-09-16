@@ -1427,8 +1427,8 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 	fmt.Println("VALID BLOCK HEIGHT      ::", blockHeaderToTest.Number)
 	fmt.Println("CURRENT BLOCKHASH       ::", archive.CurrentHeader().Hash().String())
 	fmt.Println("CURRENT BLOCK HEIGHT    ::", archive.CurrentHeader().Number)
-
-	invalidBlockHashes := archive.GetBlockHashesSinceLastValidBlockHash(blockHeaderToTest.Hash())
+	//Need to add PG rollback in this test case
+	invalidBlockHashes, _ := archive.GetBlockHashesSinceLastValidBlockHash(blockHeaderToTest.Hash())
 	archive.ShyftRollback(invalidBlockHashes)
 	var archiveHeight uint64
 	archiveHeight = 1020
