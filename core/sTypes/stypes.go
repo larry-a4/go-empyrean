@@ -50,6 +50,10 @@ type BlockRes struct {
 	Blocks   []SBlock
 }
 
+type BlockHash struct {
+	Hash string
+}
+
 type SAccounts struct {
 	Addr         string
 	Balance      string

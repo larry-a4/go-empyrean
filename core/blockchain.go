@@ -504,22 +504,21 @@ func (bc *BlockChain) Genesis() *types.Block {
 	return bc.genesisBlock
 }
 //GetBlockHashesSinceLastValidBlockHash returns a slice of invalid blockHashes
-func (bc *BlockChain) GetBlockHashesSinceLastValidBlockHash(validHash common.Hash) (blockHashes []common.Hash) {
+func (bc *BlockChain) GetBlockHashesSinceLastValidBlockHash(validHash common.Hash) (blockHashes []common.Hash, bHashes []string) {
 	//bNumber is VALID blockNumber
 	bNumber := bc.hc.GetBlockNumber(validHash)
 	//hNumber is the Current Header Block Number
 	hNumber := bc.hc.CurrentHeader().Number.Uint64()
 	//hash is the current Headers block hash
 	hash := bc.hc.CurrentHeader().Hash()
-	var blocks []*types.Block
 	//Starting at block height bNumber loop until i <= hNumber
 	for i := hNumber; i > bNumber; i-- {
 		block := bc.GetBlock(hash, hNumber)
 		if block == nil {
 			break
 		}
-		//blocks will be a slice of all invalid blocks (carries all block data)
-		blocks = append(blocks, block)
+		//bHashes will be a slice of all invalid block hashs as []string
+		bHashes = append(bHashes, block.Hash().String())
 		//blockHashes will be a slice of all invalid blockhashes this is returned
 		//to be passed into Rollback()
 		blockHashes = append(blockHashes, block.Hash())
@@ -529,7 +528,7 @@ func (bc *BlockChain) GetBlockHashesSinceLastValidBlockHash(validHash common.Has
 		//necessary for GetBlock LN 517
 		hNumber--
 	}
-	return blockHashes
+	return blockHashes, bHashes
 }
 
 // GetBody retrieves a block body (transactions and uncles) from the database by

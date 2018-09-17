@@ -169,7 +169,7 @@ DELETE FROM internaltxs WHERE blockhash = ANY($1);
 
 // BlockRollback - deletes all blocks whose hash is contained in the array of blockheaders
 const BlockRollback = `
-DELETE FROM block WHERE hash = ANY($1);
+DELETE FROM blocks WHERE hash = ANY($1);
 `
 
 // FindOrCreateAcctStmnt - query to create account if it doesnt exist - and return it if it does

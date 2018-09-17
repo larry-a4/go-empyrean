@@ -36,12 +36,13 @@ CREATE TABLE IF NOT EXISTS txs (
 CREATE TABLE IF NOT EXISTS accounts (
   addr text primary key unique,
   balance numeric,
-  accountNonce numeric
+  nonce numeric
 );
 
 CREATE TABLE IF NOT EXISTS internalTxs (
   id SERIAL PRIMARY KEY,
   txHash text references txs(txHash),
+  blockHash text references blocks(hash) ON DELETE CASCADE,
   type text,
   to_addr text,
   from_addr text,

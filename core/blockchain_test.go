@@ -34,6 +34,8 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/shyfttest"
+	"encoding/json"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 )
 
 // @SHYFT NOTE: Added to clear and reset pg db before test
@@ -1396,7 +1398,7 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 		gspec    = &Genesis{Config: params.TestChainConfig, Alloc: GenesisAlloc{address: {Balance: funds}}}
 		genesis  = gspec.MustCommit(gendb)
 	)
-	height := uint64(1024)
+	height := uint64(10)
 	blocks, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), gendb, int(height), nil)
 
 	//Create a small assertion method to check the three heads
@@ -1421,26 +1423,37 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 	}
 	defer archive.Stop()
 
-	blockHeaderToTest := archive.GetHeaderByNumber(1020)
+	blockHeaderToTest := archive.GetHeaderByNumber(5)
 
-	fmt.Println("VALID BLOCKHASH         ::", blockHeaderToTest.Hash().String())
-	fmt.Println("VALID BLOCK HEIGHT      ::", blockHeaderToTest.Number)
-	fmt.Println("CURRENT BLOCKHASH       ::", archive.CurrentHeader().Hash().String())
-	fmt.Println("CURRENT BLOCK HEIGHT    ::", archive.CurrentHeader().Number)
-
-	invalidBlockHashes := archive.GetBlockHashesSinceLastValidBlockHash(blockHeaderToTest.Hash())
+	fmt.Println("VALID BLOCKHASH             ::", blockHeaderToTest.Hash().String())
+	fmt.Println("VALID BLOCK HEIGHT          ::", blockHeaderToTest.Number)
+	fmt.Println("CURRENT BLOCKHASH GETH      ::", archive.CurrentHeader().Hash().String())
+	fmt.Println("CURRENT BLOCK HEIGHT GETH   ::", archive.CurrentHeader().Number)
+	fmt.Println("CURRENT BLOCKHASH PG        ::", SGetRecentBlockHash())
+	//Need to add PG rollback in this test case
+	invalidBlockHashes, invalidStringBlockHashes := archive.GetBlockHashesSinceLastValidBlockHash(blockHeaderToTest.Hash())
+	RollbackPgDb(invalidStringBlockHashes)
 	archive.ShyftRollback(invalidBlockHashes)
 	var archiveHeight uint64
-	archiveHeight = 1020
+	archiveHeight = 5
 	assert(t, "archive", archive, archiveHeight, archiveHeight)
 
-	fmt.Println("*****************************************************************")
-	fmt.Println("*                                                               *")
-	fmt.Println("*                 AFTER ROLLBACK                                *")
-	fmt.Println("*                                                               *")
-	fmt.Println("*****************************************************************")
+	res := SGetRecentBlockHash()
+	PgHash := stypes.BlockHash{}
+	json.Unmarshal([]byte(res), &PgHash)
+
+	if hash := archive.CurrentHeader().Hash().Hex(); hash != PgHash.Hash {
+		t.Errorf("%s head header mismatch: have #%v, want #%v", "archive", hash, PgHash.Hash)
+	}
+
+	fmt.Println("			*****************************************************************")
+	fmt.Println("			*                                                               *")
+	fmt.Println("			*                 	  AFTER ROLLBACK                        *")
+	fmt.Println("			*                                                               *")
+	fmt.Println("			*****************************************************************")
 
 	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK NUMBER ::", archive.CurrentHeader().Number)
 	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK HASH   ::",archive.CurrentHeader().Hash().String())
+	fmt.Println("AFTER ROLLBACK CURRENT BLOCKHASH PG      ::", PgHash.Hash)
 }
 
