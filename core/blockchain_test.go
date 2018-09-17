@@ -1396,8 +1396,21 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 		gspec    = &Genesis{Config: params.TestChainConfig, Alloc: GenesisAlloc{address: {Balance: funds}}}
 		genesis  = gspec.MustCommit(gendb)
 	)
-	height := uint64(1024)
+	height := uint64(10)
 	blocks, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), gendb, int(height), nil)
+
+	//receipt := &types.Receipt{
+	//	Status:            types.ReceiptStatusSuccessful,
+	//	CumulativeGasUsed: 1,
+	//	Logs: []*types.Log{
+	//		{Address: common.BytesToAddress([]byte{0x11})},
+	//		{Address: common.BytesToAddress([]byte{0x01, 0x11})},
+	//	},
+	//	TxHash:          common.BytesToHash([]byte{0x11, 0x11}),
+	//	ContractAddress: common.BytesToAddress([]byte{0x01, 0x11, 0x11}),
+	//	GasUsed:         111111,
+	//}
+	//receipts := []*types.Receipt{receipt}
 
 	//Create a small assertion method to check the three heads
 	assert := func(t *testing.T, kind string, chain *BlockChain, header uint64, block uint64) {
@@ -1421,26 +1434,37 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 	}
 	defer archive.Stop()
 
-	blockHeaderToTest := archive.GetHeaderByNumber(1020)
+	//for _, bl := range blocks {
+	//	fmt.Println("BLOCK HASH FROM GEN CHAIN",bl.Hash().Hex())
+	//	// Write and verify the block in the database
+	//	if err := SWriteBlock(bl, receipts); err != nil {
+	//		t.Fatalf("Failed to write block into database: %v", err)
+	//	}
+	//}
 
-	fmt.Println("VALID BLOCKHASH         ::", blockHeaderToTest.Hash().String())
-	fmt.Println("VALID BLOCK HEIGHT      ::", blockHeaderToTest.Number)
-	fmt.Println("CURRENT BLOCKHASH       ::", archive.CurrentHeader().Hash().String())
-	fmt.Println("CURRENT BLOCK HEIGHT    ::", archive.CurrentHeader().Number)
+	blockHeaderToTest := archive.GetHeaderByNumber(5)
+
+	fmt.Println("VALID BLOCKHASH             ::", blockHeaderToTest.Hash().String())
+	fmt.Println("VALID BLOCK HEIGHT          ::", blockHeaderToTest.Number)
+	fmt.Println("CURRENT BLOCKHASH GETH      ::", archive.CurrentHeader().Hash().String())
+	fmt.Println("CURRENT BLOCK HEIGHT GETH   ::", archive.CurrentHeader().Number)
+	fmt.Println("CURRENT BLOCKHASH PG        ::", SGetRecentBlockHash())
 	//Need to add PG rollback in this test case
-	invalidBlockHashes, _ := archive.GetBlockHashesSinceLastValidBlockHash(blockHeaderToTest.Hash())
+	invalidBlockHashes, invalidStringBlockHashes := archive.GetBlockHashesSinceLastValidBlockHash(blockHeaderToTest.Hash())
+	RollbackPgDb(invalidStringBlockHashes)
 	archive.ShyftRollback(invalidBlockHashes)
 	var archiveHeight uint64
-	archiveHeight = 1020
+	archiveHeight = 5
 	assert(t, "archive", archive, archiveHeight, archiveHeight)
 
-	fmt.Println("*****************************************************************")
-	fmt.Println("*                                                               *")
-	fmt.Println("*                 AFTER ROLLBACK                                *")
-	fmt.Println("*                                                               *")
-	fmt.Println("*****************************************************************")
+	fmt.Println("			*****************************************************************")
+	fmt.Println("			*                                                               *")
+	fmt.Println("			*                 	  AFTER ROLLBACK                        *")
+	fmt.Println("			*                                                               *")
+	fmt.Println("			*****************************************************************")
 
 	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK NUMBER ::", archive.CurrentHeader().Number)
 	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK HASH   ::",archive.CurrentHeader().Hash().String())
+	fmt.Println("AFTER ROLLBACK CURRENT BLOCKHASH PG      ::", SGetRecentBlockHash())
 }
 
