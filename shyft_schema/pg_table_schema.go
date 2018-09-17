@@ -36,13 +36,13 @@ CREATE TABLE IF NOT EXISTS accounts (
 type Block struct {
 	Hash       string    `db:"hash"`
 	Coinbase   string    `db:"coinbase"`
-	GasUsed    int64     `db:"gasUsed"`
-	GasLimit   int64     `db:"gasLimit"`
-	TxCount    int64     `db:"txCount"`
-	UncleCount int64     `db:"uncleCount"`
+	GasUsed    int64     `db:"gasused"`
+	GasLimit   int64     `db:"gaslimit"`
+	TxCount    int64     `db:"txcount"`
+	UncleCount int64     `db:"unclecount"`
 	Age        time.Time `db:"age"`
-	ParentHash string    `db:"parentHash"`
-	UncleHash  string    `db:"uncleHash"`
+	ParentHash string    `db:"parenthash"`
+	UncleHash  string    `db:"unclehash"`
 	Difficulty int64     `db:"difficulty"`
 	Size       string    `db:"size"`
 	Nonce      int64     `db:"nonce"`
@@ -55,13 +55,13 @@ const blocksTable = `
 CREATE TABLE IF NOT EXISTS blocks (
   hash text primary key,
   coinbase text,
-  gasUsed numeric,
-  gasLimit numeric,
-  txCount numeric,
-  uncleCount numeric,
+  gasused numeric,
+  gaslimit numeric,
+  txcount numeric,
+  unclecount numeric,
   age timestamp,
-  parentHash text,
-  uncleHash text,
+  parenthash text,
+  unclehash text,
   difficulty bigint,
   size text,
   nonce numeric,
@@ -111,7 +111,7 @@ type PgTransaction struct {
 // TxsTable sql for transactions
 const txsTable = `
 CREATE TABLE IF NOT EXISTS txs (
-  txHash text primary key unique,
+  txhash text primary key unique,
   to_addr text,
   from_addr text,
   blockhash text,
@@ -119,11 +119,11 @@ CREATE TABLE IF NOT EXISTS txs (
   amount numeric,
   gasprice numeric,
   gas numeric,
-  gasLimit numeric,
-  txFee numeric,
+  gaslimit numeric,
+  txfee numeric,
   nonce numeric,
-  txStatus text,
-  isContract bool,
+  txstatus text,
+  iscontract bool,
   age timestamp,
   data bytea
 );
@@ -135,7 +135,7 @@ const internalTxsTable = `
 CREATE TABLE IF NOT EXISTS internalTxs (
   id SERIAL PRIMARY KEY,
   txHash text references txs(txHash) ON DELETE CASCADE,
-  blockHash text references blocks(hash) ON DELETE CASCADE,
+  blockHash text NOT NULL,
   action text,
   to_addr text,
   from_addr text,
