@@ -34,6 +34,8 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/shyfttest"
+	"encoding/json"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 )
 
 // @SHYFT NOTE: Added to clear and reset pg db before test
@@ -1399,19 +1401,6 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 	height := uint64(10)
 	blocks, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), gendb, int(height), nil)
 
-	//receipt := &types.Receipt{
-	//	Status:            types.ReceiptStatusSuccessful,
-	//	CumulativeGasUsed: 1,
-	//	Logs: []*types.Log{
-	//		{Address: common.BytesToAddress([]byte{0x11})},
-	//		{Address: common.BytesToAddress([]byte{0x01, 0x11})},
-	//	},
-	//	TxHash:          common.BytesToHash([]byte{0x11, 0x11}),
-	//	ContractAddress: common.BytesToAddress([]byte{0x01, 0x11, 0x11}),
-	//	GasUsed:         111111,
-	//}
-	//receipts := []*types.Receipt{receipt}
-
 	//Create a small assertion method to check the three heads
 	assert := func(t *testing.T, kind string, chain *BlockChain, header uint64, block uint64) {
 		if num := chain.CurrentBlock().NumberU64(); num != block {
@@ -1434,14 +1423,6 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 	}
 	defer archive.Stop()
 
-	//for _, bl := range blocks {
-	//	fmt.Println("BLOCK HASH FROM GEN CHAIN",bl.Hash().Hex())
-	//	// Write and verify the block in the database
-	//	if err := SWriteBlock(bl, receipts); err != nil {
-	//		t.Fatalf("Failed to write block into database: %v", err)
-	//	}
-	//}
-
 	blockHeaderToTest := archive.GetHeaderByNumber(5)
 
 	fmt.Println("VALID BLOCKHASH             ::", blockHeaderToTest.Hash().String())
@@ -1457,6 +1438,14 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 	archiveHeight = 5
 	assert(t, "archive", archive, archiveHeight, archiveHeight)
 
+	res := SGetRecentBlockHash()
+	PgHash := stypes.BlockHash{}
+	json.Unmarshal([]byte(res), &PgHash)
+
+	if hash := archive.CurrentHeader().Hash().Hex(); hash != PgHash.Hash {
+		t.Errorf("%s head header mismatch: have #%v, want #%v", "archive", hash, PgHash.Hash)
+	}
+
 	fmt.Println("			*****************************************************************")
 	fmt.Println("			*                                                               *")
 	fmt.Println("			*                 	  AFTER ROLLBACK                        *")
@@ -1465,6 +1454,6 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 
 	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK NUMBER ::", archive.CurrentHeader().Number)
 	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK HASH   ::",archive.CurrentHeader().Hash().String())
-	fmt.Println("AFTER ROLLBACK CURRENT BLOCKHASH PG      ::", SGetRecentBlockHash())
+	fmt.Println("AFTER ROLLBACK CURRENT BLOCKHASH PG      ::", PgHash.Hash)
 }
 
