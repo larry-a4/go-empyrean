@@ -35,7 +35,6 @@ func InitDB() (*sqlx.DB, error) {
 	}
 	// connect to the designated db & create tables if necessary
 	blockExplorerDb = Connect(ShyftConnectStr())
-	fmt.Println(shyftschema.MakeTableQuery())
 	blockExplorerDb.MustExec(shyftschema.MakeTableQuery())
 	return blockExplorerDb, nil
 }
