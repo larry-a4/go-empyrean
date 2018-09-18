@@ -118,6 +118,11 @@ var (
 		Usage: "Data directory for the databases and keystore",
 		Value: DirectoryString{node.DefaultDataDir()},
 	}
+	PostgresFlag = cli.StringFlag{
+		Name:  "nopg",
+		Usage: "Disconnects the postgres instance used for Shyft Shakedown",
+		Value: "",
+	}
 	KeyStoreDirFlag = DirectoryFlag{
 		Name:  "keystore",
 		Usage: "Directory for the keystore (default = inside the datadir)",

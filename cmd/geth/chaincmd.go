@@ -141,6 +141,21 @@ Remove blockchain and state databases`,
 The arguments are interpreted as block numbers or hashes.
 Use "ethereum dump 0" to dump the genesis block.`,
 	}
+	noPGcommand = cli.Command{
+		Action:    utils.MigrateFlags(disconnectPG),
+		Name:      "nopg",
+		Usage:     "Does not connect to a postgres instance",
+		ArgsUsage: "",
+		Flags: []cli.Flag{
+			utils.DataDirFlag,
+			utils.CacheFlag,
+			utils.LightModeFlag,
+			utils.PostgresFlag,
+		},
+		Category: "BLOCKCHAIN COMMANDS",
+		Description: `
+Allows user the option to run Shyft geth without a postgres instance for the block explorer and the api`,
+	}
 )
 
 // initGenesis will initialise the given JSON format genesis file and writes it as
@@ -411,3 +426,15 @@ func hashish(x string) bool {
 	_, err := strconv.Atoi(x)
 	return err != nil
 }
+
+func setGlobalPG (str string) string {
+	var GlobalPG = str
+	return GlobalPG
+}
+
+func disconnectPG(ctx *cli.Context) (error) {
+	setGlobalPG("disconnect")
+	return nil
+}
+
+
