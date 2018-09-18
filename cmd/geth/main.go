@@ -37,6 +37,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/metrics"
 	"github.com/ShyftNetwork/go-empyrean/node"
 	"gopkg.in/urfave/cli.v1"
+	"github.com/ShyftNetwork/go-empyrean/core"
 )
 
 const (
@@ -159,7 +160,6 @@ func init() {
 		copydbCommand,
 		removedbCommand,
 		dumpCommand,
-		noPGcommand,
 		// See monitorcmd.go:
 		monitorCommand,
 		// See accountcmd.go:
@@ -242,7 +242,9 @@ func startNode(ctx *cli.Context, stack *node.Node) {
 	// Register wallet event handlers to open and auto-derive wallets
 	events := make(chan accounts.WalletEvent, 16)
 	stack.AccountManager().Subscribe(events)
-
+	if ctx.GlobalBool(utils.PostgresFlag.Name) {
+		core.DisconnectPG()
+	}
 	go func() {
 		// Create an chain state reader for self-derivation
 		rpcClient, err := stack.Attach()

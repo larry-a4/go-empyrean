@@ -1024,12 +1024,13 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 	if status == CanonStatTy {
 		bc.insert(block)
 	}
-
 	// NOTE:SHYFT - Write block data for block explorer
-	//fmt.Printf("\n\t[BLOCKCHAIN.GO bc.chainConfig]    %+v", bc.chainConfig)
-	if err := SWriteBlock(block, receipts); err != nil {
-		return NonStatTy, err
+	if GlobalPG != "disconnect" {
+		if err := SWriteBlock(block, receipts); err != nil {
+			return NonStatTy, err
+		}
 	}
+
 	bc.futureBlocks.Remove(block.Hash())
 	return status, nil
 }
