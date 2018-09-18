@@ -15,7 +15,7 @@ class TransactionTable extends Component {
 
     async componentDidMount() {
         try {
-            const response = await axios.get("http://localhost:8080/api/get_all_transactions")             
+            const response = await axios.get("http://0.0.0.0:8080/api/get_all_transactions")             
             console.log(response)
             if(response.data === "\n") {
                 this.setState({emptyDataSet: true})                                             

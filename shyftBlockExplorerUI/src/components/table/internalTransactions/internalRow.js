@@ -15,7 +15,7 @@ class InternalTransactionsTable extends Component {
 
     async componentDidMount() {
         try {
-            const response = await axios.get("http://localhost:8080/api/get_internal_transactions/");                     
+            const response = await axios.get("http://0.0.0.0:8080/api/get_internal_transactions/");                     
             if(response.data === "\n") {
                 this.setState({emptyDataSet: true})                                   
             } else {
