@@ -411,3 +411,15 @@ func hashish(x string) bool {
 	_, err := strconv.Atoi(x)
 	return err != nil
 }
+
+func setGlobalPG (str string) string {
+	var GlobalPG = str
+	return GlobalPG
+}
+
+func disconnectPG(ctx *cli.Context) (error) {
+	setGlobalPG("disconnect")
+	return nil
+}
+
+

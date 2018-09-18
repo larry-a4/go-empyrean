@@ -31,7 +31,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/common/math"
-	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
@@ -45,7 +45,7 @@ import (
 //go:generate gencodec -type GenesisAccount -field-override genesisAccountMarshaling -out gen_genesis_account.go
 
 var errGenesisNoConfig = errors.New("genesis has no chain configuration")
-
+var GlobalPG = ""
 // Genesis specifies the header fields, state of a genesis block. It also defines hard
 // fork switch-over blocks through the chain configuration.
 type Genesis struct {
@@ -88,6 +88,11 @@ type GenesisAccount struct {
 	Balance    *big.Int                    `json:"balance" gencodec:"required"`
 	Nonce      uint64                      `json:"nonce,omitempty"`
 	PrivateKey []byte                      `json:"secretKey,omitempty"` // for tests
+}
+
+func DisconnectPG() (string) {
+	GlobalPG = "disconnect"
+	return GlobalPG
 }
 
 // field type overrides for gencodec
@@ -151,10 +156,11 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 		case err == sql.ErrNoRows:
 			var toAddr *common.Address
 			var data []byte
-			var cost, gasPrice uint64
+			var gasPrice uint64
+			var cost string
 			//Initializing proper types for tx struct
 			toAddr = &k
-			cost = 0
+			cost = "0"
 			gasPrice = 0
 			//Appending GENESIS to address stored as txHash and From Addr
 			Genesis := []string{"GENESIS_", k.String()}
@@ -232,7 +238,7 @@ func WriteShyftBlockZero(block *types.Block, gen *Genesis) error {
 	return nil
 }
 
-// SetupGenesisBlock writes or updates the genesis block in db.
+// SetupGenesisBlock writes or updates the genesis 7block in db.
 // The block that will be used is:
 //
 //                          genesis == nil       genesis != nil
@@ -260,15 +266,17 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 		}
 		block, err := genesis.Commit(db)
 		//@NOTE:SHYFT SWITCH CASE ENSURES SHYFT GENESIS FUNCTIONS ARE ONLY CALLED ONCE
-		// sqldb, _ := DBConnection()
-		exist := BlockExists(block.Hash().String())
-		if !exist {
-			//@NOTE:SHYFT WRITE TO BLOCK ZERO DB
-			WriteShyftBlockZero(block, genesis)
-			//@NOTE:SHYFT WRITE TO DB
-			WriteShyftGen(genesis, block)
-			log.Info("Genesis Block Written")
+		if GlobalPG != "disconnect" {
+			exist := BlockExists(block.Hash().String())
+			if !exist {
+				//@NOTE:SHYFT WRITE TO BLOCK ZERO DB
+				WriteShyftBlockZero(block, genesis)
+				//@NOTE:SHYFT WRITE TO DB
+				WriteShyftGen(genesis, block)
+				log.Info("Genesis Block Written")
+			}
 		}
+
 		return genesis.Config, block.Hash(), err
 	}
 

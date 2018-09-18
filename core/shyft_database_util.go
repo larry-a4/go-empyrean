@@ -62,16 +62,6 @@ func SWriteBlock(block *types.Block, receipts []*types.Receipt) error {
 			swriteTransactions(tx, block.Header().Hash(), blockData.Number, receipts, age, blockData.GasLimit)
 		}
 	}
-
-	//block4Header := bc.GetHeaderByNumber(20)
-	//if block.Number().Int64() == 30 {
-	//		invalidBlockHashes := bc.GetInvalidBlockHashes(block4Header.Hash())
-	//		bc.Rollback(invalidBlockHashes)
-	//		//fmt.Println(invalidBlockHashes)
-	//		}
-	//if block.Number().Int64() == 20 {
-	//	fmt.Println("CURRENT HEADER HASH AFTER ROLLBACK?", bc.hc.currentHeaderHash.String())
-	//}
 	return nil
 }
 
@@ -115,7 +105,7 @@ func swriteTransactions(tx *types.Transaction, blockHash common.Hash, blockNumbe
 		BlockHash:   blockHash.Hex(),
 		BlockNumber: blockNumber,
 		Amount:      tx.Value().String(),
-		Cost:        tx.Cost().Uint64(),
+		Cost:        tx.Cost().String(),
 		GasPrice:    tx.GasPrice().Uint64(),
 		GasLimit:    gasLimit,
 		Gas:         tx.Gas(),
@@ -136,93 +126,6 @@ func swriteTransactions(tx *types.Transaction, blockHash common.Hash, blockNumbe
 	}
 	return nil
 }
-
-//SWriteInternalTxBalances Writes internal txs and updates balances
-//TODO: Determine best way to include in accountblocks
-// func SWriteInternalTxBalances(sqldb *sqlx.DB, toAddr string, fromAddr string, amount string) error {
-// 	sendAndReceiveData := stypes.SendAndReceive{
-// 		To:     toAddr,
-// 		From:   fromAddr,
-// 		Amount: amount,
-// 	}
-// 	_, _, err := AccountExists(sendAndReceiveData.To)
-// 	value := new(big.Int)
-// 	value, _ = value.SetString(amount, 10)
-// 	switch {
-// 	case err == sql.ErrNoRows:
-// 		accountNonce := "1"
-// 		CreateAccount(sendAndReceiveData.To, sendAndReceiveData.Amount, accountNonce)
-// 		adjustBalanceFromAddr(sendAndReceiveData, value)
-// 	case err != nil:
-// 		log.Fatal(err)
-// 	default:
-// 		balanceHelper(sendAndReceiveData, amount)
-// 	}
-// 	return nil
-// }
-
-// func adjustBalanceFromAddr(s stypes.SendAndReceive, value *big.Int) {
-// 	fromAddressBalance, fromAccountNonce, err := AccountExists(s.From)
-// 	switch {
-// 	case err == sql.ErrNoRows:
-// 		CreateAccount(s.From, "0", "1")
-// 		fmt.Println("New From account created")
-// 	}
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	var newBalanceSender, newAccountNonceSender big.Int
-// 	var nonceIncrement = big.NewInt(1)
-
-// 	fromBalance := new(big.Int)
-// 	fromBalance, _ = fromBalance.SetString(fromAddressBalance, 10)
-
-// 	fromNonce := new(big.Int)
-// 	fromNonce, _ = fromNonce.SetString(fromAccountNonce, 10)
-
-// 	newBalanceSender.Sub(fromBalance, value)
-// 	newAccountNonceSender.Add(fromNonce, nonceIncrement)
-
-// 	// UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
-// }
-
-// func balanceHelper(s stypes.SendAndReceive, amount string) {
-// 	fromAddressBalance, fromAccountNonce, err := AccountExists(s.From)
-// 	toAddressBalance, toAccountNonce, err := AccountExists(s.To)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	var newBalanceReceiver, newBalanceSender, newAccountNonceReceiver, newAccountNonceSender big.Int
-// 	var nonceIncrement = big.NewInt(1)
-
-// 	//STRING TO BIG INT
-// 	//BALANCES TO AND FROM ADDR
-// 	toBalance := new(big.Int)
-// 	toBalance, _ = toBalance.SetString(toAddressBalance, 10)
-
-// 	fromBalance := new(big.Int)
-// 	fromBalance, _ = fromBalance.SetString(fromAddressBalance, 10)
-
-// 	amountValue := new(big.Int)
-// 	amountValue, _ = amountValue.SetString(amount, 10)
-
-// 	//ACCOUNT NONCES
-// 	toNonce := new(big.Int)
-// 	toNonce, _ = toNonce.SetString(toAccountNonce, 10)
-
-// 	fromNonce := new(big.Int)
-// 	fromNonce, _ = fromNonce.SetString(fromAccountNonce, 10)
-
-// 	newBalanceReceiver.Add(toBalance, amountValue)
-// 	newBalanceSender.Sub(fromBalance, amountValue)
-
-// 	newAccountNonceReceiver.Add(toNonce, nonceIncrement)
-// 	newAccountNonceSender.Add(fromNonce, nonceIncrement)
-
-// 	//UPDATE ACCOUNTS BASED ON NEW BALANCES AND ACCOUNT NONCES
-// 	UpdateAccount(s.To, newBalanceReceiver.String(), newAccountNonceReceiver.String())
-// 	UpdateAccount(s.From, newBalanceSender.String(), newAccountNonceSender.String())
-// }
 
 // @NOTE: This function is extremely complex and requires heavy testing and knowdlege of edge cases:
 // uncle blocks, account balance updates based on reorgs, diverges that get dropped.
@@ -273,42 +176,6 @@ func swriteMinerRewards(block *types.Block) string {
 
 	return fullRewardValue.String()
 }
-
-// func sstoreReward(address string, reward *big.Int) {
-// 	// Check if address exists
-// 	// addressBalance, accountNonce, err := AccountExists(address)
-
-// 	if err == sql.ErrNoRows {
-// 		// Addr does not exist, thus create new entry
-// 		// We convert totalReward into a string and postgres converts into number
-// 		CreateAccount(address, reward.String(), "1")
-// 		return
-// 	} else if err != nil {
-// 		// Something went wrong panic
-// 		panic(err)
-// 	} else {
-// 		// Addr exists, update existing balance
-// 		// bigBalance := new(big.Int)
-// 		// var nonceIncrement = big.NewInt(1)
-// 		// currentAccountNonce := new(big.Int)
-// 		// currentAccountNonce, errorr := currentAccountNonce.SetString(accountNonce, 10)
-// 		if !errorr {
-// 			panic(errorr)
-// 		}
-// 		bigBalance, err := bigBalance.SetString(addressBalance, 10)
-// 		if !err {
-// 			panic(err)
-// 		}
-// 		newBalance := new(big.Int)
-// 		newAccountNonce := new(big.Int)
-// 		newBalance.Add(newBalance, bigBalance)
-// 		newBalance.Add(newBalance, reward)
-// 		newAccountNonce.Add(currentAccountNonce, nonceIncrement)
-// 		//Update the balance and nonce
-// 		UpdateMinerAccount(address, newBalance.String(), newAccountNonce.String())
-// 		return
-// 	}
-// }
 
 ///////////////////////
 //DB Utility functions
@@ -428,7 +295,7 @@ func updateMinerAccount(addr string, blockHash string, reward *big.Int) error {
 func InsertBlock(blockData stypes.SBlock) {
 	sqldb, _ := DBConnection()
 	sqlStatement := `INSERT INTO blocks(hash, coinbase, number, gasUsed, gasLimit, txCount, uncleCount, age, parentHash, uncleHash, difficulty, size, rewards, nonce) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12),($13), ($14)) RETURNING number;`
-	qerr := sqldb.QueryRow(sqlStatement, strings.ToLower(blockData.Hash), blockData.Coinbase, blockData.Number, blockData.GasUsed, blockData.GasLimit, blockData.TxCount, blockData.UncleCount, blockData.Age, blockData.ParentHash, blockData.UncleHash, blockData.Difficulty, blockData.Size, blockData.Rewards, blockData.Nonce).Scan(&blockData.Number)
+	qerr := sqldb.QueryRow(sqlStatement, strings.ToLower(blockData.Hash), strings.ToLower(blockData.Coinbase), blockData.Number, blockData.GasUsed, blockData.GasLimit, blockData.TxCount, blockData.UncleCount, blockData.Age, blockData.ParentHash, blockData.UncleHash, blockData.Difficulty, blockData.Size, blockData.Rewards, blockData.Nonce).Scan(&blockData.Number)
 	if qerr != nil {
 		panic(qerr)
 	}
