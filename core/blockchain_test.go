@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -36,19 +35,17 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
-	"github.com/ShyftNetwork/go-empyrean/shyft_schema"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
 
 // @SHYFT NOTE: Added to clear and reset pg db before test
 // Setup DB for Testing Before Each Test
 
-func TestMain(m *testing.M) {
-	shyfttest.PgTestDbSetup()
-	retCode := m.Run()
-	shyfttest.PgTestTearDown()
-	os.Exit(retCode)
-}
+// func TestMain(m *testing.M) {
+// 	shyfttest.PgTestDbSetup()
+// 	retCode := m.Run()
+// 	shyfttest.PgTestTearDown()
+// 	os.Exit(retCode)
+// }
 
 // Test fork of length N starting from block i
 func testFork(t *testing.T, blockchain *BlockChain, i, n int, full bool, comparator func(td1, td2 *big.Int)) {
@@ -756,7 +753,7 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 	assert(t, "fast", fast, height, height, 0)
 	fast.Rollback(remove)
 	assert(t, "fast", fast, height/2, height/2, 0)
-
+	TruncateTables()
 	// Import the chain as a light node and ensure all pointers are updated
 	lightDb, _ := ethdb.NewMemDatabase()
 	gspec.MustCommit(lightDb)
@@ -1457,231 +1454,4 @@ func TestGetBlockHashesSinceLastValidBlockHash(t *testing.T) {
 	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK NUMBER ::", archive.CurrentHeader().Number)
 	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK HASH   ::", archive.CurrentHeader().Hash().String())
 	fmt.Println("AFTER ROLLBACK CURRENT BLOCKHASH PG      ::", PgHash.Hash)
-}
-
-var (
-	BlockAccounts map[string][]shyftschema.Account
-	BlockHashes   []string
-)
-
-func insertBlocksTransactions() (map[string][]shyftschema.Account, []string) {
-	TruncateTables()
-	db, _ := InitDB()
-	key, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-	signer := types.NewEIP155Signer(big.NewInt(2147483647))
-
-	//Nonce, To Address,Value, GasLimit, Gasprice, data
-	tx1 := types.NewTransaction(1, common.BytesToAddress([]byte{0x11}), big.NewInt(5), 1111, big.NewInt(11111), []byte{0x11, 0x11, 0x11})
-	mytx1, _ := types.SignTx(tx1, signer, key)
-	tx2 := types.NewTransaction(2, common.BytesToAddress([]byte{0x22}), big.NewInt(5), 2222, big.NewInt(22222), []byte{0x22, 0x22, 0x22})
-	mytx2, _ := types.SignTx(tx2, signer, key)
-	tx3 := types.NewTransaction(3, common.BytesToAddress([]byte{0x33}), big.NewInt(5), 3333, big.NewInt(33333), []byte{0x33, 0x33, 0x33})
-	mytx3, _ := types.SignTx(tx3, signer, key)
-	txs := []*types.Transaction{mytx1, mytx2}
-	txs1 := []*types.Transaction{mytx3}
-
-	//Nonce,Value, GasLimit, Gasprice, data
-	contractCreation := types.NewContractCreation(1, big.NewInt(111), 1111, big.NewInt(11111), []byte{0x11, 0x11, 0x11})
-	mytx4, _ := types.SignTx(contractCreation, signer, key)
-	txs2 := []*types.Transaction{mytx4}
-
-	receipt := &types.Receipt{
-		Status:            types.ReceiptStatusSuccessful,
-		CumulativeGasUsed: 1,
-		Logs: []*types.Log{
-			{Address: common.BytesToAddress([]byte{0x11})},
-			{Address: common.BytesToAddress([]byte{0x01, 0x11})},
-		},
-		TxHash:          common.BytesToHash([]byte{0x11, 0x11}),
-		ContractAddress: common.BytesToAddress([]byte{0x01, 0x11, 0x11}),
-		GasUsed:         111111,
-	}
-	receipts := []*types.Receipt{receipt}
-
-	block1 := types.NewBlock(&types.Header{Number: big.NewInt(323)}, txs, nil, receipts)
-	block2 := types.NewBlock(&types.Header{Number: big.NewInt(320)}, txs1, nil, receipts)
-	block3 := types.NewBlock(&types.Header{Number: big.NewInt(322)}, txs2, nil, receipts)
-	blocks := []*types.Block{block1, block2, block3}
-	blockHashes := []string{}
-	blockAccounts := map[string][]shyftschema.Account{}
-	for _, bl := range blocks {
-		// Write and verify the block in the database
-		err := SWriteBlock(bl, receipts)
-		if err != nil {
-			panic(err)
-		}
-		newDbAccounts := []shyftschema.Account{}
-		err = db.Select(&newDbAccounts, "SELECT * FROM accounts")
-		if err != nil {
-			panic(err)
-		}
-		blockHashes = append(blockHashes, bl.Hash().Hex())
-		blockAccounts[bl.Hash().Hex()] = newDbAccounts
-	}
-	// fmt.Println("Blocks Inserted Resulting In The Following Balances:")
-	// for k, v := range blockAccounts {
-	// 	fmt.Printf("\n@block insertion %s \n", k)
-	// 	fmt.Println("*********************************************************************")
-	// 	for _, acct := range v {
-	// 		fmt.Printf("%+v \n", acct)
-	// 	}
-	// 	fmt.Println("*********************************************************************")
-	// }
-	return blockAccounts, blockHashes
-}
-
-func TestRollbackReconcilesAccounts(t *testing.T) {
-	t.Run("PgRollback - of all blocks reverses all account balances", func(t *testing.T) {
-		_, blockHashes := insertBlocksTransactions()
-		db, _ := InitDB()
-
-		// Rollback 1 blocks
-		RollbackPgDb(blockHashes[0:])
-		rollBackDbAccounts := []shyftschema.Account{}
-		err := db.Select(&rollBackDbAccounts, "SELECT * FROM accounts")
-		if err != nil {
-			panic(err)
-		}
-		if len(rollBackDbAccounts) > 0 {
-			t.Errorf("Rollback of the following blocks %+v expected %d accounts have %d\n", blockHashes[0:], 0, len(rollBackDbAccounts))
-		}
-		newDbAccountBlocks := []shyftschema.AccountBlock{}
-		err = db.Select(&newDbAccountBlocks, "SELECT * FROM accountblocks")
-		if err != nil {
-			panic(err)
-		}
-		if len(newDbAccountBlocks) != 0 {
-			t.Errorf("Got %d db accountblocks on rollback -  Expected 2", len(newDbAccountBlocks))
-		}
-		rollbackBlocks := []shyftschema.Block{}
-		err = db.Select(&rollbackBlocks, "SELECT * FROM blocks")
-		if err != nil {
-			panic(err)
-		}
-		if len(rollbackBlocks) != 0 {
-			t.Errorf("Got %d db blocks on rollback -  Expected 0", len(rollbackBlocks))
-		}
-		rollbackTxs := []shyftschema.PgTransaction{}
-		err = db.Select(&rollbackTxs, "SELECT * FROM txs")
-		if err != nil {
-			panic(err)
-		}
-		if len(rollbackTxs) != 0 {
-			t.Errorf("Got %d db transactions on rollback -  Expected 0", len(rollbackTxs))
-		}
-	})
-	t.Run("PgRollback - 2 Blocks- reverses all account balances accordingly", func(t *testing.T) {
-		blockAccounts, blockHashes := insertBlocksTransactions()
-		db, _ := InitDB()
-		fmt.Println("Rollback by 2 blocks should yield the following balances:")
-		fmt.Println("*********************************************************************")
-		fmt.Printf("\n@block insertion %s \n", blockHashes[0])
-		fmt.Println("*********************************************************************")
-		for _, acct := range blockAccounts[blockHashes[0]] {
-			fmt.Printf("%+v \n", acct)
-		}
-		fmt.Println("*********************************************************************")
-		// Rollback 2 blocks
-		RollbackPgDb(blockHashes[1:])
-		rollBackDbAccounts := []shyftschema.Account{}
-		err := db.Select(&rollBackDbAccounts, "SELECT * FROM accounts")
-		if err != nil {
-			panic(err)
-		}
-		if len(rollBackDbAccounts) != 5 {
-			t.Errorf("Rollback of the following blocks %+v expected %d accounts have %d\n", blockHashes[1:], 5, len(rollBackDbAccounts))
-		}
-		newDbAccountBlocks := []shyftschema.AccountBlock{}
-		err = db.Select(&newDbAccountBlocks, "SELECT * FROM accountblocks")
-		if err != nil {
-			panic(err)
-		}
-		if len(newDbAccountBlocks) != 5 {
-			t.Errorf("Got %d db accountblocks on rollback -  Expected 5", len(newDbAccountBlocks))
-		}
-		rollbackBlocks := []shyftschema.Block{}
-		err = db.Select(&rollbackBlocks, "SELECT * FROM blocks")
-		if err != nil {
-			panic(err)
-		}
-		if len(rollbackBlocks) != 1 {
-			t.Errorf("Got %d db blocks on rollback -  Expected 1", len(rollbackBlocks))
-		}
-		rollbackTxs := []shyftschema.PgTransaction{}
-		err = db.Select(&rollbackTxs, "SELECT * FROM txs")
-		if err != nil {
-			panic(err)
-		}
-		if len(rollbackTxs) != 2 {
-			t.Errorf("Got %d db transactions on rollback -  Expected 2", len(rollbackTxs))
-		}
-		for _, acct := range blockAccounts[blockHashes[0]] {
-			fetchDbBalanceStmnt := `SELECT * FROM accounts WHERE addr = $1`
-			acctCheck := shyftschema.Account{}
-			err = db.Get(&acctCheck, fetchDbBalanceStmnt, acct.Addr)
-			if err != nil {
-				panic(err)
-			}
-			if acctCheck.Balance != acct.Balance || acctCheck.Nonce != acct.Nonce {
-				t.Errorf("Got Balance: %d Nonce: %d Expected Balance: %d Nonce: %d - Addr: %s\n", acctCheck.Balance, acctCheck.Nonce, acct.Balance, acct.Nonce, acct.Addr)
-			}
-		}
-	})
-	t.Run("PgRollback - 1 Blocks- reverses all account balances accordingly", func(t *testing.T) {
-		blockAccounts, blockHashes := insertBlocksTransactions()
-		db, _ := InitDB()
-		fmt.Println("Rollback by 2 blocks should yield the following balances:")
-		fmt.Println("*********************************************************************")
-		fmt.Printf("\n@block insertion %s \n", blockHashes[1])
-		fmt.Println("*********************************************************************")
-		for _, acct := range blockAccounts[blockHashes[1]] {
-			fmt.Printf("%+v \n", acct)
-		}
-		fmt.Println("*********************************************************************")
-		// Rollback 2 blocks
-		RollbackPgDb(blockHashes[2:])
-		rollBackDbAccounts := []shyftschema.Account{}
-		err := db.Select(&rollBackDbAccounts, "SELECT * FROM accounts")
-		if err != nil {
-			panic(err)
-		}
-		if len(rollBackDbAccounts) != 6 {
-			t.Errorf("Rollback of the following blocks %+v expected %d accounts have %d\n", blockHashes[1:], 5, len(rollBackDbAccounts))
-		}
-		newDbAccountBlocks := []shyftschema.AccountBlock{}
-		err = db.Select(&newDbAccountBlocks, "SELECT * FROM accountblocks")
-		if err != nil {
-			panic(err)
-		}
-		if len(newDbAccountBlocks) != 9 {
-			t.Errorf("Got %d db accountblocks on rollback -  Expected 5", len(newDbAccountBlocks))
-		}
-		rollbackBlocks := []shyftschema.Block{}
-		err = db.Select(&rollbackBlocks, "SELECT * FROM blocks")
-		if err != nil {
-			panic(err)
-		}
-		if len(rollbackBlocks) != 2 {
-			t.Errorf("Got %d db blocks on rollback -  Expected 2", len(rollbackBlocks))
-		}
-		rollbackTxs := []shyftschema.PgTransaction{}
-		err = db.Select(&rollbackTxs, "SELECT * FROM txs")
-		if err != nil {
-			panic(err)
-		}
-		if len(rollbackTxs) != 3 {
-			t.Errorf("Got %d db transactions on rollback -  Expected 3", len(rollbackTxs))
-		}
-		for _, acct := range blockAccounts[blockHashes[1]] {
-			fetchDbBalanceStmnt := `SELECT * FROM accounts WHERE addr = $1`
-			acctCheck := shyftschema.Account{}
-			err = db.Get(&acctCheck, fetchDbBalanceStmnt, acct.Addr)
-			if err != nil {
-				panic(err)
-			}
-			if acctCheck.Balance != acct.Balance || acctCheck.Nonce != acct.Nonce {
-				t.Errorf("Got Balance: %d Nonce: %d Expected Balance: %d Nonce: %d - Addr: %s \n", acctCheck.Balance, acctCheck.Nonce, acct.Balance, acct.Nonce, acct.Addr)
-			}
-		}
-	})
 }
