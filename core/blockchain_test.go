@@ -20,33 +20,32 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
-	"os"
 	"sync"
 	"testing"
 	"time"
 
+	"encoding/json"
+
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
-	"encoding/json"
-	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 )
 
 // @SHYFT NOTE: Added to clear and reset pg db before test
 // Setup DB for Testing Before Each Test
 
-func TestMain(m *testing.M) {
-	shyfttest.PgTestDbSetup()
-	retCode := m.Run()
-	shyfttest.PgTestTearDown()
-	os.Exit(retCode)
-}
+// func TestMain(m *testing.M) {
+// 	shyfttest.PgTestDbSetup()
+// 	retCode := m.Run()
+// 	shyfttest.PgTestTearDown()
+// 	os.Exit(retCode)
+// }
 
 // Test fork of length N starting from block i
 func testFork(t *testing.T, blockchain *BlockChain, i, n int, full bool, comparator func(td1, td2 *big.Int)) {
@@ -754,7 +753,7 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 	assert(t, "fast", fast, height, height, 0)
 	fast.Rollback(remove)
 	assert(t, "fast", fast, height/2, height/2, 0)
-
+	TruncateTables()
 	// Import the chain as a light node and ensure all pointers are updated
 	lightDb, _ := ethdb.NewMemDatabase()
 	gspec.MustCommit(lightDb)
@@ -1386,7 +1385,7 @@ func TestLargeReorgTrieGC(t *testing.T) {
 }
 
 //GetBlockHashesSinceLastValidBlockHash tests blockhashes being popped off
-func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
+func TestGetBlockHashesSinceLastValidBlockHash(t *testing.T) {
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
 	TruncateTables()
 
@@ -1453,7 +1452,6 @@ func TestGetBlockHashesSinceLastValidBlockHash (t *testing.T) {
 	fmt.Println("			*****************************************************************")
 
 	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK NUMBER ::", archive.CurrentHeader().Number)
-	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK HASH   ::",archive.CurrentHeader().Hash().String())
+	fmt.Println("AFTER ROLLBACK CURRENT HEAD BLOCK HASH   ::", archive.CurrentHeader().Hash().String())
 	fmt.Println("AFTER ROLLBACK CURRENT BLOCKHASH PG      ::", PgHash.Hash)
 }
-

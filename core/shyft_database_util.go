@@ -249,10 +249,10 @@ func swriteMinerRewards(block *types.Block) string {
 	var uncleAddrs []string
 
 	// uncleReward is overwritten after each iteration
+	// Based on calculation in consensus.go accumulateRewards()
 	uncleReward := new(big.Int)
 	for _, uncle := range block.Uncles() {
 		uncleReward.Add(uncle.Number, big8)
-		// NOTE dbk - subtract Block Number? Clarification required
 		uncleReward.Sub(uncleReward, block.Number())
 		uncleReward.Mul(uncleReward, Rewards.ShyftMinerBlockReward)
 		uncleReward.Div(uncleReward, big8)
@@ -551,6 +551,12 @@ func RollbackPgDb(blockheaders []string) error {
 			if err != nil {
 				panic(err)
 			}
+		}
+		// Prune all 0 Balance accounts
+		delZeroBalances := `DELETE FROM accounts WHERE balance = '0'`
+		_, err = tx.Exec(delZeroBalances)
+		if err != nil {
+			panic(err)
 		}
 		// Delete all transactions containing the blockhash
 		_, err = tx.Exec(shyftschema.TransactionRollback, pq.Array(blockheaders))

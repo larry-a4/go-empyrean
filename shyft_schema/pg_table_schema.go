@@ -9,6 +9,8 @@ import (
 // For Scanning and Executing queries to the db database - Many of the structs are used in tests
 // So if the schema is changed the structs should be updated accordingly
 
+//FOR TABLE COLUMN NAMES PLEASE DO NOT USE CAMELCASE
+
 // MakeTableQuery - returns sql to create db tables
 func MakeTableQuery() string {
 	return fmt.Sprintf(`%s %s %s %s %s`, blocksTable, txsTable, accountsTable, accountBlocksTable, internalTxsTable)
@@ -36,13 +38,13 @@ CREATE TABLE IF NOT EXISTS accounts (
 type Block struct {
 	Hash       string    `db:"hash"`
 	Coinbase   string    `db:"coinbase"`
-	GasUsed    int64     `db:"gasUsed"`
-	GasLimit   int64     `db:"gasLimit"`
-	TxCount    int64     `db:"txCount"`
-	UncleCount int64     `db:"uncleCount"`
+	GasUsed    int64     `db:"gasused"`
+	GasLimit   int64     `db:"gaslimit"`
+	TxCount    int64     `db:"txcount"`
+	UncleCount int64     `db:"unclecount"`
 	Age        time.Time `db:"age"`
-	ParentHash string    `db:"parentHash"`
-	UncleHash  string    `db:"uncleHash"`
+	ParentHash string    `db:"parenthash"`
+	UncleHash  string    `db:"unclehash"`
 	Difficulty int64     `db:"difficulty"`
 	Size       string    `db:"size"`
 	Nonce      int64     `db:"nonce"`
@@ -55,13 +57,13 @@ const blocksTable = `
 CREATE TABLE IF NOT EXISTS blocks (
   hash text primary key,
   coinbase text,
-  gasUsed numeric,
-  gasLimit numeric,
-  txCount numeric,
-  uncleCount numeric,
+  gasused numeric,
+  gaslimit numeric,
+  txcount numeric,
+  unclecount numeric,
   age timestamp,
-  parentHash text,
-  uncleHash text,
+  parenthash text,
+  unclehash text,
   difficulty bigint,
   size text,
   nonce numeric,
@@ -85,6 +87,7 @@ CREATE TABLE IF NOT EXISTS accountblocks (
   txcount bigint,
   primary key(acct, blockhash)
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_acct_bhash ON accountblocks (acct, blockhash);
 CREATE INDEX IF NOT EXISTS idx_acct_ab ON accountblocks (acct);
 CREATE INDEX IF NOT EXISTS idx_block_ab ON accountblocks (blockhash);
 `
@@ -111,7 +114,7 @@ type PgTransaction struct {
 // TxsTable sql for transactions
 const txsTable = `
 CREATE TABLE IF NOT EXISTS txs (
-  txHash text primary key unique,
+  txhash text primary key unique,
   to_addr text,
   from_addr text,
   blockhash text,
@@ -119,11 +122,11 @@ CREATE TABLE IF NOT EXISTS txs (
   amount numeric,
   gasprice numeric,
   gas numeric,
-  gasLimit numeric,
-  txFee numeric,
+  gaslimit numeric,
+  txfee numeric,
   nonce numeric,
-  txStatus text,
-  isContract bool,
+  txstatus text,
+  iscontract bool,
   age timestamp,
   data bytea
 );
@@ -134,8 +137,8 @@ CREATE INDEX IF NOT EXISTS idx_block_txs ON txs (blockhash);
 const internalTxsTable = `
 CREATE TABLE IF NOT EXISTS internalTxs (
   id SERIAL PRIMARY KEY,
-  txHash text references txs(txHash) ON DELETE CASCADE,
-  blockHash text references blocks(hash) ON DELETE CASCADE,
+  txhash text references txs(txhash) ON DELETE CASCADE,
+  blockhash text references blocks(hash) ON DELETE CASCADE,
   action text,
   to_addr text,
   from_addr text,
@@ -146,7 +149,7 @@ CREATE TABLE IF NOT EXISTS internalTxs (
   input text,
   output text
 );
-CREATE INDEX IF NOT EXISTS idx_tx_txs ON txs (txHash);
+CREATE INDEX IF NOT EXISTS idx_tx_txs ON txs (txhash);
 `
 
 // AccountRollBack - finds the relevant account and reverses the balance and nonce
@@ -182,7 +185,7 @@ ON CONFLICT ON CONSTRAINT accounts_pkey DO NOTHING;
 //FindOrCreateAcctBlockStmnt - query to find or create an accountblock record returning
 const FindOrCreateAcctBlockStmnt = `
 INSERT INTO accountblocks(acct, blockhash, delta, txcount) VALUES($1, $2, $3, 1)
-ON CONFLICT ON CONSTRAINT accountblocks_pkey
+ON CONFLICT (acct, blockhash)
 DO
   UPDATE
     SET delta = ((SELECT delta FROM accountblocks WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2) + $3),
