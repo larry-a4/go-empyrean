@@ -261,6 +261,8 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 		block, err := genesis.Commit(db)
 		//@NOTE:SHYFT SWITCH CASE ENSURES SHYFT GENESIS FUNCTIONS ARE ONLY CALLED ONCE
 		// sqldb, _ := DBConnection()
+
+		//fmt.Println(GlobalPG)
 		exist := BlockExists(block.Hash().String())
 		if !exist {
 			//@NOTE:SHYFT WRITE TO BLOCK ZERO DB

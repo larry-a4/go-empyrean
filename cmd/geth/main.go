@@ -54,6 +54,7 @@ var (
 	nodeFlags = []cli.Flag{
 		utils.IdentityFlag,
 		utils.UnlockedAccountFlag,
+		utils.PostgresFlag,
 		utils.PasswordFileFlag,
 		utils.BootnodesFlag,
 		utils.BootnodesV4Flag,
@@ -158,6 +159,7 @@ func init() {
 		copydbCommand,
 		removedbCommand,
 		dumpCommand,
+		noPGcommand,
 		// See monitorcmd.go:
 		monitorCommand,
 		// See accountcmd.go:
