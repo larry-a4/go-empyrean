@@ -8,8 +8,7 @@ WORKDIR /go/src/github.com/ShyftNetwork/go-empyrean/shyftBlockExplorerApi
 
 RUN go get -u github.com/kardianos/govendor
 RUN govendor sync
-RUN cat /go/src/github.com/ShyftNetwork/go-empyrean/shyftBlockExplorerApi/vendor/vendor.json
-RUN echo `ls -l /go/src/github.com/ShyftNetwork/go-empyrean/shyftBlockExplorerApi/vendor`
+
 CMD go run -v *.go
 
 EXPOSE 8080
