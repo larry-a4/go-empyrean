@@ -3,7 +3,7 @@ services:
   shyftgeth:
     build:
       context: $PWD 
-      dockerfile: docker/shyftGeth/Dockerfile
+      dockerfile: docker/development/shyftGeth/Dockerfile
     ports:
       - "8545:8545"
       - "8546:8546"
@@ -30,7 +30,7 @@ services:
   pg:
     build: 
       context: $PWD
-      dockerfile: docker/pg/Dockerfile
+      dockerfile: docker/development/pg/Dockerfile
     volumes:
       - ./pg-data:/var/lib/postgresql/data
     ports:
@@ -43,7 +43,7 @@ services:
   shyft_block_api:
     build:
       context: $PWD 
-      dockerfile: docker/shyftApi/Dockerfile
+      dockerfile: docker/development/shyftApi/Dockerfile
     # volumes:
     #   - ./shyftBlockExplorerApi:/go/src/github.com/ShyftNetwork/go-empyrean/shyftBlockExplorerApi
     working_dir: /go/src/github.com/ShyftNetwork/go-empyrean/shyftBlockExplorerApi
@@ -63,7 +63,7 @@ services:
   shyft_block_ui:
     build:
       context: $PWD 
-      dockerfile: docker/shyftUi/Dockerfile
+      dockerfile: docker/development/shyftUi/Dockerfile
       # volumes:
       #   - ./shyftBlockExplorerApi:/go/src/github.com/ShyftNetwork/go-empyrean/shyftBlockExplorerApi
     ports:
