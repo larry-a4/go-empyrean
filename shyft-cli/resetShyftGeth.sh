@@ -1,4 +1,4 @@
 #!/bin/sh
 rm -R -f ./shyftData
 rm -R -f ./pg-data
-rm -R -f ./privatenet
+rm -R -f ./ethash
