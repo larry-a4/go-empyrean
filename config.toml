@@ -52,8 +52,8 @@ WSModules = ["net", "web3", "eth", "shh"]
 [Node.P2P]
 MaxPeers = 25
 NoDiscovery = false
-BootstrapNodes =
-BootstrapNodesV5 =
+BootstrapNodes = []
+BootstrapNodesV5 = []
 StaticNodes = []
 TrustedNodes = []
 ListenAddr = ":31333"
