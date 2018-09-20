@@ -25,6 +25,8 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"net/http"
+
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
@@ -48,6 +50,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
+	"github.com/gorilla/mux"
 )
 
 var BlockchainObject *core.BlockChain
@@ -181,6 +184,31 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	eth.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig)
 
 	BlockchainObject = eth.blockchain
+
+	go func() {
+		fmt.Println("starting server on 8081")
+		r := mux.NewRouter()
+		r.HandleFunc("/rollback_blocks/{blockhash}", func(w http.ResponseWriter, r *http.Request) {
+			vars := mux.Vars(r)
+			blockhash := vars["blockhash"]
+			commonhash := common.HexToHash(blockhash)
+			fmt.Println("The command hash as string is ", commonhash.String())
+			fmt.Println("The command hash as str is ", commonhash.Str())
+
+			fmt.Println("common hash is ", commonhash)
+			blockHashes, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
+			BlockchainObject.ShyftRollback(blockHashes)
+			err := core.RollbackPgDb(bHashes)
+			if err != nil {
+				fmt.Println("ERROR: ", err)
+			}
+
+			fmt.Printf("rolling back blockhash %s\n", blockhash)
+			fmt.Fprintf(w, "rolling back blockhash %s\n", blockhash)
+		})
+
+		http.ListenAndServe(":8081", r)
+	}()
 
 	if err != nil {
 		return nil, err
