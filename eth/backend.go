@@ -192,24 +192,18 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 			vars := mux.Vars(r)
 			blockhash := vars["blockhash"]
 			commonhash := common.HexToHash(blockhash)
-			fmt.Println("The command hash as string is ", commonhash.String())
-			fmt.Println("common hash is ", commonhash)
 			coinbase := eth.miner.Coinbase()
 			eth.miner.Stop()
 			blocknumber := BlockchainObject.GetBlockByHash(commonhash)
 			_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
 			eth.blockchain.SetHead(blocknumber.NumberU64())
-			fmt.Println("bhashes", bHashes)
 			BlockchainObject.SetHead(blocknumber.NumberU64())
 			err := core.RollbackPgDb(bHashes)
 			if err != nil {
 				panic(err)
-				fmt.Println("ERROR: ", err)
 			}
 			eth.miner.Start(coinbase)
-
-			fmt.Printf("rolling back blockhash %s\n", blockhash)
-			fmt.Fprintf(w, "rolling back blockhash %s\n", blockhash)
+			log.Info("rolled back blockchain removing blocks %+v\n", bHashes)
 		})
 
 		http.ListenAndServe(":8081", r)
