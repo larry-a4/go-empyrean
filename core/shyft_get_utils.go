@@ -320,9 +320,9 @@ func SGetTransaction(sqldb *sqlx.DB, txHash string) string {
 
 func InnerSGetAccount(sqldb *sqlx.DB, address string) (stypes.SAccounts, bool) {
 	sqlStatement := `SELECT * FROM accounts WHERE addr=$1;`
-	var addr, balance, accountNonce string
+	var addr, balance, nonce string
 	tx, _ := sqldb.Begin()
-	err := sqldb.QueryRow(sqlStatement, address).Scan(&addr, &balance, &accountNonce)
+	err := sqldb.QueryRow(sqlStatement, address).Scan(&addr, &balance, &nonce)
 	tx.Commit()
 	if err == sql.ErrNoRows {
 		return stypes.SAccounts{}, false
@@ -330,7 +330,7 @@ func InnerSGetAccount(sqldb *sqlx.DB, address string) (stypes.SAccounts, bool) {
 		account := stypes.SAccounts{
 			Addr:         addr,
 			Balance:      balance,
-			AccountNonce: accountNonce,
+			AccountNonce: nonce,
 		}
 		return account, true
 	}
@@ -346,13 +346,13 @@ func SGetAccount(sqldb *sqlx.DB, address string) string {
 //GetAllAccounts returns all accounts and balances
 func SGetAllAccounts(sqldb *sqlx.DB) string {
 	var array stypes.AccountRes
-	var accountsArr, accountNonce string
+	var accountsArr, nonce string
 	tx, _ := sqldb.Begin()
 	accs, err := sqldb.Query(`
 		SELECT
 			addr,
 			balance,
-			accountNonce
+			nonce
 		FROM accounts`)
 	tx.Commit()
 	if err != nil {
@@ -364,13 +364,13 @@ func SGetAllAccounts(sqldb *sqlx.DB) string {
 	for accs.Next() {
 		var addr, balance string
 		err = accs.Scan(
-			&addr, &balance, &accountNonce,
+			&addr, &balance, &nonce,
 		)
 
 		array.AllAccounts = append(array.AllAccounts, stypes.SAccounts{
 			Addr:         addr,
 			Balance:      balance,
-			AccountNonce: accountNonce,
+			AccountNonce: nonce,
 		})
 
 		accounts, _ := json.Marshal(array.AllAccounts)
