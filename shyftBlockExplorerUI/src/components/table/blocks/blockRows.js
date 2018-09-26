@@ -18,7 +18,7 @@ class BlocksTable extends Component {
 
         try {
             console.log("before axios ")
-            const response = await axios.get("http://localhost:8080/api/get_all_blocks/");
+            const response = await axios.get("http://0.0.0.0:8080/api/get_all_blocks/");
             if(response.data === "\n") {
                 this.setState({emptyDataSet: true})                                   
             } else {
