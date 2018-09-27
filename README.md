@@ -4,6 +4,12 @@
 go-empyerean is based on a fork of go-ethereum. Much of the functionality and process for starting go-empyrean is the same as that for a regular ethereum node - as reflected in the notes detailed under the heading Go Ethereum below. Documentation for changes and enhancements added by Shyft is detailed under the section Shyft Notes below.
 
 ## SHYFT NOTES
+
+#### Dependencies
+
+- go 1.10
+- postgres 10
+
 #### CLI
 
 Run `./shyft-geth.sh` with one of the following flags:
