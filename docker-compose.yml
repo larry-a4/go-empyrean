@@ -41,6 +41,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=postgres
   shyft_block_api:
     build:
       context: $PWD 
