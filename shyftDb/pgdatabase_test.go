@@ -159,7 +159,7 @@ func TestInsertTx(t *testing.T) {
 		BlockHash:   blockHash,
 		BlockNumber: strconv.Itoa(21234),
 		Amount:      tx.Value().String(),
-		Cost:        tx.Cost().Uint64(),
+		Cost:        tx.Cost().String(),
 		GasPrice:    tx.GasPrice().Uint64(),
 		GasLimit:    uint64(18000),
 		Gas:         tx.Gas(),
