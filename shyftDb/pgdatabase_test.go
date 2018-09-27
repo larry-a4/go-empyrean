@@ -131,11 +131,11 @@ func TestCreateAccount(t *testing.T) {
 			fmt.Println(err)
 			return
 		}
-		fmt.Printf("account written: %+v\n", newDbAccounts[0])
 		if len(newDbAccounts) > 1 {
 			t.Errorf("Got %v Accounts Created: Expected 1", len(newDbAccounts))
 		}
-		stringBalance := strconv.FormatInt(newDbAccounts[0].Balance, 10)
+		//stringBalance := strconv.FormatInt(newDbAccounts[0].Balance, 10)
+		stringBalance := newDbAccounts[0].Balance
 		if newDbAccounts[0].Addr != addr || stringBalance != "3500000000" || accountNonce != "1" {
 			t.Errorf("Account: Got %v Accounts Created: Expected addr: %s balance: %d nonce %s", newDbAccounts, addr, balance, accountNonce)
 		}
@@ -148,7 +148,7 @@ func TestInsertTx(t *testing.T) {
 	signer := types.NewEIP155Signer(big.NewInt(2147483647))
 
 	//Nonce, To Address,Value, GasLimit, Gasprice, data
-	tx1 := types.NewTransaction(1, common.BytesToAddress([]byte{0x11}), big.NewInt(5), 1111, big.NewInt(11111), []byte{0x11, 0x11, 0x11})
+	tx1 := types.NewTransaction(1, common.BytesToAddress([]byte{0x11}), big.NewInt(20), 1111, big.NewInt(11111), []byte{0x11, 0x11, 0x11})
 	tx, _ := types.SignTx(tx1, signer, key)
 
 	blockHash := "0x656c34545f90a730a19008c0e7a7cd4fb3895064b48d6d69761bd5abad681056"
@@ -159,7 +159,7 @@ func TestInsertTx(t *testing.T) {
 		BlockHash:   blockHash,
 		BlockNumber: strconv.Itoa(21234),
 		Amount:      tx.Value().String(),
-		Cost:        tx.Cost().Uint64(),
+		Cost:        tx.Cost().String(),
 		GasPrice:    tx.GasPrice().Uint64(),
 		GasLimit:    uint64(18000),
 		Gas:         tx.Gas(),
@@ -169,7 +169,6 @@ func TestInsertTx(t *testing.T) {
 		Status:      "SUCCESS",
 		IsContract:  false,
 	}
-	fmt.Printf("Transaction To Be Inserted:\n  %+v \n", txData)
 	t.Run("InsertTx - No Account exists inserts a transaction to the database and updates/creates accounts accordingly", func(t *testing.T) {
 		core.DeletePgDb(core.DbName())
 		db, _ := core.InitDB()
@@ -198,14 +197,14 @@ func TestInsertTx(t *testing.T) {
 		}
 		toAcct := newDbAccounts[0]
 		fromAcct := newDbAccounts[1]
-		if toAcct.Addr != txData.To && new(big.Int).SetInt64(toAcct.Balance) != tx.Value() && toAcct.Nonce != 1 {
+		if toAcct.Addr != txData.To && toAcct.Balance != tx.Value().String() && toAcct.Nonce != 1 {
 			t.Errorf("Got %+v \nExpected %s %s %d", toAcct, txData.To, txData.Amount, 1)
 		}
 		fromAcctBal, _ := strconv.Atoi(txData.Amount)
 		fromBalInt := -1 * fromAcctBal
 		product := new(big.Int)
 		product.Mul(new(big.Int).SetInt64(-1), tx.Value())
-		if fromAcct.Addr != txData.To && new(big.Int).SetInt64(fromAcct.Balance) != product &&
+		if fromAcct.Addr != txData.To && fromAcct.Balance != product.String() &&
 			fromAcct.Nonce != 1 {
 			t.Errorf("Got %+v \nExpected %s %d %d", fromAcct, txData.From, fromBalInt, 1)
 		}
@@ -270,21 +269,21 @@ func TestGenesisBlockCreationDeveloper(t *testing.T) {
 		if len(accountAddresses) != 9 {
 			t.Errorf("Got the following acct addresses %+v \n Expected %+v \n", accountAddresses, GenesisAcctAddresses)
 		}
-		var bal int
+		var bal string
 		sqlStmnt = "SELECT balance FROM accounts WHERE addr = $1"
 		for _, addr := range GenesisAcctAddresses {
 			err = db.Get(&bal, sqlStmnt, addr)
 			if err != nil {
 				panic(err)
 			}
-			genesisBal := 9223372036854775807
+			genesisBal := "115792089237316195423570985008687907853269984665640564039457584007913129639927"
 			if addr == "0x0000000000000000000000000000000000000000" {
 				if bal != genesisBal {
-					t.Errorf("Got for Genesis Account Balance %+v \n Expected %d", bal, genesisBal)
+					t.Errorf("Got for Genesis Account Balance %+v \n Expected %s", bal, genesisBal)
 				}
 			} else {
-				if bal != 1 {
-					t.Errorf("Got balance for acct %s: %+v \n Expected %d", addr, bal, genesisBal)
+				if bal != "1" {
+					t.Errorf("Got balance for acct %s: %+v \n Expected %s", addr, bal, genesisBal)
 				}
 			}
 		}
@@ -476,7 +475,7 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 				panic(err)
 			}
 			if acctCheck.Balance != acct.Balance || acctCheck.Nonce != acct.Nonce {
-				t.Errorf("Got Balance: %d Nonce: %d Expected Balance: %d Nonce: %d - Addr: %s\n", acctCheck.Balance, acctCheck.Nonce, acct.Balance, acct.Nonce, acct.Addr)
+				t.Errorf("Got Balance: %s Nonce: %d Expected Balance: %s Nonce: %d - Addr: %s\n", acctCheck.Balance, acctCheck.Nonce, acct.Balance, acct.Nonce, acct.Addr)
 			}
 		}
 	})
@@ -533,7 +532,7 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 				panic(err)
 			}
 			if acctCheck.Balance != acct.Balance || acctCheck.Nonce != acct.Nonce {
-				t.Errorf("Got Balance: %d Nonce: %d Expected Balance: %d Nonce: %d - Addr: %s \n", acctCheck.Balance, acctCheck.Nonce, acct.Balance, acct.Nonce, acct.Addr)
+				t.Errorf("Got Balance: %s Nonce: %d Expected Balance: %s Nonce: %d - Addr: %s \n", acctCheck.Balance, acctCheck.Nonce, acct.Balance, acct.Nonce, acct.Addr)
 			}
 		}
 	})

@@ -16,6 +16,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/shyfttracerinterface"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"fmt"
 )
 
 //IShyftTracer Used to initialize ShyftTracer
@@ -254,15 +255,16 @@ func Transact(db *sqlx.DB, txFunc func(*sqlx.Tx) error) (err error) {
 func CreateAccount(addr string, balance string, nonce string) error {
 	sqldb, _ := DBConnection()
 	addr = strings.ToLower(addr)
-	bal := new(big.Int)
-	numericBalance, _ := bal.SetString(balance, 10)
-	non := new(big.Int)
-	intNonce, _ := non.SetString(nonce, 10)
+	//bal := new(big.Int)
+	//numericBalance, _ := bal.SetString(balance, 10)
+
+	//non := new(big.Int)
+	//intNonce, _ := non.SetString(nonce, 10)
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
 
 		accountStmnt := shyftschema.FindOrCreateAcctStmnt
 
-		if _, err := tx.Exec(accountStmnt, addr, numericBalance, intNonce); err != nil {
+		if _, err := tx.Exec(accountStmnt, addr, balance, nonce); err != nil {
 			return err
 		}
 		return nil
@@ -297,6 +299,7 @@ func InsertBlock(blockData stypes.SBlock) {
 	sqlStatement := `INSERT INTO blocks(hash, coinbase, number, gasUsed, gasLimit, txCount, uncleCount, age, parentHash, uncleHash, difficulty, size, rewards, nonce) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12),($13), ($14)) RETURNING number;`
 	qerr := sqldb.QueryRow(sqlStatement, strings.ToLower(blockData.Hash), strings.ToLower(blockData.Coinbase), blockData.Number, blockData.GasUsed, blockData.GasLimit, blockData.TxCount, blockData.UncleCount, blockData.Age, blockData.ParentHash, blockData.UncleHash, blockData.Difficulty, blockData.Size, blockData.Rewards, blockData.Nonce).Scan(&blockData.Number)
 	if qerr != nil {
+		fmt.Println("INSERT BLOCK ISSUE")
 		panic(qerr)
 	}
 }
@@ -320,12 +323,14 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 			txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract,
 			txData.Status, txData.Age, txData.Data)
 		if err != nil {
+			fmt.Println("CREATE TX TABLE ISSUE")
 			panic(err)
 		}
 		// Update account balances and account Nonces
 		// Updates/Creates Account for To
 		_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit.String())
 		if err != nil {
+			fmt.Println("UPDATE BALANCE NONCE ISSUE")
 			panic(err)
 		}
 		//Update/Create TO accountblock

@@ -722,6 +722,7 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 	}
 	// Import the chain as an archive node and ensure all pointers are updated
 	archiveDb, _ := ethdb.NewMemDatabase()
+	TruncateTables()
 	gspec.MustCommit(archiveDb)
 
 	archive, _ := NewBlockChain(archiveDb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})

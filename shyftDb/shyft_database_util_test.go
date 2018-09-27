@@ -245,7 +245,7 @@ func TestBlock(t *testing.T) {
 			if tx.Value().String() != data.Amount {
 				t.Fatalf("Amount [%v]: Amount not found", tx.Value().String())
 			}
-			if tx.Cost().Uint64() != data.Cost {
+			if tx.Cost().String() != data.Cost {
 				t.Fatalf("Cost [%v]: Cost not found", tx.Cost().String())
 			}
 			var status string
@@ -308,7 +308,7 @@ func TestBlock(t *testing.T) {
 			if tx.Value().String() != data.Amount {
 				t.Fatalf("Amount [%v]: Amount not found", tx.Value().String())
 			}
-			if tx.Cost().Uint64() != data.Cost {
+			if tx.Cost().String() != data.Cost {
 				t.Fatalf("Cost [%v]: Cost not found", tx.Cost().String())
 			}
 			var status string
