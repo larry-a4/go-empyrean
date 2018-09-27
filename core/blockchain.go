@@ -20,6 +20,7 @@ package core
 import (
 	"errors"
 	"fmt"
+
 	//"bytes"
 	//"encoding/gob"
 	"io"
@@ -503,6 +504,7 @@ func (bc *BlockChain) insert(block *types.Block) {
 func (bc *BlockChain) Genesis() *types.Block {
 	return bc.genesisBlock
 }
+
 //GetBlockHashesSinceLastValidBlockHash returns a slice of invalid blockHashes
 func (bc *BlockChain) GetBlockHashesSinceLastValidBlockHash(validHash common.Hash) (blockHashes []common.Hash, bHashes []string) {
 	//bNumber is VALID blockNumber
@@ -735,7 +737,6 @@ func (bc *BlockChain) Rollback(chain []common.Hash) {
 		hash := chain[i]
 		currentHeader := bc.hc.CurrentHeader()
 		if currentHeader.Hash() == hash {
-			fmt.Println("count")
 			bc.hc.SetCurrentHeader(bc.GetHeader(currentHeader.ParentHash, currentHeader.Number.Uint64()-1))
 		}
 		if currentFastBlock := bc.CurrentFastBlock(); currentFastBlock.Hash() == hash {
@@ -1607,7 +1608,7 @@ func (bc *BlockChain) SubscribeLogsEvent(ch chan<- []*types.Log) event.Subscript
 func (bc *BlockChain) ShyftRollback(chain []common.Hash) {
 	bc.mu.Lock()
 	defer bc.mu.Unlock()
-	for i := 0; i <= len(chain) - 1; i++ {
+	for i := 0; i <= len(chain)-1; i++ {
 		hash := chain[i]
 		currentHeader := bc.hc.CurrentHeader()
 		if currentHeader.Hash() == hash {

@@ -136,7 +136,7 @@ func SGetRecentBlockHash() string {
 		&hash)
 
 	blockhash := stypes.BlockHash{
-		Hash:       hash,
+		Hash: hash,
 	}
 	json, _ := json.Marshal(blockhash)
 	return string(json)
@@ -352,7 +352,7 @@ func SGetAllAccounts(sqldb *sqlx.DB) string {
 		SELECT
 			addr,
 			balance,
-			accountNonce
+			nonce
 		FROM accounts`)
 	tx.Commit()
 	if err != nil {
@@ -393,7 +393,7 @@ func SGetAccountTxs(sqldb *sqlx.DB, address string) string {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var txhash, to_addr, from_addr,txfee, blockhash, blocknumber, amount, status string
+		var txhash, to_addr, from_addr, txfee, blockhash, blocknumber, amount, status string
 		var gasprice, gas, gasLimit, nonce uint64
 		var isContract bool
 		var age time.Time
