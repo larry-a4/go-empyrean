@@ -21,16 +21,16 @@ func MakeTableQuery() string {
 
 // Account - - struct for reading and writing database data
 type Account struct {
-	Addr    string `db:"addr"`
-	Balance int64  `db:"balance"`
-	Nonce   int64  `db:"nonce"`
+	Addr    string  `db:"addr"`
+	Balance string  `db:"balance"`
+	Nonce   uint64  `db:"nonce"`
 }
 
 const accountsTable = `
 CREATE TABLE IF NOT EXISTS accounts (
   addr text primary key unique,
-  balance numeric,
-  nonce bigint
+  balance numeric(78),
+  nonce numeric
 );
 `
 
@@ -103,7 +103,7 @@ type PgTransaction struct {
 	Gasprice    uint64    `db:"gasprice"`
 	Gas         uint64    `db:"gas"`
 	GasLimit    uint64    `db:"gaslimit"`
-	TxFee       uint64    `db:"txfee"`
+	TxFee       string    `db:"txfee"`
 	Nonce       uint64    `db:"nonce"`
 	TxStatus    string    `db:"txstatus"`
 	IsContract  bool      `db:"iscontract"`

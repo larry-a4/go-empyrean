@@ -175,7 +175,6 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 				panic(err)
 			}
 			age := time.Unix(i, 0)
-
 			txData := stypes.ShyftTxEntryPretty{
 				TxHash:      txHash,
 				From:        GENESIS,
@@ -194,7 +193,6 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 				IsContract:  false,
 			}
 			//Create account and store tx
-			// CreateAccount(k.String(), v.Balance.String(), accountNoncee) - Removed As InsertTx Handles this now
 			InsertTx(txData)
 
 		default:
