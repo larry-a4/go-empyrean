@@ -9,6 +9,8 @@ import (
 
 	"github.com/ShyftNetwork/go-empyrean/shyft_schema"
 
+	"fmt"
+
 	"github.com/ShyftNetwork/go-empyrean/common"
 	Rewards "github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
@@ -16,7 +18,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/shyfttracerinterface"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"fmt"
 )
 
 //IShyftTracer Used to initialize ShyftTracer
@@ -307,47 +308,57 @@ func InsertBlock(blockData stypes.SBlock) {
 //InsertTx writes tx to Postgres Db
 func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 	acctAddrs := [2]string{strings.ToLower(txData.To), strings.ToLower(txData.From)}
-	// NOTE: Confirm this - If account doesnt exist before reflecting transaction sets nonce to 0
-	// accountNonce := "0"
-	// balance := "0"
 	sqldb, _ := DBConnection()
 
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
-		toAcctCredit := new(big.Int)
-		toAcctCredit, _ = toAcctCredit.SetString(txData.Amount, 10)
-		var one = big.NewInt(-1)
-		fromAcctDebit := new(big.Int).Mul(toAcctCredit, one)
-		// Add Transaction Table entry
-		_, err := tx.Exec(shyftschema.CreateTxTableStmnt, strings.ToLower(txData.TxHash), strings.ToLower(txData.From),
-			strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount,
-			txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract,
-			txData.Status, txData.Age, txData.Data)
-		if err != nil {
-			fmt.Println("CREATE TX TABLE ISSUE")
-			panic(err)
-		}
-		// Update account balances and account Nonces
-		// Updates/Creates Account for To
-		_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit.String())
-		if err != nil {
-			fmt.Println("UPDATE BALANCE NONCE ISSUE")
-			panic(err)
-		}
-		//Update/Create TO accountblock
-		_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], txData.BlockHash, toAcctCredit.String())
+		txHash := strings.ToLower(txData.TxHash)
+		// @SHYFT NOTE - AFTER CHAIN RESTART IT APPEARS CURRENTLY TRANSACTION JOURNAL OR REPEATED SEND TRANSACTION IS NOT FUNCTIONING
+		// NEED TO CHECK sendTransactions JS TO CONFIRM WHAT IS HAPPENING ALSO BLOCK HEIGHT IS NOT SET CORRECTLY FOR BLOCKS AFTER CHAIN
+		// RESTART
+		// RELATED BLOCKS
+		txExistsStmnt := fmt.Sprintf(`select exists(SELECT txhash FROM txs WHERE txhash = '%s');`, txHash)
+		var exists bool
+		err := sqldb.QueryRow(txExistsStmnt).Scan(&exists)
 		if err != nil {
 			panic(err)
 		}
-		if acctAddrs[1] != "genesis" {
-			// Updates/Creates Account for From
-			_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit.String())
+		if !exists {
+			toAcctCredit := new(big.Int)
+			toAcctCredit, _ = toAcctCredit.SetString(txData.Amount, 10)
+			var one = big.NewInt(-1)
+			fromAcctDebit := new(big.Int).Mul(toAcctCredit, one)
+			// Add Transaction Table entry
+			_, err = tx.Exec(shyftschema.CreateTxTableStmnt, txHash, strings.ToLower(txData.From),
+				strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount,
+				txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract,
+				txData.Status, txData.Age, txData.Data)
+			if err != nil {
+				fmt.Println("CREATE TX TABLE ISSUE")
+				panic(err)
+			}
+			// Update account balances and account Nonces
+			// Updates/Creates Account for To
+			_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit.String())
+			if err != nil {
+				fmt.Println("UPDATE BALANCE NONCE ISSUE")
+				panic(err)
+			}
+			//Update/Create TO accountblock
+			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], txData.BlockHash, toAcctCredit.String())
 			if err != nil {
 				panic(err)
 			}
-			//Update/Create FROM accountblock
-			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], txData.BlockHash, fromAcctDebit.String())
-			if err != nil {
-				panic(err)
+			if acctAddrs[1] != "genesis" {
+				// Updates/Creates Account for From
+				_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit.String())
+				if err != nil {
+					panic(err)
+				}
+				//Update/Create FROM accountblock
+				_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], txData.BlockHash, fromAcctDebit.String())
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 		//

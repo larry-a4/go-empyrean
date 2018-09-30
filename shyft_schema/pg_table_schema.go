@@ -21,15 +21,15 @@ func MakeTableQuery() string {
 
 // Account - - struct for reading and writing database data
 type Account struct {
-	Addr    string  `db:"addr"`
-	Balance string  `db:"balance"`
-	Nonce   uint64  `db:"nonce"`
+	Addr    string `db:"addr"`
+	Balance string `db:"balance"`
+	Nonce   uint64 `db:"nonce"`
 }
 
 const accountsTable = `
 CREATE TABLE IF NOT EXISTS accounts (
   addr text primary key unique,
-  balance numeric(78),
+  balance numeric(78,0),
   nonce numeric
 );
 `
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS txs (
   from_addr text,
   blockhash text,
   blocknumber text,
-  amount numeric,
+  amount text,
   gasprice numeric,
   gas numeric,
   gaslimit numeric,
@@ -213,7 +213,7 @@ VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11));
 //Creates a transaction record in the tx table
 const CreateTxTableStmnt = `
 INSERT INTO txs(txhash, from_addr, to_addr, blockhash, blockNumber, amount, gasprice, gas, gasLimit, txfee, nonce, isContract, txStatus, age, data)
-VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15));
+VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12), ($13), ($14), ($15)) ON CONFLICT ON CONSTRAINT txs_pkey DO NOTHING;
 `
 
 //FindOrCreateAcctBlockStmntForInternals - query to find or create an accountblock record returning

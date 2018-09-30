@@ -74,13 +74,30 @@ ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838c
 
 Docker Images are available for ShyftGeth and the Postgresql Database which can be used for development and testing. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).
 
-To launch ShyftGeth, PG, the ShyftBlock Explorer Api and UI - issue the following command from the root of the project directory:
+To launch ShyftGeth, PG, the ShyftBlock Explorer Api and UI - issue the following commands from the root of the project directory:
+
+`./shyft-geth.sh # clears persisted directories prior to docker build`
 
 `docker-compose up`
 
-If you would like to reinitialize/rebuild the docker images you can issue the following command:
+If you would like to reinitialize/rebuild the docker images you can just add the build flag to the docker command:
+
+
+`./shyft-geth.sh # clears persisted directories prior to docker build`
 
 `docker-compose up --build`
+
+To stop/pause mining - enter:
+
+`docker-compose stop`
+
+And then just issue `docker-compose up` to continue mining.
+
+#### Docker Postgresql - DB Connection
+From your local machine you can view the database by connecting to the database in the container at 127.0.0.1:8001. Use User: 'postgres' Password: 'docker' Database: 'shyftdb'
+
+#### Docker Block Explorer Api 
+To access the shyftBlockExplorer open a browser and visit http://localhost:3000.
 
 To rebuild any one of the services - issue the following commands:
 
@@ -94,7 +111,6 @@ _The Postgresql Database Container will persist the database data to the directo
 
 ```./shyft-cli/resetShyftGeth.sh```
 
-From your local machine you can view the database by connecting to the database in the container at 127.0.0.1:8001. To access the shyftBlockExplorer open a browser and visit http://localhost:3000.
 
 __Blockchain data is persisted to ./ethash/.ethash and ./shyftData__. If you would like to reset the test blockchain you will need to delete the __./ethash ./shyftData & ./privatenet__ directories.
 
@@ -120,10 +136,10 @@ govendor add +external
 govendor remove github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^
 govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^
 
-```
 
 NB: The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive/
 
+```
 _TODO_
 
 - Find better dependency management solution that pulls in c header files without manual intervention

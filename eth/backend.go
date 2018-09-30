@@ -197,7 +197,6 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 			blocknumber := BlockchainObject.GetBlockByHash(commonhash)
 			_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
 			eth.blockchain.SetHead(blocknumber.NumberU64())
-			BlockchainObject.SetHead(blocknumber.NumberU64())
 			err := core.RollbackPgDb(bHashes)
 			if err != nil {
 				panic(err)

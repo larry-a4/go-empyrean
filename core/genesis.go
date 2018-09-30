@@ -46,6 +46,7 @@ import (
 
 var errGenesisNoConfig = errors.New("genesis has no chain configuration")
 var GlobalPG = ""
+
 // Genesis specifies the header fields, state of a genesis block. It also defines hard
 // fork switch-over blocks through the chain configuration.
 type Genesis struct {
@@ -90,7 +91,8 @@ type GenesisAccount struct {
 	PrivateKey []byte                      `json:"secretKey,omitempty"` // for tests
 }
 
-func DisconnectPG() (string) {
+// DisconnectPG - returns whether flags include running without the Postgres DB
+func DisconnectPG() string {
 	GlobalPG = "disconnect"
 	return GlobalPG
 }
@@ -146,7 +148,6 @@ func (e *GenesisMismatchError) Error() string {
 	return fmt.Sprintf("database already contains an incompatible genesis block (have %x, new %x)", e.Stored[:8], e.New[:8])
 }
 
-// @dbkbali - why 2 methods to write block 0 - WriteShyftBlockZero/WriteShyftGen
 //WriteShyftGen writes the genesis block to Shyft db
 //@NOTE:SHYFT
 func WriteShyftGen(gen *Genesis, block *types.Block) {
@@ -168,7 +169,6 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 			txHash := strings.Join(Genesis, k.String())
 			//Create the accountNonce, set to 1 (1 incoming tx), format type
 			accountNonce := v.Nonce + 1
-			// accountNoncee := strconv.FormatUint(accountNonce, 10)
 
 			i, err := strconv.ParseInt(block.Time().String(), 10, 64)
 			if err != nil {
@@ -201,8 +201,7 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 	}
 }
 
-// @dbkbali - why 2 methods to write block 0 - WriteShyftBlockZero/WriteShyftGen
-//WriteShyftBlockZero writes block 0 to postgres db
+// WriteShyftBlockZero writes block 0 to postgres db
 func WriteShyftBlockZero(block *types.Block, gen *Genesis) error {
 	// sqldb, _ := DBConnection()
 
