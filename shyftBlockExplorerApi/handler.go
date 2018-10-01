@@ -13,8 +13,6 @@ import (
 
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/gorilla/mux"
-	"github.com/ShyftNetwork/go-empyrean/common"
-	"github.com/ShyftNetwork/go-empyrean/core/types"
 )
 
 // GetTransaction gets txs
@@ -263,28 +261,4 @@ func BroadcastTx(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "Transaction Hash:", tx_hash)
 	}
-}
-
-func BlockHashMessage (w http.ResponseWriter, r *http.Request) {
-	// http params
-	//vars := mux.Vars(r)
-	//validBlockHash := vars["blockHash"]
-	var badBlockHashes []*types.Block
-	var validBlockHash common.Hash
-	var bc *core.BlockChain
-
-	validBlockHash = bc.GetBlockByNumber(uint64(2)).Hash()
-	fmt.Println(validBlockHash)
-	badBlockHashes = bc.GetBlocksFromHash(validBlockHash, 10)
-	//fmt.Println(badBlockHashes, test)
-
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
-	fmt.Fprintln(w, "Bad blocks:", badBlockHashes)
 }

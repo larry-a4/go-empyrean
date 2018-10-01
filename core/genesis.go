@@ -203,7 +203,6 @@ func WriteShyftGen(gen *Genesis, block *types.Block) {
 
 // WriteShyftBlockZero writes block 0 to postgres db
 func WriteShyftBlockZero(block *types.Block, gen *Genesis) error {
-	// sqldb, _ := DBConnection()
 
 	i, error := strconv.ParseInt(block.Time().String(), 10, 64)
 	if error != nil {

@@ -5,70 +5,34 @@ go-empyerean is based on a fork of go-ethereum. Much of the functionality and pr
 
 ## SHYFT NOTES
 
-#### Dependencies
+    #### Dependencies
+    
+    - go 1.10
+    - postgres 10
+    
+    To install go please review the installation docs [here](https://golang.org/doc/install), but ensure you download version 1.10. If you would like to install go with a script please check out this repo [here](https://github.com/canha/golang-tools-install-script).
+    
+    To install postgres please review the installation docs [here](https://www.postgresql.org/docs/10/static/tutorial-install.html).
 
-- go 1.10
-- postgres 10
+#### Running Locally
 
-#### CLI
+To begin running locally, please ensure you have correctly installed go 1.10 and postgres (make sure postgres is running). Then continue to clone this repo into your go workspace which by default should be in /usr/local/go/src/github.com/ShyftNetwork/ 
 
-Run `./shyft-geth.sh` with one of the following flags:
+Once cloned, in a terminal window run the following command:
 
-- `--setup` - Setups postgres and the shyft chain db.
-- `--start` - Starts geth.
-- `--reset` - Drops postgress and chain db, and reinstantiates both.
-- `--js [web3 filename]` - Executes web3 calls with a passed file name. If the file name is `sendTransactions.js`, `./shyft-geth.sh --js sendTransactions`.
+``.shyft-geth.sh --setup`` This sets up postgres and the shyft chain db
 
-### Shyft BlockExplorer API
+``./shyft-geth.sh --start`` This starts GETH
 
-To run the block explorer rest api that queries the postgres instance and returns a json body, open a new terminal window, navigate to the root directory of the project and run the following command:
+At this point you should see GETH running in the terminal and if you opened your postgres instance you should see data being populated into the tables.
 
-``go run blockExplorerApi/*.go``
+To stop Geth, crtl+C in the terminal window, if you proceed with the start script mentioned above the Shyft chain will begin from the last block height, if you wish to start the chain fresh from genesis follow the below steps:
 
-This will start a go server on port 8080 and allow you to either run the pre-existing block explorer or query the api endpoints. Its important to note, that if you have nothing in your postgres database the API will return nothing.
+``./shyft-geth.sh --reset`` This drops postgres and chaindb data
 
-Below is an API map containing the different endpoints you can query. If you are running locally and example request would be like so:
+``./shyft-geth.sh --start`` Starts GETH
 
-`http://localhost:8080/api/get_block/10` 
-
-This would return the block data for block number 10, like so: 
-
-`{"Hash":"0xb6f0906a276d992e9dc82f82e3be5487251ff6e7b8ff6b0e5e1603092f534799","Coinbase":"0x43EC6d0942f7fAeF069F7F63D0384a27f529B062","Number":"10","GasUsed":"189000","GasLimit":"26863872","TxCount":"9","UncleCount":"0","Age":"2018-05-10T16:26:02Z"}`
-
-
-|       GET        |           Blocks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| :-----------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  `/api/get_block/{blockNumber} `                          | Returns block data by block height/number |
-|  `/api/get_all_blocks`                                    | Returns block data for all blocks |
-|  `/api/get_recent_block`                                  | Returns block data for the most recent block mined |
-|  `/api/get_blocks_mined/{coinbase}`                       | Returns block data by miner address |
-
-|       GET        |           Transactions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| :-----------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  `/api/get_transaction/{txHash}`                          | Returns tx data by transaction hash |
-|  `/api/get_all_transactions`                              | Returns tx data for all transactions |
-|  `/api/get_all_transactions_from_block/{blockNumber}`     | Returns tx data by block height/number |
-|  `/api/get_internal_transactions/{address}`               | Returns internal tx data by address |
-|  `/api/get_internal_transactions_hash/{transactions_hash}`|  Returns internal tx data by transaction hash |
-
-|       GET        |           Accounts                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| :-----------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  `/api/get_account/{address}`                             | Returns account data by address |
-|  `/api/get_account_txs/{address}`                         |  Returns tx data by address |
-|  `/api/get_all_accounts`                                  | Returns account data from all accounts |
-
-                                                                                                                                                                                                                                                                                                           
-#### Chain Rollbacks
-
-For development and testing purposes only, until a formal messaging system has been incorporated within go-empyrean, an endpoint is available and freely accessible to trigger a chain and postgresql database rollback.
-
-To trigger a chain/pg database rollback the following command should be executed:
-
-```
-curl <node ip address>:8081/rollback_blocks/<block hashheader to rollback to>
-
-ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838cad4fe6ae45f68410c8cd7cd640
-```
+To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.
 
 #### Docker Images
 
@@ -148,6 +112,71 @@ _TODO_
 - Reduce size of the ShytfGeth docker container which is responsible for mining and running the blockchain
 - Adjust docker scripts and ports to facilitate sending of test transactions
 - Modify Docker scripts to facilitate hot reloading during development
+
+#### CLI
+
+Run `./shyft-geth.sh` with one of the following flags:
+
+- `--setup` - Setups postgres and the shyft chain db.
+- `--start` - Starts geth.
+- `--reset` - Drops postgress and chain db, and reinstantiates both.
+- `--js [web3 filename]` - Executes web3 calls with a passed file name. If the file name is `sendTransactions.js`, `./shyft-geth.sh --js sendTransactions`.
+
+### Shyft BlockExplorer API
+
+To run the block explorer rest api that queries the postgres instance and returns a json body, open a new terminal window, navigate to the root directory of the project and run the following command:
+
+``go run blockExplorerApi/*.go``
+
+This will start a go server on port 8080 and allow you to either run the pre-existing block explorer or query the api endpoints. Its important to note, that if you have nothing in your postgres database the API will return nothing.
+
+Below is an API map containing the different endpoints you can query. If you are running locally and example request would be like so:
+
+`http://localhost:8080/api/get_block/10` 
+
+This would return the block data for block number 10, like so: 
+```json
+{
+    "Hash":"0xb6f0906a276d992e9dc82f82e3be5487251ff6e7b8ff6b0e5e1603092f534799",
+    "Coinbase":"0x43EC6d0942f7fAeF069F7F63D0384a27f529B062",
+    "Number":"10",
+    "GasUsed":"189000",
+    "GasLimit":"26863872",
+    "TxCount":"9",
+    "UncleCount":"0",
+    "Age":"2018-05-10T16:26:02Z"
+}
+```
+```go
+```
+| GET ENDPOINTS  | Description | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------- | -------------- | ------------
+|  `/api/get_block/{blockNumber} `  | Returns block data by block height/number | Blocks
+|  `/api/get_all_blocks`            | Returns block data for all blocks | Blocks
+|  `/api/get_recent_block`         | Returns block data for the most recent block mined | Blocks
+|  `/api/get_blocks_mined/{coinbase}` | Returns block data by miner address | Blocks
+|  `/api/get_transaction/{txHash}`                          | Returns tx data by transaction hash | Transactions
+|  `/api/get_all_transactions`                              | Returns tx data for all transactions | Transactions
+|  `/api/get_all_transactions_from_block/{blockNumber}`     | Returns tx data by block height/number | Transactions
+|  `/api/get_internal_transactions/{address}`               | Returns internal tx data by address | Transactions
+|  `/api/get_internal_transactions_hash/{transactions_hash}`|  Returns internal tx data by transaction hash | Transactions
+|  `/api/get_account/{address}`                             | Returns account data by address | Accounts
+|  `/api/get_account_txs/{address}`                         | Returns tx data by address | Accounts
+|  `/api/get_all_accounts`                                  | Returns account data from all accounts | Accounts
+
+The above endpoints will respond with a json payload for the given request, each of these endpoints are subject to change in the future.
+                                                                                                                                                                                                                                                                                                           
+#### Chain Rollbacks
+
+For development and testing purposes only, until a formal messaging system has been incorporated within go-empyrean, an endpoint is available and freely accessible to trigger a chain and postgresql database rollback.
+
+To trigger a chain/pg database rollback the following command should be executed:
+
+```
+curl <node ip address>:8081/rollback_blocks/<block hashheader to rollback to>
+
+ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838cad4fe6ae45f68410c8cd7cd640
+```
 
 ## Go Ethereum
 

@@ -17,7 +17,7 @@ func SGetAllBlocks(sqldb *sqlx.DB) string {
 	var arr stypes.BlockRes
 	var blockArr string
 
-	rows, err := sqldb.Queryx(`SELECT * FROM blocks`)
+	rows, err := sqldb.Queryx(`SELECT * FROM blocks ORDER BY number ASC`)
 	if err != nil {
 		fmt.Println("err")
 	}
