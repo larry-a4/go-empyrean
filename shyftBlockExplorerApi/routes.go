@@ -93,10 +93,4 @@ var routes = Routes{
 		"/api/broadcast_tx/{transaction_hash}",
 		BroadcastTx,
 	},
-	Route{
-		"BlockHashMessage",
-		"GET",
-		"api/v1/valid_blockhash/{blockHash}",
-		BlockHashMessage,
-	},
 }
