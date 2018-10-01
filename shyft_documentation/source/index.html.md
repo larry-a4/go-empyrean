@@ -25,7 +25,7 @@ In order to successfully accept a PR the maintainers of the Shyft repositories r
 
 # Setup
 
-#### Dependencies
+### Dependencies
     
  - go 1.10
  - postgres 10
@@ -33,8 +33,6 @@ In order to successfully accept a PR the maintainers of the Shyft repositories r
 To install go please review the installation docs [here](https://golang.org/doc/install), but ensure you download version 1.10. If you would like to install go with a script please check out this repo [here](https://github.com/canha/golang-tools-install-script).
     
 To install postgres please review the installation docs [here](https://www.postgresql.org/docs/10/static/tutorial-install.html).
-    
-### Build GETH
 
 ### Govendor and Packages/Dependencies
 
@@ -67,7 +65,7 @@ To add a new dependency, run govendor fetch <import-path> , and commit the chang
 GOPATH is not strictly necessary however, for govendor it is much easier to use gopath as go will look for binaries in this directory ($GOPATH/bin). To set up GOPATH, read the govendor section.
 </aside>
 
-#### Running Locally
+### Running Locally
 
 To begin running locally, please ensure you have correctly installed go 1.10 and postgres (make sure postgres is running). 
 Once cloned, in a terminal window run the following command:
@@ -87,8 +85,7 @@ To stop Geth, `crtl+C` in the terminal window, if you proceed with the start scr
 ``./shyft-geth.sh --start`` Starts GETH
 
 To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.
-
-#### Docker Images
+### Docker Images
 
 Docker Images are available for ShyftGeth and the Postgresql Database which can be used for development and testing. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).
 
@@ -110,55 +107,57 @@ To stop/pause mining - enter:
 `docker-compose stop`
 
 And then just issue `docker-compose up` to continue mining.
+### Docker Postgresql - DB Connection
+From your local machine you can view the database by connecting to the database in the container at 
+``127.0.0.1:8001``
 
-#### Docker Postgresql - DB Connection
-From your local machine you can view the database by connecting to the database in the container at 127.0.0.1:8001. Use User: 'postgres' Password: 'docker' Database: 'shyftdb'
+Use User: 'postgres' Password: 'docker' Database: 'shyftdb'
+### Docker Block Explorer Api 
+To access the shyftBlockExplorer open a browser and visit 
 
-#### Docker Block Explorer Api 
-To access the shyftBlockExplorer open a browser and visit http://localhost:3000.
+``http://localhost:3000``
 
 To rebuild any one of the services - issue the following commands:
 
-```
+``
 docker-compose up -d --no-deps --build <docker compose file service name> 
+``
 
-# ie. for shyftBlockExplorerApi:
-# docker-compose up -d --no-deps --build shyft_block_api
-```
-_The Postgresql Database Container will persist the database data to the directory ./pg-data _. So if you do want to reinitialize the database you should delete this directory as well as the blockchain data directories (./shyftData ./privatenet) prior to launching the docker containers. There is a shell script available to delete these folders to run it execute the following command:
+ie. for shyftBlockExplorerApi:
 
-```./shyft-cli/resetShyftGeth.sh```
+``docker-compose up -d --no-deps --build shyft_block_api``
 
+The Postgresql Database Container will persist the database data to the directory ``./pg-data`` _. So if you do want to reinitialize the database you should delete this directory as well as the blockchain data directories ``(./shyftData ./privatenet)`` prior to launching the docker containers. There is a shell script available to delete these folders to run it execute the following command:
 
-__Blockchain data is persisted to ./ethash/.ethash and ./shyftData__. If you would like to reset the test blockchain you will need to delete the __./ethash ./shyftData & ./privatenet__ directories.
+``./shyft-cli/resetShyftGeth.sh``
+
+Blockchain data is persisted to ``./ethash/.ethash and ./shyftData__``. If you would like to reset the test blockchain you will need to delete the ``__./ethash ./shyftData & ./privatenet__`` directories.
 
 The docker container for the ShyftBlockExplorerApi utilizes govendor to minimize its image size. __If you would like the docker image for this container to reflect any uncommitted changes which may have occurred in the go-empyrean repository, ie. changes with respect to go-empyrean core (ie. cryptographic functions and database). Prior to launching the docker containers you should rebuild the vendor directory for the shyftBlockExplorerApi - by executing the following steps:__
 
-```
-# remove existing shyftBlockExplorerApi vendor.json and vendored components:
+Remove existing shyftBlockExplorerApi vendor.json and vendored components:
 
-rm -rf shyftBlockExplorerApi/vendor
+``rm -rf shyftBlockExplorerApi/vendor``
 
-# reinitialize vendor.json
+reinitialize vendor.json
 
-cd shyftBlockExplorerApi && govendor init
+``cd shyftBlockExplorerApi && govendor init``
 
-# rebuild vendor.json using latest uncommitted changes
+rebuild vendor.json using latest uncommitted changes
 
-govendor add +external
+``govendor add +external``
 
-# due to a bug in govendor and it not being able to pull in some dependencies that are c-header files 
-# you should execute the following commands - see these issues - which whilst closed
-# appears to have not been fixed: https://github.com/kardianos/govendor/issues/124 && https://github.com/kardianos/govendor/issues/61
+Due to a bug in govendor and it not being able to pull in some dependencies that are c-header files 
+you should execute the following commands - see these issues - which whilst closed
+appears to have not been fixed: https://github.com/kardianos/govendor/issues/124 && https://github.com/kardianos/govendor/issues/61
 
-govendor remove github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^
-govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^
+``govendor remove github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^``
 
+``govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^``
 
 NB: The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive/
 
-```
-### CLI
+# Command Line Options
 
 Before running any CLI options ensure you run `make geth` in the root directory.
 
@@ -177,69 +176,61 @@ For convenience a simple CLI was built using `shyft-geth.sh` as the executable f
 
 This will create a new database for geth to use as well as all the necessary tables for the shyft blockexplorer.
 
-
-
 # Custom Shyft Constants
-
 ### Block Rewards
 
-> ./consensus/ethash/consensus.go
-
-```go
-```
+``./consensus/ethash/consensus.go``
 
 Shyft inflation is different than that of Ethereum, therefore the constants were changed in order to support this.
 
 # Shyft Extended Functionality
+### Database Functions
 
-## Database Functions
+``./core/db.go``
 
-> ./core/db.go
-
-> ./shyft_schema
-
-```go
-```
+``./shyft_schema``
 
 ### Database instanitation
 
 The local database is instantiated where Geth generates and writes the genesis state/block.
-> ./core/genesis.go
+``./core/genesis.go``
 
 Specifically, the local database configuration and set up takes place in a custom database file
-> ./core/db.go
-
+``./core/db.go``
 ### Writing Blocks
 
 In our case, we use `SWriteBlock()` for writing all our data. So far, it contains all the data that we need to store to our local block explorer database. It invokes the `SWriteTransaction()` which writes the transactions and updates accounts in the local database. This may change in the future. This function is invoked in:
-> ./core/blockchain.go
+``./core/blockchain.go``
 
 `SWriteBlock()` and `SWriteTransaction()` exist within:
-> ./core/shyft_database_util.go
+``./core/shyft_database_util.go``
 
-```go
-```
-## Transaction Helper Functions
+### Transaction Types Functions
 
-> ./core/types/transaction.go
-
-```go
-```
+``./core/types/transaction.go``
 
 The existing transaction type in Geth did not allow the evm to call a helper function to retrieve the from address, essentially the sender. Therefore, we extended the functionality of the Transaction type to generate the from address through `*Transaction.From()`.
 
->  ./core/shyft_database_util.go
+``./core/shyft_database_util.go``
 
-```go
+### Chain Rollbacks
+
+For development and testing purposes only, until a formal messaging system has been incorporated within go-empyrean, an endpoint is available and freely accessible to trigger a chain and postgresql database rollback.
+
+To trigger a chain/pg database rollback the following command should be executed:
+
 ```
+curl <node ip address>:8081/rollback_blocks/<block hashheader to rollback to>
 
-## Database Getters And Setters
+ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838cad4fe6ae45f68410c8cd7cd640
+```
+# Database Getters And Setters
 
 In order to store the block explorer database, a custom folder was created `./shyft_schema` that contains all the necessary functions to read and write to the explorer database.
 
 The main functions exist in `./core/shyft_database_util.go` and `./core/shyft_get_utils.go`
 
-#### Shyft BlockExplorer API
+### Shyft BlockExplorer API
 
 To run the block explorer rest api that queries the postgres instance and returns a json body, open a new terminal window, navigate to the root directory of the project and run the following command:
 
@@ -252,6 +243,7 @@ Below is an API map containing the different endpoints you can query. If you are
 `http://localhost:8080/api/get_block/10` 
 
 This would return the block data for block number 10, like so: 
+
 ```json
 {
     "Hash":"0xb6f0906a276d992e9dc82f82e3be5487251ff6e7b8ff6b0e5e1603092f534799",
@@ -263,8 +255,6 @@ This would return the block data for block number 10, like so:
     "UncleCount":"0",
     "Age":"2018-05-10T16:26:02Z"
 }
-```
-```go
 ```
 | GET ENDPOINTS  | Description | Type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | ----------- | -------------- | ------------
@@ -282,17 +272,5 @@ This would return the block data for block number 10, like so:
 |  `/api/get_all_accounts`                                  | Returns account data from all accounts | Accounts
 
 The above endpoints will respond with a json payload for the given request, each of these endpoints are subject to change in the future.
-
-#### Chain Rollbacks
-
-For development and testing purposes only, until a formal messaging system has been incorporated within go-empyrean, an endpoint is available and freely accessible to trigger a chain and postgresql database rollback.
-
-To trigger a chain/pg database rollback the following command should be executed:
-
-```
-curl <node ip address>:8081/rollback_blocks/<block hashheader to rollback to>
-
-ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838cad4fe6ae45f68410c8cd7cd640
-```
                                          
 
