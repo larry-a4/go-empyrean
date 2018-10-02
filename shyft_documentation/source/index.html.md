@@ -2,7 +2,7 @@
 title: Shyft Block Explorer Documentation 
 
 language_tabs: # must be one of https://git.io/vQNgJ
-  - shell: cURL
+  - shell: code
 
 toc_footers:
   - <a href='https://github.com/lord/slate'>Documentation Powered by Slate</a>
@@ -124,10 +124,10 @@ To rebuild any one of the services- issue the following commands:
 
 Services:
 
-   - ShyftGeth
-   - Postgres Instance
-   - Shyft Explorer API
-   - Shyft Example Explorer UI
+   - go-empyrean_shyftgeth
+   - go-empyrean_pg
+   - go-empyrean_shyft_block_api
+   - go-empyrean_shyft_block_ui
 
 **``
 docker-compose up -d --no-deps --build <docker compose file service name> 
@@ -165,17 +165,32 @@ appears to have not been fixed: https://github.com/kardianos/govendor/issues/124
 
 **``govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^``**
 
-NB: The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive/
+<aside class="warning">
+The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive
+</aside>
+
+### Docker Port TroubleShooting
+
+Stop/remove all docker containers that may be using conflicting ports - ports for each of the containers shown in the ``docker-compose.yml``
+
+To see which ports are being used on your machine you can run the below command in your terminals root directory:
+
+``netstat -a``
+
 
 # Shyft BlockExplorer API
 
-In order to store the block explorer database, a custom folder was created `./shyft_schema` that contains all the necessary functions to read and write to the explorer database.
+In order to store the block explorer database, a custom folder was created `./shyft_schema` that contains the schema for the explorer database.
 
 The main functions exist in `./core/shyft_database_util.go` and `./core/shyft_get_utils.go`
 
 To run the block explorer rest api that queries the postgres instance and returns a json body, open a new terminal window, navigate to the root directory of the project and run the following command:
 
 **``go run blockExplorerApi/*.go``**
+
+<aside class="warning">
+The above command is to only be used if running locally.
+</aside>
 
 This will start a go server on port 8080 and allow you to either run the pre-existing block explorer or query the api endpoints. Its important to note, that if you have nothing in your postgres database the API will return nothing.
 
@@ -873,6 +888,10 @@ To run the Block Explorer UI, ensure that you have the API running as mentioned 
 ``npm install``
 
 ``npm run start``
+
+<aside class="warning">
+The above command is to only be used if running locally.
+</aside>
 
 This will start a development server on ``port 3000`` and spin up an example block explorer that uses the API to query the postgres database.
 
