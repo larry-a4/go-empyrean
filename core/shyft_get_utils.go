@@ -440,18 +440,19 @@ func SGetAllInternalTransactions(sqldb *sqlx.DB) string {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var txhash, action, to_addr, from_addr, amount, input, output string
+		var txhash, blockhash, action, to_addr, from_addr, amount, input, output string
 		var gas, gasUsed uint64
 		var id int
 		var age string
 
 		err = rows.Scan(
-			&id, &txhash, &action, &to_addr, &from_addr, &amount, &gas, &gasUsed, &age, &input, &output,
+			&id, &txhash, &blockhash, &action, &to_addr, &from_addr, &amount, &gas, &gasUsed, &age, &input, &output,
 		)
 
 		arr.InternalEntry = append(arr.InternalEntry, stypes.InteralWrite{
 			ID:      id,
 			Hash:    txhash,
+			BlockHash: blockhash,
 			Action:  action,
 			To:      to_addr,
 			From:    from_addr,
@@ -485,18 +486,19 @@ func SGetInternalTransaction(sqldb *sqlx.DB, txHash string) string {
 	defer rows.Close()
 
 	for rows.Next() {
-		var txhash, action, to_addr, from_addr, amount, input, output string
+		var txhash, blockhash, action, to_addr, from_addr, amount, input, output string
 		var id int
 		var gas, gasUsed uint64
 		var age string
 
 		err = rows.Scan(
-			&id, &txhash, &action, &to_addr, &from_addr, &amount, &gas, &gasUsed, &age, &input, &output,
+			&id, &txhash, &blockhash, &action, &to_addr, &from_addr, &amount, &gas, &gasUsed, &age, &input, &output,
 		)
 
 		arr.InternalEntry = append(arr.InternalEntry, stypes.InteralWrite{
 			ID:      id,
 			Hash:    txhash,
+			BlockHash: blockhash,
 			Action:  action,
 			To:      to_addr,
 			From:    from_addr,
