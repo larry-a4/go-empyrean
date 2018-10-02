@@ -211,7 +211,7 @@
     <div class="toc-wrapper">
       <img src="images/logo.png" class="logo" alt="Logo" />
         <div class="lang-selector">
-              <a href="#" data-language-name="shell">cURL</a>
+              <a href="#" data-language-name="shell">code</a>
         </div>
         <div class="search">
           <input type="text" class="search" id="input-search" placeholder="Search">
@@ -249,6 +249,9 @@
                   </li>
                   <li>
                     <a href="#docker-block-explorer-api" class="toc-h2 toc-link" data-title="docker-block-explorer-api">Docker Block Explorer Api</a>
+                  </li>
+                  <li>
+                    <a href="#docker-port-troubleshooting" class="toc-h2 toc-link" data-title="docker-port-troubleshooting">Docker Port TroubleShooting</a>
                   </li>
               </ul>
           </li>
@@ -408,10 +411,10 @@ Once cloned, in a terminal window run the following command:</p>
 <p>Services:</p>
 
 <ul>
-<li>ShyftGeth</li>
-<li>Postgres Instance</li>
-<li>Shyft Explorer API</li>
-<li>Shyft Example Explorer UI</li>
+<li>go-empyrean_shyftgeth</li>
+<li>go-empyrean_pg</li>
+<li>go-empyrean_shyft_block_api</li>
+<li>go-empyrean_shyft_block_ui</li>
 </ul>
 
 <p><strong><code>
@@ -450,15 +453,27 @@ appears to have not been fixed: https://github.com/kardianos/govendor/issues/124
 
 <p><strong><code>govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^</code></strong></p>
 
-<p>NB: The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive/</p>
+<aside class="warning">
+The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive
+</aside>
+<h3 id='docker-port-troubleshooting'>Docker Port TroubleShooting</h3>
+<p>Stop/remove all docker containers that may be using conflicting ports - ports for each of the containers shown in the <code>docker-compose.yml</code></p>
+
+<p>To see which ports are being used on your machine you can run the below command in your terminals root directory:</p>
+
+<p><code>netstat -a</code></p>
 <h1 id='shyft-blockexplorer-api'>Shyft BlockExplorer API</h1>
-<p>In order to store the block explorer database, a custom folder was created <code>./shyft_schema</code> that contains all the necessary functions to read and write to the explorer database.</p>
+<p>In order to store the block explorer database, a custom folder was created <code>./shyft_schema</code> that contains the schema for the explorer database.</p>
 
 <p>The main functions exist in <code>./core/shyft_database_util.go</code> and <code>./core/shyft_get_utils.go</code></p>
 
 <p>To run the block explorer rest api that queries the postgres instance and returns a json body, open a new terminal window, navigate to the root directory of the project and run the following command:</p>
 
 <p><strong><code>go run blockExplorerApi/*.go</code></strong></p>
+
+<aside class="warning">
+The above command is to only be used if running locally.
+</aside>
 
 <p>This will start a go server on port 8080 and allow you to either run the pre-existing block explorer or query the api endpoints. Its important to note, that if you have nothing in your postgres database the API will return nothing.</p>
 <h2 id='blocks'>Blocks</h2>
@@ -1849,6 +1864,10 @@ appears to have not been fixed: https://github.com/kardianos/govendor/issues/124
 
 <p><code>npm run start</code></p>
 
+<aside class="warning">
+The above command is to only be used if running locally.
+</aside>
+
 <p>This will start a development server on <code>port 3000</code> and spin up an example block explorer that uses the API to query the postgres database.</p>
 
 <p>It should look like the below image.</p>
@@ -1945,7 +1964,7 @@ This error section is stored in a separate file in <code>includes/_errors.md</co
       </div>
       <div class="dark-box">
           <div class="lang-selector">
-                <a href="#" data-language-name="shell">cURL</a>
+                <a href="#" data-language-name="shell">code</a>
           </div>
       </div>
     </div>
