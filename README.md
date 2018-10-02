@@ -5,6 +5,8 @@ go-empyerean is based on a fork of go-ethereum. Much of the functionality and pr
 
 ## SHYFT NOTES
 
+https://shyftnetwork.github.io/go-empyrean/#setup
+
 #### Dependencies
     
  - go 1.10
