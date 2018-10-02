@@ -1,99 +1,1953 @@
-<!DOCTYPE html>
-<html lang="en">
+
+<!doctype html>
+<html>
   <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Go Ethereum</title>
-    <link rel="icon" type="image/png" href="./static/images/favicon.png" />
-
-    <link href="./static/styles/bootstrap.min.css" rel="stylesheet" />
-    <link href="./static/styles/flatly.min.css" rel="stylesheet" />
-    <link href="./static/styles/font-awesome.min.css" rel="stylesheet" />
-
-    <link href="./static/styles/custom/common.css" rel="stylesheet" />
-    <link href="./static/styles/custom/home.css" rel="stylesheet" />
-
-    <script src="./static/scripts/jquery.min.js"></script>
-    <script src="./static/scripts/bootstrap.min.js"></script>
-    <script src="./static/scripts/moment.min.js"></script>
-    <script src="./static/scripts/marked.min.js"></script>
-    <script src="./static/scripts/emojify.min.js"></script>
-
-    <script src="../static/scripts/custom/polyfills.js"></script>
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Shyft Block Explorer Documentation</title>
+    <link href="images/shyftlogo.png" rel="icon" type="image/png" />
+    <style>
+      .highlight table td { padding: 5px; }
+.highlight table pre { margin: 0; }
+.highlight .gh {
+  color: #999999;
+}
+.highlight .sr {
+  color: #f6aa11;
+}
+.highlight .go {
+  color: #888888;
+}
+.highlight .gp {
+  color: #555555;
+}
+.highlight .gs {
+}
+.highlight .gu {
+  color: #aaaaaa;
+}
+.highlight .nb {
+  color: #f6aa11;
+}
+.highlight .cm {
+  color: #75715e;
+}
+.highlight .cp {
+  color: #75715e;
+}
+.highlight .c1 {
+  color: #75715e;
+}
+.highlight .cs {
+  color: #75715e;
+}
+.highlight .c, .highlight .cd {
+  color: #75715e;
+}
+.highlight .err {
+  color: #960050;
+}
+.highlight .gr {
+  color: #960050;
+}
+.highlight .gt {
+  color: #960050;
+}
+.highlight .gd {
+  color: #49483e;
+}
+.highlight .gi {
+  color: #49483e;
+}
+.highlight .ge {
+  color: #49483e;
+}
+.highlight .kc {
+  color: #66d9ef;
+}
+.highlight .kd {
+  color: #66d9ef;
+}
+.highlight .kr {
+  color: #66d9ef;
+}
+.highlight .no {
+  color: #66d9ef;
+}
+.highlight .kt {
+  color: #66d9ef;
+}
+.highlight .mf {
+  color: #ae81ff;
+}
+.highlight .mh {
+  color: #ae81ff;
+}
+.highlight .il {
+  color: #ae81ff;
+}
+.highlight .mi {
+  color: #ae81ff;
+}
+.highlight .mo {
+  color: #ae81ff;
+}
+.highlight .m, .highlight .mb, .highlight .mx {
+  color: #ae81ff;
+}
+.highlight .sc {
+  color: #ae81ff;
+}
+.highlight .se {
+  color: #ae81ff;
+}
+.highlight .ss {
+  color: #ae81ff;
+}
+.highlight .sd {
+  color: #e6db74;
+}
+.highlight .s2 {
+  color: #e6db74;
+}
+.highlight .sb {
+  color: #e6db74;
+}
+.highlight .sh {
+  color: #e6db74;
+}
+.highlight .si {
+  color: #e6db74;
+}
+.highlight .sx {
+  color: #e6db74;
+}
+.highlight .s1 {
+  color: #e6db74;
+}
+.highlight .s {
+  color: #e6db74;
+}
+.highlight .na {
+  color: #a6e22e;
+}
+.highlight .nc {
+  color: #a6e22e;
+}
+.highlight .nd {
+  color: #a6e22e;
+}
+.highlight .ne {
+  color: #a6e22e;
+}
+.highlight .nf {
+  color: #a6e22e;
+}
+.highlight .vc {
+  color: #ffffff;
+}
+.highlight .nn {
+  color: #ffffff;
+}
+.highlight .nl {
+  color: #ffffff;
+}
+.highlight .ni {
+  color: #ffffff;
+}
+.highlight .bp {
+  color: #ffffff;
+}
+.highlight .vg {
+  color: #ffffff;
+}
+.highlight .vi {
+  color: #ffffff;
+}
+.highlight .nv {
+  color: #ffffff;
+}
+.highlight .w {
+  color: #ffffff;
+}
+.highlight {
+  color: #ffffff;
+}
+.highlight .n, .highlight .py, .highlight .nx {
+  color: #ffffff;
+}
+.highlight .ow {
+  color: #f92672;
+}
+.highlight .nt {
+  color: #f92672;
+}
+.highlight .k, .highlight .kv {
+  color: #f92672;
+}
+.highlight .kn {
+  color: #f92672;
+}
+.highlight .kp {
+  color: #f92672;
+}
+.highlight .o {
+  color: #f92672;
+}
+    </style>
+    <link href="stylesheets/screen.css" rel="stylesheet" media="screen" />
+    <link href="stylesheets/print.css" rel="stylesheet" media="print" />
+      <script src="javascripts/all.js"></script>
   </head>
 
-  <body>
-    <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">Go Ethereum</a>
+  <body class="index" data-languages="[&quot;shell&quot;]">
+    <a href="#" id="nav-button">
+      <span>
+        NAV
+        <img src="images/navbar.png" alt="Navbar" />
+      </span>
+    </a>
+    <div class="toc-wrapper">
+      <img src="images/logo.png" class="logo" alt="Logo" />
+        <div class="lang-selector">
+              <a href="#" data-language-name="shell">cURL</a>
         </div>
-        <div id="navbar" class="navbar-collapse collapse">
-          <ul class="nav navbar-nav">
-            <li><a href="install/">Install</a></li>
-            <li><a href="downloads/">Downloads</a></li>
-            <!--<li><a href="/guide/">Guide</a></li>-->
-          </ul>
+        <div class="search">
+          <input type="text" class="search" id="input-search" placeholder="Search">
         </div>
+        <ul class="search-results"></ul>
+      <div id="toc" class="toc-list-h1">
+          <li>
+            <a href="#introduction" class="toc-h1 toc-link" data-title="introduction">Introduction</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#a-note-from-the-developers" class="toc-h2 toc-link" data-title="a-note-from-the-developers">A Note From The Developers</a>
+                  </li>
+                  <li>
+                    <a href="#contributing-to-shyft-geth" class="toc-h2 toc-link" data-title="contributing-to-shyft-geth">Contributing To Shyft Geth</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#setup" class="toc-h1 toc-link" data-title="setup">Setup</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#dependencies" class="toc-h2 toc-link" data-title="dependencies">Dependencies</a>
+                  </li>
+                  <li>
+                    <a href="#govendor-and-packages-dependencies" class="toc-h2 toc-link" data-title="govendor-and-packages-dependencies">Govendor and Packages/Dependencies</a>
+                  </li>
+                  <li>
+                    <a href="#running-locally" class="toc-h2 toc-link" data-title="running-locally">Running Locally</a>
+                  </li>
+                  <li>
+                    <a href="#docker-images" class="toc-h2 toc-link" data-title="docker-images">Docker Images</a>
+                  </li>
+                  <li>
+                    <a href="#docker-postgresql-db-connection" class="toc-h2 toc-link" data-title="docker-postgresql-db-connection">Docker Postgresql - DB Connection</a>
+                  </li>
+                  <li>
+                    <a href="#docker-block-explorer-api" class="toc-h2 toc-link" data-title="docker-block-explorer-api">Docker Block Explorer Api</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#shyft-blockexplorer-api" class="toc-h1 toc-link" data-title="shyft-blockexplorer-api">Shyft BlockExplorer API</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#blocks" class="toc-h2 toc-link" data-title="blocks">Blocks</a>
+                  </li>
+                  <li>
+                    <a href="#transactions" class="toc-h2 toc-link" data-title="transactions">Transactions</a>
+                  </li>
+                  <li>
+                    <a href="#accounts" class="toc-h2 toc-link" data-title="accounts">Accounts</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#shyft-block-explorer-ui" class="toc-h1 toc-link" data-title="shyft-block-explorer-ui">Shyft Block Explorer UI</a>
+          </li>
+          <li>
+            <a href="#command-line-options" class="toc-h1 toc-link" data-title="command-line-options">Command Line Options</a>
+          </li>
+          <li>
+            <a href="#custom-shyft-constants" class="toc-h1 toc-link" data-title="custom-shyft-constants">Custom Shyft Constants</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#block-rewards" class="toc-h2 toc-link" data-title="block-rewards">Block Rewards</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#shyft-extended-functionality" class="toc-h1 toc-link" data-title="shyft-extended-functionality">Shyft Extended Functionality</a>
+              <ul class="toc-list-h2">
+                  <li>
+                    <a href="#database-functions" class="toc-h2 toc-link" data-title="database-functions">Database Functions</a>
+                  </li>
+                  <li>
+                    <a href="#database-instanitation" class="toc-h2 toc-link" data-title="database-instanitation">Database instanitation</a>
+                  </li>
+                  <li>
+                    <a href="#writing-blocks" class="toc-h2 toc-link" data-title="writing-blocks">Writing Blocks</a>
+                  </li>
+                  <li>
+                    <a href="#transaction-types-functions" class="toc-h2 toc-link" data-title="transaction-types-functions">Transaction Types Functions</a>
+                  </li>
+                  <li>
+                    <a href="#chain-rollbacks" class="toc-h2 toc-link" data-title="chain-rollbacks">Chain Rollbacks</a>
+                  </li>
+              </ul>
+          </li>
+          <li>
+            <a href="#errors" class="toc-h1 toc-link" data-title="errors">Errors</a>
+          </li>
       </div>
-    </nav>
-
-    <div class="jumbotron">
-      <div class="container mascot">
-        <h1>Go Ethereum</h1>
-        <h2>Official Go implementation of the Ethereum protocol</h2>
-        <br/>
-        <a href="https://github.com/ethereum/go-ethereum" target="_blank" class="btn btn-success" style="margin: 4px;"><i class="fa fa-github" aria-hidden="true"></i> View on GitHub</a>
-        <a href="https://gitter.im/ethereum/go-ethereum" target="_blank" class="btn btn-success" style="margin: 4px;"><i class="fa fa-user-circle" aria-hidden="true"></i> Chat on Gitter</a>
-      </div>
+        <ul class="toc-footer">
+            <li><a href='https://github.com/lord/slate'>Documentation Powered by Slate</a></li>
+        </ul>
     </div>
+    <div class="page-wrapper">
+      <div class="dark-box"></div>
+      <div class="content">
+        <h1 id='introduction'>Introduction</h1><h3 id='a-note-from-the-developers'>A Note From The Developers</h3>
+<p>Our goal was to avoid compromising the integrity of Geth and simply extend existing functionality to meet the specific needs of the Shyft Network. To our utmost ability we have documented, within the codebase, exactly where we have extended our functionality using the following notation:  NOTE:SHYFT. This document is meant to provide a high level overview of the changes made to Geth and to provide explanations, where needed, on the changes that were made. Another benefit of this document is to allow others to quickly see the changes that were made in order to get quicker feedback on a compromising line of code.</p>
+<h3 id='contributing-to-shyft-geth'>Contributing To Shyft Geth</h3>
+<p>In order to successfully accept a PR the maintainers of the Shyft repositories require that this document must be updated, reflecting the changes made in the PR. Along with the documentation, we ask that contributors provide the NOTE:SHYFT. The tag could should contain a brief on the modified code. This will help with releases further down the road as we document what breaking changes have been made along the journey.</p>
+<h1 id='setup'>Setup</h1><h3 id='dependencies'>Dependencies</h3>
+<ul>
+<li>go 1.10</li>
+<li>postgres 10</li>
+</ul>
 
-    <div class="container mascot-mobile">
-      <img src="./static/images/mascot.png" height="200px" />
-    </div>
+<p>To install go please review the installation docs <a href="https://golang.org/doc/install">here</a>, but ensure you download version 1.10. If you would like to install go with a script please check out this repo <a href="https://github.com/canha/golang-tools-install-script">here</a>.</p>
 
-    <div class="container marketing">
-      <div class="row featurette">
-        <div class="col-md-7">
-          <h2 class="featurette-heading">What is Ethereum?</h2>
-          <p class="lead">Ethereum is a  decentralized platform that runs smart contracts, applications that run exactly as programmed without possibility of downtime, censorship, fraud or third party interference.</p>
-          <p class="lead">See <a href="https://ethereum.org" target="_blank">our website</a> or <a href="http://ethdocs.org/en/latest/introduction/what-is-ethereum.html" target="_blank">read the docs</a> for more infos!</p>
-        </div>
-        <div class="col-md-5 hide-on-small-screen">
-          <img class="featurette-image center-block" src="./static/images/ethereum.png" height="300px">
-        </div>
+<p>To install postgres please review the installation docs <a href="https://www.postgresql.org/docs/10/static/tutorial-install.html">here</a>.</p>
+<h3 id='govendor-and-packages-dependencies'>Govendor and Packages/Dependencies</h3>
+<blockquote>
+<p>Download Go Vendor</p>
+</blockquote>
+<pre class="highlight shell tab-shell"><code>go get -u github.com/kardianos/govendor
+</code></pre>
+<blockquote>
+<p>To run govendor globally, have this in your bash_profile file:</p>
+</blockquote>
+<pre class="highlight shell tab-shell"><code><span class="nb">export </span><span class="nv">GOPATH</span><span class="o">=</span><span class="nv">$HOME</span>/go
+<span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:<span class="nv">$HOME</span>/go/bin
+</code></pre>
+<blockquote>
+<p>Then go_empyrean will need to be cloned to this directory:</p>
+</blockquote>
+<pre class="highlight shell tab-shell"><code><span class="nv">$GOPATH</span>/src/github.com/ShyftNetwork/
+</code></pre>
+<p>Geth uses govendor to manage packages/dependencies: <a href="https://github.com/kardianos/govendor">Go Vendor</a></p>
+
+<p>This has some more information: <a href="https://github.com/ethereum/go-ethereum/wiki/Developers'-Guide">Ethereum Wiki</a></p>
+
+<p>To add a new dependency, run govendor fetch <import-path> , and commit the changes to git. Then the deps will be accessible on other machines that pull from git.</p>
+
+<aside class="notice">
+GOPATH is not strictly necessary however, for govendor it is much easier to use gopath as go will look for binaries in this directory ($GOPATH/bin). To set up GOPATH, read the govendor section.
+</aside>
+<h3 id='running-locally'>Running Locally</h3>
+<p>To begin running locally, please ensure you have correctly installed go 1.10 and postgres (make sure postgres is running). 
+Once cloned, in a terminal window run the following command:</p>
+
+<p>Before running any CLI options ensure you run <strong><code>make geth</code></strong> in the root directory.</p>
+
+<p><code>.shyft-geth.sh --setup</code> This sets up postgres and the shyft chain db</p>
+
+<p><code>./shyft-geth.sh --start</code> This starts GETH</p>
+
+<p>At this point you should see GETH running in the terminal and if you opened your postgres instance you should see data being populated into the tables. It might look something similiar to the image below.</p>
+
+<p><img src="./images/geth.png" alt="Geth example"></p>
+
+<p>To stop Geth, <strong><code>crtl+C</code></strong> in the terminal window, if you proceed with the start script mentioned above the Shyft chain will begin from the last block height, if you wish to start the chain fresh from genesis follow the below steps:</p>
+
+<p><code>./shyft-geth.sh --reset</code> This drops postgres and chaindb data</p>
+
+<p><code>./shyft-geth.sh --start</code> Starts GETH</p>
+
+<p>To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.</p>
+<h3 id='docker-images'>Docker Images</h3>
+<p>Docker Images are available for ShyftGeth and the Postgresql Database which can be used for development and testing. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available <a href="https://docs.docker.com/install/">here</a>.</p>
+
+<p><strong>To build the images for the first time please run the following command:</strong></p>
+
+<p><code>./shyft-geth.sh --setup # clears persisted directories prior to docker build</code></p>
+
+<p><code>docker-compose up --build</code></p>
+
+<p>If you would like to reinitialize/rebuild the docker images you can run the above mentioned command as well.</p>
+
+<p>To launch ShyftGeth, PG, the ShyftBlock Explorer Api and UI anytime after initial build - issue the following commands from the root of the project directory:</p>
+
+<p><code>./shyft-geth.sh --setup # clears persisted directories prior to docker build</code></p>
+
+<p><strong><code>docker-compose up</code></strong></p>
+
+<p>To stop/pause mining - enter:</p>
+
+<p><strong><code>docker-compose stop</code></strong></p>
+
+<p>And then just issue <code>docker-compose up</code> to continue mining.</p>
+<h3 id='docker-postgresql-db-connection'>Docker Postgresql - DB Connection</h3>
+<p>From your local machine you can view the database by connecting to the database in the container at 
+<strong><code>127.0.0.1:8001</code></strong></p>
+
+<p>Use User: &#39;postgres&#39; Password: &#39;docker&#39; Database: &#39;shyftdb&#39;</p>
+<h3 id='docker-block-explorer-api'>Docker Block Explorer Api</h3>
+<p>To access the shyftBlockExplorer open a browser and visit </p>
+
+<p><strong><code>http://localhost:3000</code></strong></p>
+
+<p>To rebuild any one of the services- issue the following commands:</p>
+
+<p>Services:</p>
+
+<ul>
+<li>ShyftGeth</li>
+<li>Postgres Instance</li>
+<li>Shyft Explorer API</li>
+<li>Shyft Example Explorer UI</li>
+</ul>
+
+<p><strong><code>
+docker-compose up -d --no-deps --build &lt;docker compose file service name&gt; 
+</code></strong></p>
+
+<p>ie. for shyftBlockExplorerApi:</p>
+
+<p><strong><code>docker-compose up -d --no-deps --build shyft_block_api</code></strong></p>
+
+<p>The Postgresql Database Container will persist the database data to the directory <code>./pg-data</code> _. So if you do want to reinitialize the database you should delete this directory as well as the blockchain data directories <code>(./shyftData ./privatenet)</code> prior to launching the docker containers. There is a shell script available to delete these folders to run it execute the following command:</p>
+
+<p><strong><code>./shyft-cli/resetShyftGeth.sh</code></strong></p>
+
+<p>Blockchain data is persisted to <strong><code>./ethash/.ethash and ./shyftData__</code></strong>. If you would like to reset the test blockchain you will need to delete the <strong><code>__./ethash ./shyftData &amp; ./privatenet__</code></strong> directories.</p>
+
+<p>The docker container for the ShyftBlockExplorerApi utilizes govendor to minimize its image size. <strong>If you would like the docker image for this container to reflect any uncommitted changes which may have occurred in the go-empyrean repository, ie. changes with respect to go-empyrean core (ie. cryptographic functions and database). Prior to launching the docker containers you should rebuild the vendor directory for the shyftBlockExplorerApi - by executing the following steps:</strong></p>
+
+<p>Remove existing shyftBlockExplorerApi vendor.json and vendored components:</p>
+
+<p><strong><code>rm -rf shyftBlockExplorerApi/vendor</code></strong></p>
+
+<p>reinitialize vendor.json</p>
+
+<p><strong><code>cd shyftBlockExplorerApi &amp;&amp; govendor init</code></strong></p>
+
+<p>rebuild vendor.json using latest uncommitted changes</p>
+
+<p><strong><code>govendor add +external</code></strong></p>
+
+<p>Due to a bug in govendor and it not being able to pull in some dependencies that are c-header files 
+you should execute the following commands - see these issues - which whilst closed
+appears to have not been fixed: https://github.com/kardianos/govendor/issues/124 &amp;&amp; https://github.com/kardianos/govendor/issues/61</p>
+
+<p><strong><code>govendor remove github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^</code></strong></p>
+
+<p><strong><code>govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^</code></strong></p>
+
+<p>NB: The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive/</p>
+<h1 id='shyft-blockexplorer-api'>Shyft BlockExplorer API</h1>
+<p>In order to store the block explorer database, a custom folder was created <code>./shyft_schema</code> that contains all the necessary functions to read and write to the explorer database.</p>
+
+<p>The main functions exist in <code>./core/shyft_database_util.go</code> and <code>./core/shyft_get_utils.go</code></p>
+
+<p>To run the block explorer rest api that queries the postgres instance and returns a json body, open a new terminal window, navigate to the root directory of the project and run the following command:</p>
+
+<p><strong><code>go run blockExplorerApi/*.go</code></strong></p>
+
+<p>This will start a go server on port 8080 and allow you to either run the pre-existing block explorer or query the api endpoints. Its important to note, that if you have nothing in your postgres database the API will return nothing.</p>
+<h2 id='blocks'>Blocks</h2>
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_block/{blockNumber}</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">  
+   </span><span class="s2">"Hash"</span><span class="p">:</span><span class="s2">"0x72590ac6e7626b9b1f77452d83297c0361e6ff7fa011872289224ee02b9acc8f"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Coinbase"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-10-01T11:15:54Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"ParentHash"</span><span class="p">:</span><span class="s2">"0x5c1aa0559093d9e1e128b6d8ae63d5bf9a5fbf273f704afad9adac88e734c3cc"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleHash"</span><span class="p">:</span><span class="s2">"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Difficulty"</span><span class="p">:</span><span class="s2">"135005"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Size"</span><span class="p">:</span><span class="s2">"538.00 B"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Rewards"</span><span class="p">:</span><span class="s2">"5000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Number"</span><span class="p">:</span><span class="mi">63</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasUsed"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">25534458</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">7333650700872754740</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"TxCount"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleCount"</span><span class="p">:</span><span class="mi">0</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with a the block data for that specific block number. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>blockNumber</code></td>
+<td>The block height or block number</td>
+</tr>
+</tbody></table>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>Hash</code></td>
+<td style="text-align: center">Block hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Coinbase</code></td>
+<td style="text-align: center">Address of miner</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Number</code></td>
+<td style="text-align: center">Block height</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasUsed</code></td>
+<td style="text-align: center">Amount of gas used</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasLimit</code></td>
+<td style="text-align: center">Maximum amount of gas willing to be spent</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>TxCount</code></td>
+<td style="text-align: center">Amount of transactions included in the block</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>UncleCount</code></td>
+<td style="text-align: center">Amount of uncle blocks</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Age</code></td>
+<td style="text-align: center">Time stamp of block creation</td>
+<td style="text-align: right">Timestamp</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>ParentHash</code></td>
+<td style="text-align: center">Hash of the prior block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>UncleHash</code></td>
+<td style="text-align: center">Hash of a the uncle block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Size</code></td>
+<td style="text-align: center">Size of block measured in Bytes</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Rewards</code></td>
+<td style="text-align: center">Block reward</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Nonce</code></td>
+<td style="text-align: center">Value used for PoW</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Difficulty</code></td>
+<td style="text-align: center">The difficulty for this block</td>
+<td style="text-align: right">string</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_all_blocks</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">[{</span><span class="w">  
+   </span><span class="s2">"Hash"</span><span class="p">:</span><span class="s2">"0x5c1aa0559093d9e1e128b6d8ae63d5bf9a5fbf273f704afad9adac88e734c3cc"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Coinbase"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-10-01T11:15:53Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"ParentHash"</span><span class="p">:</span><span class="s2">"0xb0437e25e7cfb113bbea0f014883e8f441d5465bb628f9a112eb372e43055f1a"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleHash"</span><span class="p">:</span><span class="s2">"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Difficulty"</span><span class="p">:</span><span class="s2">"134940"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Size"</span><span class="p">:</span><span class="s2">"538.00 B"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Rewards"</span><span class="p">:</span><span class="s2">"5000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Number"</span><span class="p">:</span><span class="mi">62</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasUsed"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">25509548</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">2307164919004664188</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"TxCount"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleCount"</span><span class="p">:</span><span class="mi">0</span><span class="w">
+</span><span class="p">},</span><span class="w">
+</span><span class="p">{</span><span class="w">  
+   </span><span class="s2">"Hash"</span><span class="p">:</span><span class="s2">"0x72590ac6e7626b9b1f77452d83297c0361e6ff7fa011872289224ee02b9acc8f"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Coinbase"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-10-01T11:15:54Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"ParentHash"</span><span class="p">:</span><span class="s2">"0x5c1aa0559093d9e1e128b6d8ae63d5bf9a5fbf273f704afad9adac88e734c3cc"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleHash"</span><span class="p">:</span><span class="s2">"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Difficulty"</span><span class="p">:</span><span class="s2">"135005"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Size"</span><span class="p">:</span><span class="s2">"538.00 B"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Rewards"</span><span class="p">:</span><span class="s2">"5000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Number"</span><span class="p">:</span><span class="mi">63</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasUsed"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">25534458</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">7333650700872754740</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"TxCount"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleCount"</span><span class="p">:</span><span class="mi">0</span><span class="w">
+</span><span class="p">}]</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with a the block data for all blocks in the postgres db. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<p><em>No Parameter requirement</em></p>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>Hash</code></td>
+<td style="text-align: center">Block hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Coinbase</code></td>
+<td style="text-align: center">Address of miner</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Number</code></td>
+<td style="text-align: center">Block height</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasUsed</code></td>
+<td style="text-align: center">Amount of gas used</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasLimit</code></td>
+<td style="text-align: center">Maximum amount of gas willing to be spent</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>TxCount</code></td>
+<td style="text-align: center">Amount of transactions included in the block</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>UncleCount</code></td>
+<td style="text-align: center">Amount of uncle blocks</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Age</code></td>
+<td style="text-align: center">Time stamp of block creation</td>
+<td style="text-align: right">Timestamp</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>ParentHash</code></td>
+<td style="text-align: center">Hash of the prior block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>UncleHash</code></td>
+<td style="text-align: center">Hash of a the uncle block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Size</code></td>
+<td style="text-align: center">Size of block measured in Bytes</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Rewards</code></td>
+<td style="text-align: center">Block reward</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Nonce</code></td>
+<td style="text-align: center">Value used for PoW</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Difficulty</code></td>
+<td style="text-align: center">The difficulty for this block</td>
+<td style="text-align: right">string</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_recent_block</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">  
+   </span><span class="s2">"Hash"</span><span class="p">:</span><span class="s2">"0x72590ac6e7626b9b1f77452d83297c0361e6ff7fa011872289224ee02b9acc8f"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Coinbase"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-10-01T11:15:54Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"ParentHash"</span><span class="p">:</span><span class="s2">"0x5c1aa0559093d9e1e128b6d8ae63d5bf9a5fbf273f704afad9adac88e734c3cc"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleHash"</span><span class="p">:</span><span class="s2">"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Difficulty"</span><span class="p">:</span><span class="s2">"135005"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Size"</span><span class="p">:</span><span class="s2">"538.00 B"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Rewards"</span><span class="p">:</span><span class="s2">"5000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Number"</span><span class="p">:</span><span class="mi">63</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasUsed"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">25534458</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">7333650700872754740</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"TxCount"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleCount"</span><span class="p">:</span><span class="mi">0</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with the block data from the highest block height. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<p><em>No Parameter requirement</em></p>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>Hash</code></td>
+<td style="text-align: center">Block hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Coinbase</code></td>
+<td style="text-align: center">Address of miner</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Number</code></td>
+<td style="text-align: center">Block height</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasUsed</code></td>
+<td style="text-align: center">Amount of gas used</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasLimit</code></td>
+<td style="text-align: center">Maximum amount of gas willing to be spent</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>TxCount</code></td>
+<td style="text-align: center">Amount of transactions included in the block</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>UncleCount</code></td>
+<td style="text-align: center">Amount of uncle blocks</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Age</code></td>
+<td style="text-align: center">Time stamp of block creation</td>
+<td style="text-align: right">Timestamp</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>ParentHash</code></td>
+<td style="text-align: center">Hash of the prior block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>UncleHash</code></td>
+<td style="text-align: center">Hash of a the uncle block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Size</code></td>
+<td style="text-align: center">Size of block measured in Bytes</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Rewards</code></td>
+<td style="text-align: center">Block reward</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Nonce</code></td>
+<td style="text-align: center">Value used for PoW</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Difficulty</code></td>
+<td style="text-align: center">The difficulty for this block</td>
+<td style="text-align: right">string</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_blocks_mined/{coinbase}</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">[{</span><span class="w">  
+   </span><span class="s2">"Hash"</span><span class="p">:</span><span class="s2">"0x5c1aa0559093d9e1e128b6d8ae63d5bf9a5fbf273f704afad9adac88e734c3cc"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Coinbase"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-10-01T11:15:53Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"ParentHash"</span><span class="p">:</span><span class="s2">"0xb0437e25e7cfb113bbea0f014883e8f441d5465bb628f9a112eb372e43055f1a"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleHash"</span><span class="p">:</span><span class="s2">"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Difficulty"</span><span class="p">:</span><span class="s2">"134940"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Size"</span><span class="p">:</span><span class="s2">"538.00 B"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Rewards"</span><span class="p">:</span><span class="s2">"5000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Number"</span><span class="p">:</span><span class="mi">62</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasUsed"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">25509548</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">2307164919004664188</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"TxCount"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleCount"</span><span class="p">:</span><span class="mi">0</span><span class="w">
+</span><span class="p">},</span><span class="w">
+</span><span class="p">{</span><span class="w">  
+   </span><span class="s2">"Hash"</span><span class="p">:</span><span class="s2">"0x72590ac6e7626b9b1f77452d83297c0361e6ff7fa011872289224ee02b9acc8f"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Coinbase"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-10-01T11:15:54Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"ParentHash"</span><span class="p">:</span><span class="s2">"0x5c1aa0559093d9e1e128b6d8ae63d5bf9a5fbf273f704afad9adac88e734c3cc"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleHash"</span><span class="p">:</span><span class="s2">"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Difficulty"</span><span class="p">:</span><span class="s2">"135005"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Size"</span><span class="p">:</span><span class="s2">"538.00 B"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Rewards"</span><span class="p">:</span><span class="s2">"5000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Number"</span><span class="p">:</span><span class="mi">63</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasUsed"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">25534458</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">7333650700872754740</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"TxCount"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"UncleCount"</span><span class="p">:</span><span class="mi">0</span><span class="w">
+</span><span class="p">}]</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with a the block data for all blocks which have been mined by the provided address. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>coinbase</code></td>
+<td>The miners address</td>
+</tr>
+</tbody></table>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>Hash</code></td>
+<td style="text-align: center">Block hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Coinbase</code></td>
+<td style="text-align: center">Address of miner</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Number</code></td>
+<td style="text-align: center">Block height</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasUsed</code></td>
+<td style="text-align: center">Amount of gas used</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasLimit</code></td>
+<td style="text-align: center">Maximum amount of gas willing to be spent</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>TxCount</code></td>
+<td style="text-align: center">Amount of transactions included in the block</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>UncleCount</code></td>
+<td style="text-align: center">Amount of uncle blocks</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Age</code></td>
+<td style="text-align: center">Time stamp of block creation</td>
+<td style="text-align: right">Timestamp</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>ParentHash</code></td>
+<td style="text-align: center">Hash of the prior block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>UncleHash</code></td>
+<td style="text-align: center">Hash of a the uncle block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Size</code></td>
+<td style="text-align: center">Size of block measured in Bytes</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Rewards</code></td>
+<td style="text-align: center">Block reward</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Nonce</code></td>
+<td style="text-align: center">Value used for PoW</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Difficulty</code></td>
+<td style="text-align: center">The difficulty for this block</td>
+<td style="text-align: right">string</td>
+</tr>
+</tbody></table>
+<h2 id='transactions'>Transactions</h2>
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_transaction/{txHash}</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">  
+   </span><span class="s2">"TxHash"</span><span class="p">:</span><span class="s2">"0x5bd738164c61fb50eb12e227846cbaef2de965aa0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x007622d84a234bb8b078230fcf84b67ae9a8acae"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0xfa01942529ef3a4e543ef8c061c6e0cb69a61c489d3bb6891bb65651c02dafd4"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockNumber"</span><span class="p">:</span><span class="s2">"2"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Amount"</span><span class="p">:</span><span class="s2">"400000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasPrice"</span><span class="p">:</span><span class="mi">1253</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">12124</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">24011655</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Cost"</span><span class="p">:</span><span class="s2">"53002"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Status"</span><span class="p">:</span><span class="s2">"SUCCESS"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"IsContract"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-03-18T19:38:41Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Data"</span><span class="p">:</span><span class="s2">""</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with transaction data from the provided transaction hash. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>txHash</code></td>
+<td>The hash for that particular transaction</td>
+</tr>
+</tbody></table>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>TxHash</code></td>
+<td style="text-align: center">Transaction hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>To</code></td>
+<td style="text-align: center">Address of transaction receiver</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>From</code></td>
+<td style="text-align: center">Address of transaction sender</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockHash</code></td>
+<td style="text-align: center">Hash of block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockNumber</code></td>
+<td style="text-align: center">Block height</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Amount</code></td>
+<td style="text-align: center">Amount of value being transferred</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasPrice</code></td>
+<td style="text-align: center">Price of required gas</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Gas</code></td>
+<td style="text-align: center">Required pricing value to process transaction</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasLimit</code></td>
+<td style="text-align: center">Maximum amount of gas willing to be spent</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Cost</code></td>
+<td style="text-align: center">Hash of a the uncle block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Nonce</code></td>
+<td style="text-align: center">Number of transactions sent from a given address</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Status</code></td>
+<td style="text-align: center">Whether the transaction was success or fail</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>IsContract</code></td>
+<td style="text-align: center">Whether the transaction was from a contract</td>
+<td style="text-align: right">bool</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Age</code></td>
+<td style="text-align: center">Time stamp of transaction creation</td>
+<td style="text-align: right">timestamp</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Data</code></td>
+<td style="text-align: center">Contract data in byte code</td>
+<td style="text-align: right">byteArray</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_all_transactions</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">[{</span><span class="w">  
+   </span><span class="s2">"TxHash"</span><span class="p">:</span><span class="s2">"0x5bd738164c61fb50eb12e227846cbaef2de965aa0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x007622d84a234bb8b078230fcf84b67ae9a8acae"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0xfa01942529ef3a4e543ef8c061c6e0cb69a61c489d3bb6891bb65651c02dafd4"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockNumber"</span><span class="p">:</span><span class="s2">"2"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Amount"</span><span class="p">:</span><span class="s2">"400000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasPrice"</span><span class="p">:</span><span class="mi">1253</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">12124</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">24011655</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Cost"</span><span class="p">:</span><span class="s2">"53002"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Status"</span><span class="p">:</span><span class="s2">"SUCCESS"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"IsContract"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-03-18T19:38:41Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Data"</span><span class="p">:</span><span class="s2">""</span><span class="w">
+</span><span class="p">},</span><span class="w">
+</span><span class="p">{</span><span class="w">  
+   </span><span class="s2">"TxHash"</span><span class="p">:</span><span class="s2">"0x2f56g38164c634550eb12e222146cbaef2de965aa0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x007622d84a234bb8b078230fcf84b67ae9a8acae"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0xbg01234529ef3a4e543q23061c6e0cb69a61c489d3bb6891bb65651c02dafd4"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockNumber"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Amount"</span><span class="p">:</span><span class="s2">"100000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasPrice"</span><span class="p">:</span><span class="mi">1253</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">12124</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">24011655</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Cost"</span><span class="p">:</span><span class="s2">"53002"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Status"</span><span class="p">:</span><span class="s2">"SUCCESS"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"IsContract"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-03-18T19:40:41Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Data"</span><span class="p">:</span><span class="s2">""</span><span class="w">
+</span><span class="p">}]</span><span class="w">
+
+</span></code></pre>
+<p>The above endpoint will respond with transaction data for all transactions in the postgres database. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<p><em>No parameters required</em></p>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>TxHash</code></td>
+<td style="text-align: center">Transaction hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>To</code></td>
+<td style="text-align: center">Address of transaction receiver</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>From</code></td>
+<td style="text-align: center">Address of transaction sender</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockHash</code></td>
+<td style="text-align: center">Hash of block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockNumber</code></td>
+<td style="text-align: center">Block height</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Amount</code></td>
+<td style="text-align: center">Amount of value being transferred</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasPrice</code></td>
+<td style="text-align: center">Price of required gas</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Gas</code></td>
+<td style="text-align: center">Required pricing value to process transaction</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasLimit</code></td>
+<td style="text-align: center">Maximum amount of gas willing to be spent</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Cost</code></td>
+<td style="text-align: center">Hash of a the uncle block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Nonce</code></td>
+<td style="text-align: center">Number of transactions sent from a given address</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Status</code></td>
+<td style="text-align: center">Whether the transaction was success or fail</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>IsContract</code></td>
+<td style="text-align: center">Whether the transaction was from a contract</td>
+<td style="text-align: right">bool</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Age</code></td>
+<td style="text-align: center">Time stamp of transaction creation</td>
+<td style="text-align: right">timestamp</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Data</code></td>
+<td style="text-align: center">Contract data in byte code</td>
+<td style="text-align: right">byteArray</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_all_transactions_from_block/{blockNumber}</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">[{</span><span class="w">  
+   </span><span class="s2">"TxHash"</span><span class="p">:</span><span class="s2">"0x5bd738164c61fb50eb12e227846cbaef2de965aa0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x007622d84a234bb8b078230fcf84b67ae9a8acae"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0xfa01942529ef3a4e543ef8c061c6e0cb69a61c489d3bb6891bb65651c02dafd4"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockNumber"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Amount"</span><span class="p">:</span><span class="s2">"400000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasPrice"</span><span class="p">:</span><span class="mi">1253</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">12124</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">24011655</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Cost"</span><span class="p">:</span><span class="s2">"53002"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Status"</span><span class="p">:</span><span class="s2">"SUCCESS"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"IsContract"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-03-18T19:38:41Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Data"</span><span class="p">:</span><span class="s2">""</span><span class="w">
+</span><span class="p">},</span><span class="w">
+</span><span class="p">{</span><span class="w">  
+   </span><span class="s2">"TxHash"</span><span class="p">:</span><span class="s2">"0x2f56g38164c634550eb12e222146cbaef2de965aa0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x007622d84a234bb8b078230fcf84b67ae9a8acae"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0xbg01234529ef3a4e543q23061c6e0cb69a61c489d3bb6891bb65651c02dafd4"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"BlockNumber"</span><span class="p">:</span><span class="s2">"3"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Amount"</span><span class="p">:</span><span class="s2">"100000000000000000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasPrice"</span><span class="p">:</span><span class="mi">1253</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">12124</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">24011655</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Cost"</span><span class="p">:</span><span class="s2">"53002"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Status"</span><span class="p">:</span><span class="s2">"SUCCESS"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"IsContract"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-03-18T19:40:41Z"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Data"</span><span class="p">:</span><span class="s2">""</span><span class="w">
+</span><span class="p">}]</span><span class="w">
+
+</span></code></pre>
+<p>The above endpoint will respond with transaction data for all transactions in the postgres database. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>blockNumber</code></td>
+<td>The block height or block number</td>
+</tr>
+</tbody></table>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>TxHash</code></td>
+<td style="text-align: center">Transaction hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>To</code></td>
+<td style="text-align: center">Address of transaction receiver</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>From</code></td>
+<td style="text-align: center">Address of transaction sender</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockHash</code></td>
+<td style="text-align: center">Hash of block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockNumber</code></td>
+<td style="text-align: center">Block height</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Amount</code></td>
+<td style="text-align: center">Amount of value being transferred</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasPrice</code></td>
+<td style="text-align: center">Price of required gas</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Gas</code></td>
+<td style="text-align: center">Required pricing value to process transaction</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasLimit</code></td>
+<td style="text-align: center">Maximum amount of gas willing to be spent</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Cost</code></td>
+<td style="text-align: center">Hash of a the uncle block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Nonce</code></td>
+<td style="text-align: center">Number of transactions sent from a given address</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Status</code></td>
+<td style="text-align: center">Whether the transaction was success or fail</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>IsContract</code></td>
+<td style="text-align: center">Whether the transaction was from a contract</td>
+<td style="text-align: right">bool</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Age</code></td>
+<td style="text-align: center">Time stamp of transaction creation</td>
+<td style="text-align: right">timestamp</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Data</code></td>
+<td style="text-align: center">Contract data in byte code</td>
+<td style="text-align: right">byteArray</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_account_txs/{address}</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">[</span><span class="w">  
+   </span><span class="p">{</span><span class="w">  
+      </span><span class="s2">"TxHash"</span><span class="p">:</span><span class="s2">"0x7da80aaf6f7e382735310c725b81f790f84c75a541a5360ecba30eb2d7965395"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0xfaeccae8c1af6bdfd71095e1b6a2f61c61c8a7e7"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0x894459a52417bcf3e0eec81fce6cc0858813cbd2202711031e8c5185d9aa4d38"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"BlockNumber"</span><span class="p">:</span><span class="s2">"2"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Amount"</span><span class="p">:</span><span class="s2">"0"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"GasPrice"</span><span class="p">:</span><span class="mi">100000000000</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">6721975</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">24058572</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Cost"</span><span class="p">:</span><span class="s2">"672197500000000000"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Status"</span><span class="p">:</span><span class="s2">"SUCCESS"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"IsContract"</span><span class="p">:</span><span class="kc">true</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-10-02T13:21:02Z"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Data"</span><span class="p">:</span><span class="s2">"YIBgQFI0gBVhABBXYAGCY/////8WfAEAAAAAAAAAAAAAAAAAAAAAAAYQVienpyMFS8PtYkAKQ=="</span><span class="w">
+   </span><span class="p">},</span><span class="w">
+   </span><span class="p">{</span><span class="w">  
+      </span><span class="s2">"TxHash"</span><span class="p">:</span><span class="s2">"0x2f49282ff117dd4d28f4b5a59a71fc0c3ab1cd595f6d503cd82caa88d1cc4897"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0xfaeccae8c1af6bdfd71095e1b6a2f61c61c8a7e7"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0x12b73a2ae27cb32193e8570c275b24d6a9aa9d637c61582e63afe589535f075a"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"BlockNumber"</span><span class="p">:</span><span class="s2">"4"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Amount"</span><span class="p">:</span><span class="s2">"0"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"GasPrice"</span><span class="p">:</span><span class="mi">100000000000</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">6721975</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"GasLimit"</span><span class="p">:</span><span class="mi">24105581</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Cost"</span><span class="p">:</span><span class="s2">"672197500000000000"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Nonce"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Status"</span><span class="p">:</span><span class="s2">"SUCCESS"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"IsContract"</span><span class="p">:</span><span class="kc">false</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Age"</span><span class="p">:</span><span class="s2">"2018-10-02T13:21:05Z"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Data"</span><span class="p">:</span><span class="s2">"/azVdgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB"</span><span class="w">
+   </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+
+</span></code></pre>
+<p>The above endpoint will respond with transaction data for all transactions conducted by the provided address. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>address</code></td>
+<td>The address of an account</td>
+</tr>
+</tbody></table>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>TxHash</code></td>
+<td style="text-align: center">Transaction hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>To</code></td>
+<td style="text-align: center">Address of transaction receiver</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>From</code></td>
+<td style="text-align: center">Address of transaction sender</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockHash</code></td>
+<td style="text-align: center">Hash of block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockNumber</code></td>
+<td style="text-align: center">Block height</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Amount</code></td>
+<td style="text-align: center">Amount of value being transferred</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasPrice</code></td>
+<td style="text-align: center">Price of required gas</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Gas</code></td>
+<td style="text-align: center">Required pricing value to process transaction</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasLimit</code></td>
+<td style="text-align: center">Maximum amount of gas willing to be spent</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Cost</code></td>
+<td style="text-align: center">Hash of a the uncle block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Nonce</code></td>
+<td style="text-align: center">Number of transactions sent from a given address</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Status</code></td>
+<td style="text-align: center">Whether the transaction was success or fail</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>IsContract</code></td>
+<td style="text-align: center">Whether the transaction was from a contract</td>
+<td style="text-align: right">bool</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Age</code></td>
+<td style="text-align: center">Time stamp of transaction creation</td>
+<td style="text-align: right">timestamp</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Data</code></td>
+<td style="text-align: center">Contract data in byte code</td>
+<td style="text-align: right">byteArray</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_internal_transactions/{hash}</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">[</span><span class="w">  
+   </span><span class="p">{</span><span class="w">  
+      </span><span class="s2">"ID"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Hash"</span><span class="p">:</span><span class="s2">"0x2f49282ff117dd4d28f4b5a59a71fc0c3ab1cd595f6d503cd82caa88d1cc4897"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0x12b73a2ae27cb32193e8570c275b24d6a9aa9d637c61582e63afe589535f075a"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Action"</span><span class="p">:</span><span class="s2">"CALL"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0xfaeccae8c1af6bdfd71095e1b6a2f61c61c8a7e7"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Value"</span><span class="p">:</span><span class="s2">"0"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">6700511</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"GasUsed"</span><span class="p">:</span><span class="mi">20544</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Input"</span><span class="p">:</span><span class="s2">"0xfdacd5760000000000000000000000000000000000000000000000000000000000000001"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Output"</span><span class="p">:</span><span class="s2">"0x"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Time"</span><span class="p">:</span><span class="s2">"6.950856ms"</span><span class="w">
+   </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with transaction data from the provided transaction hash. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>hash</code></td>
+<td>The transaction hash of the particular record</td>
+</tr>
+</tbody></table>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>ID</code></td>
+<td style="text-align: center">Incrementing integer for unique db record</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Hash</code></td>
+<td style="text-align: center">Transaction hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockHash</code></td>
+<td style="text-align: center">Hash of block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Action</code></td>
+<td style="text-align: center">Contract type, can be Call or Create</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>To</code></td>
+<td style="text-align: center">Address of transaction receiver</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>From</code></td>
+<td style="text-align: center">Address of transaction sender</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Value</code></td>
+<td style="text-align: center">Amount of value being transferred</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Gas</code></td>
+<td style="text-align: center">Required pricing value to process transaction</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasUsed</code></td>
+<td style="text-align: center">Amount of gas used</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Input</code></td>
+<td style="text-align: center">Parameters passed into contract in bytecode</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Output</code></td>
+<td style="text-align: center">Return values from contract in bytecode</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Time</code></td>
+<td style="text-align: center">Amount of time to trace transaction</td>
+<td style="text-align: right">string</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_internal_transactions</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">[</span><span class="w">  
+   </span><span class="p">{</span><span class="w">  
+      </span><span class="s2">"ID"</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Hash"</span><span class="p">:</span><span class="s2">"0x2f49282ff117dd4d28f4b5a59a71fc0c3ab1cd595f6d503cd82caa88d1cc4897"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0x12b73a2ae27cb32193e8570c275b24d6a9aa9d637c61582e63afe589535f075a"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Action"</span><span class="p">:</span><span class="s2">"CALL"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0xfaeccae8c1af6bdfd71095e1b6a2f61c61c8a7e7"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Value"</span><span class="p">:</span><span class="s2">"0"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">6700511</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"GasUsed"</span><span class="p">:</span><span class="mi">20544</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Input"</span><span class="p">:</span><span class="s2">"0xfdacd5760000000000000000000000000000000000000000000000000000000000000001"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Output"</span><span class="p">:</span><span class="s2">"0x"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Time"</span><span class="p">:</span><span class="s2">"6.950856ms"</span><span class="w">
+   </span><span class="p">},</span><span class="w">
+   </span><span class="p">{</span><span class="w">  
+      </span><span class="s2">"ID"</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Hash"</span><span class="p">:</span><span class="s2">"0x16b218a28d48c5ef54cf09ce836e285cb23ba9c179b3c88269d61cb5bd5473db"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"BlockHash"</span><span class="p">:</span><span class="s2">"0xbdb1aca7c9aeee9f9723ea84cb8d47ff46f49e29a85d41a92b7950a0970b1d25"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Action"</span><span class="p">:</span><span class="s2">"CALL"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"From"</span><span class="p">:</span><span class="s2">"0x43ec6d0942f7faef069f7f63d0384a27f529b062"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"To"</span><span class="p">:</span><span class="s2">"0xfaeccae8c1af6bdfd71095e1b6a2f61c61c8a7e7"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Value"</span><span class="p">:</span><span class="s2">"0"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Gas"</span><span class="p">:</span><span class="mi">6700511</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"GasUsed"</span><span class="p">:</span><span class="mi">5544</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Input"</span><span class="p">:</span><span class="s2">"0xfdacd5760000000000000000000000000000000000000000000000000000000000000002"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Output"</span><span class="p">:</span><span class="s2">"0x"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Time"</span><span class="p">:</span><span class="s2">"1.370835ms"</span><span class="w">
+   </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with all internal transaction data from the postgres database. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<p><em>No parameters requirements</em></p>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>ID</code></td>
+<td style="text-align: center">Incrementing integer for unique db record</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Hash</code></td>
+<td style="text-align: center">Transaction hash</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>BlockHash</code></td>
+<td style="text-align: center">Hash of block</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Action</code></td>
+<td style="text-align: center">Contract type, can be Call or Create</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>To</code></td>
+<td style="text-align: center">Address of transaction receiver</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>From</code></td>
+<td style="text-align: center">Address of transaction sender</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Value</code></td>
+<td style="text-align: center">Amount of value being transferred</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Gas</code></td>
+<td style="text-align: center">Required pricing value to process transaction</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>GasUsed</code></td>
+<td style="text-align: center">Amount of gas used</td>
+<td style="text-align: right">number</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Input</code></td>
+<td style="text-align: center">Parameters passed into contract in bytecode</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Output</code></td>
+<td style="text-align: center">Return values from contract in bytecode</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Time</code></td>
+<td style="text-align: center">Amount of time to trace transaction</td>
+<td style="text-align: right">string</td>
+</tr>
+</tbody></table>
+<h2 id='accounts'>Accounts</h2>
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_account/{address}</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">  
+   </span><span class="s2">"Addr"</span><span class="p">:</span><span class="s2">"0xfaeccae8c1af6bdfd71095e1b6a2f61c61c8a7e7"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Balance"</span><span class="p">:</span><span class="s2">"100000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"AccountNonce"</span><span class="p">:</span><span class="s2">"5"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with account data from the provided address. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>address</code></td>
+<td>The address of an account to query</td>
+</tr>
+</tbody></table>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>Addr</code></td>
+<td style="text-align: center">Account address</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Balance</code></td>
+<td style="text-align: center">Address balance in wei</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>AccountNonce</code></td>
+<td style="text-align: center">Number of transactions sent from a given address</td>
+<td style="text-align: right">string</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_account/{address}</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">{</span><span class="w">  
+   </span><span class="s2">"Addr"</span><span class="p">:</span><span class="s2">"0xfaeccae8c1af6bdfd71095e1b6a2f61c61c8a7e7"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"Balance"</span><span class="p">:</span><span class="s2">"100000000"</span><span class="p">,</span><span class="w">
+   </span><span class="s2">"AccountNonce"</span><span class="p">:</span><span class="s2">"5"</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with account data from the provided address. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>address</code></td>
+<td>The address of an account to query</td>
+</tr>
+</tbody></table>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>Addr</code></td>
+<td style="text-align: center">Account address</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Balance</code></td>
+<td style="text-align: center">Address balance in wei</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>AccountNonce</code></td>
+<td style="text-align: center">Number of transactions sent from a given address</td>
+<td style="text-align: right">string</td>
+</tr>
+</tbody></table>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: blue; padding: 7px; margin-right: 5px;"><strong>GET</strong></span> <code>/api/get_all_accounts</code> </p>
+
+<p><span style="color:#fff; height: 25px; width: 30px; background: red; padding: 7px; margin-right: 5px;"><strong>Headers</strong></span> <code>Content-Type: application/json</code></p>
+
+<p><strong>Description</strong></p>
+<pre class="highlight json tab-json"><code><span class="p">[</span><span class="w">  
+   </span><span class="p">{</span><span class="w">  
+      </span><span class="s2">"Addr"</span><span class="p">:</span><span class="s2">"0xc04ee4131895f1d0c294d508af65d94060aa42bb"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Balance"</span><span class="p">:</span><span class="s2">"500000000000000000000"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"AccountNonce"</span><span class="p">:</span><span class="s2">"1"</span><span class="w">
+   </span><span class="p">},</span><span class="w">
+   </span><span class="p">{</span><span class="w">  
+      </span><span class="s2">"Addr"</span><span class="p">:</span><span class="s2">"0x07d899c4ac0c1725c35c5f816e60273b33a964f7"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Balance"</span><span class="p">:</span><span class="s2">"100000000000000000000"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"AccountNonce"</span><span class="p">:</span><span class="s2">"1"</span><span class="w">
+   </span><span class="p">},</span><span class="w">
+   </span><span class="p">{</span><span class="w">  
+      </span><span class="s2">"Addr"</span><span class="p">:</span><span class="s2">"0x5bd738164c61fb50eb12e227846cbaef2de965aa"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"Balance"</span><span class="p">:</span><span class="s2">"400000000000000000000"</span><span class="p">,</span><span class="w">
+      </span><span class="s2">"AccountNonce"</span><span class="p">:</span><span class="s2">"1"</span><span class="w">
+   </span><span class="p">}</span><span class="w">
+</span><span class="p">]</span><span class="w">
+</span></code></pre>
+<p>The above endpoint will respond with account data for all accounts in the postgres database. The table below lists the attributes that will be included in the response from this endpoint.</p>
+
+<table><thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>address</code></td>
+<td>The address of an account to query</td>
+</tr>
+</tbody></table>
+
+<table><thead>
+<tr>
+<th style="text-align: left">Attributes</th>
+<th style="text-align: center">Description</th>
+<th style="text-align: right">Type</th>
+</tr>
+</thead><tbody>
+<tr>
+<td style="text-align: left"><code>Addr</code></td>
+<td style="text-align: center">Account address</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>Balance</code></td>
+<td style="text-align: center">Address balance in wei</td>
+<td style="text-align: right">string</td>
+</tr>
+<tr>
+<td style="text-align: left"><code>AccountNonce</code></td>
+<td style="text-align: center">Number of transactions sent from a given address</td>
+<td style="text-align: right">string</td>
+</tr>
+</tbody></table>
+
+<p><strong>The above endpoints will respond with a json payload for the given request, each of these endpoints are subject to change in the future.</strong></p>
+<h1 id='shyft-block-explorer-ui'>Shyft Block Explorer UI</h1>
+<p>To demonstrate the ability to create your own block explorer, a custom folder was created <code>./shyftBlockExplorerUI</code> that contains an example block explorer using react!</p>
+
+<p>To run the Block Explorer UI, ensure that you have the API running as mentioned above. Then run the following command in a terminal:</p>
+
+<p><code>cd shyftBlockExplorerUI</code></p>
+
+<p><code>npm install</code></p>
+
+<p><code>npm run start</code></p>
+
+<p>This will start a development server on <code>port 3000</code> and spin up an example block explorer that uses the API to query the postgres database.</p>
+
+<p>It should look like the below image.</p>
+
+<p><img src="./images/explorerUI.png" alt="Block Explorer Example"></p>
+<h1 id='command-line-options'>Command Line Options</h1>
+<p>Before running any CLI options ensure you run <code>make geth</code> in the root directory.</p>
+
+<blockquote>
+<p>In the root directory run <code>./shyft-geth.sh</code> with any of the following flags:</p>
+</blockquote>
+<pre class="highlight shell tab-shell"><code>--setup              - Setups postgres and the shyft chain db.
+--start              - Starts geth.
+--reset              - Drops postgres and chain db, and instantiates both.
+--js &lt;web3 filename&gt; - Executes web3 calls with a passed file name.
+                       If the file name is sendTransactions.js:
+                       ./shyft-geth.sh --js sendTransactions
+</code></pre>
+<p>For convenience a simple CLI was built using <code>shyft-geth.sh</code> as the executable file with some basic commands to get your environment setup.</p>
+
+<p>This will create a new database for geth to use as well as all the necessary tables for the shyft blockexplorer.</p>
+<h1 id='custom-shyft-constants'>Custom Shyft Constants</h1><h3 id='block-rewards'>Block Rewards</h3>
+<p><code>./consensus/ethash/consensus.go</code></p>
+
+<p>Shyft inflation is different than that of Ethereum, therefore the constants were changed in order to support this.</p>
+<h1 id='shyft-extended-functionality'>Shyft Extended Functionality</h1><h3 id='database-functions'>Database Functions</h3>
+<p><code>./core/db.go</code></p>
+
+<p><code>./shyft_schema</code></p>
+<h3 id='database-instanitation'>Database instanitation</h3>
+<p>The local database is instantiated where Geth generates and writes the genesis state/block.
+<code>./core/genesis.go</code></p>
+
+<p>Specifically, the local database configuration and set up takes place in a custom database file
+<code>./core/db.go</code></p>
+<h3 id='writing-blocks'>Writing Blocks</h3>
+<p>In our case, we use <code>SWriteBlock()</code> for writing all our data. So far, it contains all the data that we need to store to our local block explorer database. It invokes the <code>SWriteTransaction()</code> which writes the transactions and updates accounts in the local database. This may change in the future. This function is invoked in:
+<code>./core/blockchain.go</code></p>
+
+<p><code>SWriteBlock()</code> and <code>SWriteTransaction()</code> exist within:
+<code>./core/shyft_database_util.go</code></p>
+<h3 id='transaction-types-functions'>Transaction Types Functions</h3>
+<p><code>./core/types/transaction.go</code></p>
+
+<p>The existing transaction type in Geth did not allow the evm to call a helper function to retrieve the from address, essentially the sender. Therefore, we extended the functionality of the Transaction type to generate the from address through <code>*Transaction.From()</code>.</p>
+
+<p><code>./core/shyft_database_util.go</code></p>
+<h3 id='chain-rollbacks'>Chain Rollbacks</h3>
+<p>For development and testing purposes only, until a formal messaging system has been incorporated within go-empyrean, an endpoint is available and freely accessible to trigger a chain and postgresql database rollback.</p>
+
+<p>To trigger a chain/pg database rollback the following command should be executed:</p>
+<pre class="highlight plaintext"><code>curl &lt;node ip address&gt;:8081/rollback_blocks/&lt;block hashheader to rollback to&gt;
+
+ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838cad4fe6ae45f68410c8cd7cd640
+</code></pre><h1 id='errors'>Errors</h1>
+<aside class="notice">
+This error section is stored in a separate file in <code>includes/_errors.md</code>. Slate allows you to optionally separate out your docs into many files...just save them to the <code>includes</code> folder and add them to the top of your <code>index.md</code>'s frontmatter. Files are included in the order listed.
+</aside>
+
+<p>The Shyft Block Explorer API uses the following error codes:</p>
+
+<table><thead>
+<tr>
+<th>Error Code</th>
+<th>Meaning</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>400</td>
+<td>Bad Request -- Your request is invalid.</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not Found -- The specified request endpoint could not be found.</td>
+</tr>
+<tr>
+<td>406</td>
+<td>Not Acceptable -- You requested a format that isn&#39;t json.</td>
+</tr>
+<tr>
+<td>429</td>
+<td>Too Many Requests -- You&#39;re requesting too much data! Slow down!</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Internal Server Error -- We had a problem with our server. Try again later.</td>
+</tr>
+<tr>
+<td>503</td>
+<td>Service Unavailable -- We&#39;re temporarily offline for maintenance. Please try again later.</td>
+</tr>
+</tbody></table>
+
       </div>
-      <hr/>
-      <div class="row featurette">
-        <div class="col-md-7 col-md-push-5">
-          <h2 class="featurette-heading">What is Go Ethereum?</h2>
-          <p class="lead">Go Ethereum is one of the three original implementations (along with C++ and Python) of the Ethereum protocol. It is written in Go, fully open source and licensed under the GNU LGPL v3.</p>
-          <p class="lead">See <a href="https://github.com/ethereum/go-ethereum" target="_blank">our repository</a> and <a href="./downloads">downloads section</a> for the code!</p>
-        </div>
-        <div class="col-md-5 col-md-pull-7 hide-on-small-screen">
-          <img class="featurette-image center-block" src="./static/images/mascot.png" height="300px">
-        </div>
+      <div class="dark-box">
+          <div class="lang-selector">
+                <a href="#" data-language-name="shell">cURL</a>
+          </div>
       </div>
-      <hr/>
-      <div class="row featurette">
-        <div class="col-md-7">
-          <h2 class="featurette-heading">How can I use it?</h2>
-          <p class="lead">Go Ethereum is available either as a standalone client called Geth that you can install on pretty much any operating system, or as a library that you can embed in your Go, Android or iOS projects.</p>
-          <p class="lead">See our <a href="./install">installation guide</a> or our <a href="https://github.com/ethereum/go-ethereum/wiki" target="_blank">wiki pages</a> for details!</p>
-        </div>
-      </div>
-      <hr/>
-      <footer>
-        <p>&copy; 2013-2016. The go-ethereum Authors.</p>
-      </footer>
     </div>
   </body>
 </html>
