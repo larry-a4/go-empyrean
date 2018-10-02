@@ -57,8 +57,6 @@ To stop/pause mining - enter:
 
 And then just issue `docker-compose up` to continue mining.
 
-_NOTE:_ There is currently an issue with respect to starting and stopping the docker containers. Currently docker stop does not allow the shyft geth instance to undergo an orderly shutdown and corrupts the chaindata, resulting in a complete rewind of the chain and the chain being rebuilt from block 0. We are currently researching a solution whereby the docker stop command will be captured by the shyft geth container allowing for an orderly shutdown and not corrupting the chain data.
-
 #### Docker Postgresql - DB Connection
 From your local machine you can view the database by connecting to the database in the container at 127.0.0.1:8001. Use User: 'postgres' Password: 'docker' Database: 'shyftdb'
 
