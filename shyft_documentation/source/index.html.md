@@ -246,7 +246,7 @@ To run the block explorer rest api that queries the postgres instance and return
 **``go run blockExplorerApi/*.go``**
 
 <aside class="warning">
-The above command is to only be used if running locally.
+The above command is to only be used if running locally and assumes that the block explorer API is being run from the same server.
 </aside>
 
 This will start a go server on port 8080 and allow you to either run the pre-existing block explorer or query the api endpoints. Its important to note, that if you have nothing in your postgres database the API will return nothing.
@@ -947,7 +947,7 @@ To run the Block Explorer UI, ensure that you have the API running as mentioned 
 ``npm run start``
 
 <aside class="warning">
-The above command is to only be used if running locally.
+The above command is to only be used if running locally and assumes that the block explorer API is being run from the same server.
 </aside>
 
 This will start a development server on ``port 3000`` and spin up an example block explorer that uses the API to query the postgres database.
