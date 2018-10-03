@@ -228,7 +228,7 @@ This will start a go server on port 8080 and allow you to either run the pre-exi
 }
 ```
 
-The above endpoint will respond with a the block data for that specific block number. The table below lists the attributes that will be included in the response from this endpoint.
+The above endpoint will respond with the block data for that specific block number. The table below lists the attributes that will be included in the response from this endpoint.
 
 | Parameter | Description |
 | --- | --- |
@@ -293,7 +293,7 @@ The above endpoint will respond with a the block data for that specific block nu
 }]
 ```
 
-The above endpoint will respond with a the block data for all blocks in the postgres db. The table below lists the attributes that will be included in the response from this endpoint.
+The above endpoint will respond with the block data for all blocks in the postgres db. The table below lists the attributes that will be included in the response from this endpoint.
 
 *No Parameter requirement*
 
@@ -403,7 +403,7 @@ The above endpoint will respond with the block data from the highest block heigh
 }]
 ```
 
-The above endpoint will respond with a the block data for all blocks which have been mined by the provided address. The table below lists the attributes that will be included in the response from this endpoint.
+The above endpoint will respond with the block data for all blocks which have been mined by the provided address. The table below lists the attributes that will be included in the response from this endpoint.
 
 | Parameter | Description |
 | --- | --- |
