@@ -1,1 +1,2 @@
-CREATE DATABASE shyftdbTest
+DROP DATABASE IF EXISTS shyftdbTest;
+CREATE DATABASE shyftdbTest;

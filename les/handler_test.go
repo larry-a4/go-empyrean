@@ -28,6 +28,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/light"
@@ -35,6 +36,10 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/trie"
+)
+
+const (
+	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
 
 func expectResponse(r p2p.MsgReader, msgcode, reqID, bv uint64, data interface{}) error {
@@ -51,6 +56,8 @@ func TestGetBlockHeadersLes2(t *testing.T) { testGetBlockHeaders(t, 2) }
 
 func testGetBlockHeaders(t *testing.T, protocol int) {
 	db, _ := ethdb.NewMemDatabase()
+	// @SHYFT NOTE: clear pg db
+	// core.TruncateTables()
 	pm := newTestProtocolManagerMust(t, false, downloader.MaxHashFetch+15, nil, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
@@ -181,6 +188,7 @@ func TestGetBlockBodiesLes2(t *testing.T) { testGetBlockBodies(t, 2) }
 
 func testGetBlockBodies(t *testing.T, protocol int) {
 	db, _ := ethdb.NewMemDatabase()
+	core.TruncateTables()
 	pm := newTestProtocolManagerMust(t, false, downloader.MaxBlockFetch+15, nil, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
@@ -259,6 +267,24 @@ func TestGetCodeLes2(t *testing.T) { testGetCode(t, 2) }
 func testGetCode(t *testing.T, protocol int) {
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
+
+	//@SHYFT //SETS UP OUR TEST ENV
+	core.TruncateTables()
+	eth.NewShyftTestLDB()
+	shyftTracer := new(eth.ShyftTracer)
+	core.SetIShyftTracer(shyftTracer)
+
+	ethConf := &eth.Config{
+		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+		Etherbase: common.HexToAddress(testAddress),
+		Ethash: ethash.Config{
+			PowMode: ethash.ModeTest,
+		},
+	}
+
+	eth.SetGlobalConfig(ethConf)
+	eth.InitTracerEnv()
+
 	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
@@ -293,6 +319,7 @@ func TestGetReceiptLes2(t *testing.T) { testGetReceipt(t, 2) }
 func testGetReceipt(t *testing.T, protocol int) {
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
+	core.TruncateTables()
 	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
@@ -321,6 +348,7 @@ func TestGetProofsLes2(t *testing.T) { testGetProofs(t, 2) }
 func testGetProofs(t *testing.T, protocol int) {
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
+	core.TruncateTables()
 	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
@@ -384,6 +412,7 @@ func testGetCHTProofs(t *testing.T, protocol int) {
 	}
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
+	core.TruncateTables()
 	pm := newTestProtocolManagerMust(t, false, int(frequency)+light.HelperTrieProcessConfirmations, testChainGen, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
@@ -452,6 +481,7 @@ func testGetCHTProofs(t *testing.T, protocol int) {
 func TestGetBloombitsProofs(t *testing.T) {
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
+	core.TruncateTables()
 	pm := newTestProtocolManagerMust(t, false, light.BloomTrieFrequency+256, testChainGen, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", 2, pm, true)
@@ -491,6 +521,7 @@ func TestGetBloombitsProofs(t *testing.T) {
 
 func TestTransactionStatusLes2(t *testing.T) {
 	db, _ := ethdb.NewMemDatabase()
+	core.TruncateTables()
 	pm := newTestProtocolManagerMust(t, false, 0, nil, nil, nil, db)
 	chain := pm.blockchain.(*core.BlockChain)
 	config := core.DefaultTxPoolConfig

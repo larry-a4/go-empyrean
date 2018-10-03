@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
@@ -32,11 +33,25 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 	"github.com/ShyftNetwork/go-empyrean/trie"
 )
+
+const (
+	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
+)
+
+//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+func TestMain(m *testing.M) {
+	shyfttest.PgTestDbSetup()
+	retCode := m.Run()
+	shyfttest.PgTestTearDown()
+	os.Exit(retCode)
+}
 
 var (
 	testBankKey, _  = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
@@ -231,6 +246,23 @@ func testChainGen(i int, block *core.BlockGen) {
 }
 
 func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
+	//@SHYFT //SETS UP OUR TEST ENV
+	shyfttest.PgTestDbSetup()
+	eth.NewShyftTestLDB()
+	shyftTracer := new(eth.ShyftTracer)
+	core.SetIShyftTracer(shyftTracer)
+
+	ethConf := &eth.Config{
+		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+		Etherbase: common.HexToAddress(testAddress),
+		Ethash: ethash.Config{
+			PowMode: ethash.ModeTest,
+		},
+	}
+
+	eth.SetGlobalConfig(ethConf)
+	eth.InitTracerEnv()
+
 	var (
 		sdb, _  = ethdb.NewMemDatabase()
 		ldb, _  = ethdb.NewMemDatabase()

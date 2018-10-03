@@ -119,6 +119,10 @@ func (self *Miner) Start(coinbase common.Address) {
 	self.worker.commitNewWork()
 }
 
+func (self *Miner) Coinbase() common.Address {
+	return self.coinbase
+}
+
 func (self *Miner) Stop() {
 	self.worker.stop()
 	atomic.StoreInt32(&self.mining, 0)

@@ -8,9 +8,10 @@ import (
 	"strings"
 
 	"github.com/ShyftNetwork/go-empyrean/shyft_schema"
+	"github.com/jmoiron/sqlx"
 )
 
-var blockExplorerDb *sql.DB
+var blockExplorerDb *sqlx.DB
 
 const (
 	defaultTestDb  = "shyftdbtest"
@@ -21,7 +22,7 @@ const (
 )
 
 // InitDB - initalizes a Postgresql Database for use by the Blockexplorer
-func InitDB() (*sql.DB, error) {
+func InitDB() (*sqlx.DB, error) {
 	// To set the environment you can run the program with an ENV variable DBENV.
 	// DBENV defaults to local for purposes of running the correct local
 	// database connection parameters but will use docker connection parameters if DBENV=docker
@@ -34,7 +35,7 @@ func InitDB() (*sql.DB, error) {
 	}
 	// connect to the designated db & create tables if necessary
 	blockExplorerDb = Connect(ShyftConnectStr())
-	blockExplorerDb.Query(shyftschema.MakeTableQuery())
+	blockExplorerDb.MustExec(shyftschema.MakeTableQuery())
 	return blockExplorerDb, nil
 }
 
@@ -44,8 +45,8 @@ func ShyftConnectStr() string {
 }
 
 // Connect - return a connection to a postgres database wi
-func Connect(connectURL string) *sql.DB {
-	db, err := sql.Open("postgres", connectURL)
+func Connect(connectURL string) *sqlx.DB {
+	db, err := sqlx.Connect("postgres", connectURL)
 	if err != nil {
 		fmt.Println("ERROR OPENING DB, NOT INITIALIZING")
 		panic(err)
@@ -128,7 +129,7 @@ func DbExists(dbname string) (bool, error) {
 }
 
 // DBConnection returns a connection to the PG BlockExporer DB
-func DBConnection() (*sql.DB, error) {
+func DBConnection() (*sqlx.DB, error) {
 	if blockExplorerDb == nil {
 		_, err := InitDB()
 		if err != nil {
@@ -160,6 +161,21 @@ func ClearTables() {
 
 	sqlStatement := `DELETE FROM blocks`
 	_, err = sqldb.Exec(sqlStatement)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// TruncateTables - Is primarily user to clear the pg database between unit tests
+func TruncateTables() {
+	sqldb, err := DBConnection()
+	if err != nil {
+		panic(err)
+	}
+	tx, _ := sqldb.Begin()
+	sqlStatement := `TRUNCATE TABLE txs, accounts, blocks, internaltxs RESTART IDENTITY CASCADE;`
+	_, err = tx.Exec(sqlStatement)
+	tx.Commit()
 	if err != nil {
 		panic(err)
 	}

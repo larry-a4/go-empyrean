@@ -31,6 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var jsonEventTransfer = []byte(`{
   "anonymous": false,
   "inputs": [
     {

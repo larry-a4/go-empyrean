@@ -2,7 +2,6 @@ package eth
 
 import (
 	"context"
-
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
@@ -33,8 +32,8 @@ func InitTracerEnv() {
 	PrivateAPI = privateAPI
 }
 
-func (st ShyftTracer) GetTracerToRun(hash common.Hash) (interface{}, error) {
-	return PrivateAPI.STraceTransaction(Context, hash, TracerConfig)
+func (st ShyftTracer) GetTracerToRun(hash common.Hash, bHash common.Hash) (interface{}, error) {
+	return PrivateAPI.STraceTransaction(Context, hash, TracerConfig, bHash)
 }
 
 func setEthObject(ethobj interface{}) {
