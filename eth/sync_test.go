@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/ShyftNetwork/go-empyrean/shyfttest"
-
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
 	"github.com/ShyftNetwork/go-empyrean/p2p"

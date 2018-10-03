@@ -20,9 +20,6 @@ package core
 import (
 	"errors"
 	"fmt"
-
-	//"bytes"
-	//"encoding/gob"
 	"io"
 	"math/big"
 	mrand "math/rand"

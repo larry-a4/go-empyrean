@@ -23,7 +23,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
 	"encoding/json"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
@@ -548,7 +547,6 @@ func testInsertNonceError(t *testing.T, full bool) {
 		//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
 		TruncateTables()
 		db, blockchain, err := newCanonical(ethash.NewFaker(), 0, full)
-
 		if err != nil {
 			t.Fatalf("failed to create pristine chain: %v", err)
 		}
