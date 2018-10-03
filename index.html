@@ -251,6 +251,9 @@
                     <a href="#docker-block-explorer-api" class="toc-h2 toc-link" data-title="docker-block-explorer-api">Docker Block Explorer Api</a>
                   </li>
                   <li>
+                    <a href="#connecting-to-the-geth-console-from-docker" class="toc-h2 toc-link" data-title="connecting-to-the-geth-console-from-docker">Connecting to the Geth Console from Docker</a>
+                  </li>
+                  <li>
                     <a href="#docker-port-troubleshooting" class="toc-h2 toc-link" data-title="docker-port-troubleshooting">Docker Port TroubleShooting</a>
                   </li>
               </ul>
@@ -327,6 +330,14 @@
 <p>To install go please review the installation docs <a href="https://golang.org/doc/install">here</a>, but ensure you download version 1.10. If you would like to install go with a script please check out this repo <a href="https://github.com/canha/golang-tools-install-script">here</a>.</p>
 
 <p>To install postgres please review the installation docs <a href="https://www.postgresql.org/docs/10/static/tutorial-install.html">here</a>.</p>
+
+<p>To run postgres locally on Ubuntu/Debian follow the below steps:</p>
+
+<ul>
+<li>Install postgres <a href="https://www.postgresql.org/docs/10/static/tutorial-install.html">here</a></li>
+<li><code>sudo apt update</code></li>
+<li><code>sudo apt install postgresql</code></li>
+</ul>
 <h3 id='govendor-and-packages-dependencies'>Govendor and Packages/Dependencies</h3>
 <blockquote>
 <p>Download Go Vendor</p>
@@ -492,6 +503,10 @@ appears to have not been fixed: https://github.com/kardianos/govendor/issues/124
 <p><strong><code>govendor remove github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^</code></strong></p>
 
 <p><strong><code>govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^</code></strong></p>
+<h3 id='connecting-to-the-geth-console-from-docker'>Connecting to the Geth Console from Docker</h3>
+<p>If you wish to connect to the Geth console while running in docker use the below command:</p>
+
+<p><strong><code>sudo docker exec -it eedd geth attach http://localhost:8545</code></strong></p>
 
 <aside class="warning">
 The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive
@@ -512,7 +527,7 @@ The Shyft Geth docker image size is 1+ GB so make sure you have adequate space o
 <p><strong><code>go run blockExplorerApi/*.go</code></strong></p>
 
 <aside class="warning">
-The above command is to only be used if running locally.
+The above command is to only be used if running locally and assumes that the block explorer API is being run from the same server.
 </aside>
 
 <p>This will start a go server on port 8080 and allow you to either run the pre-existing block explorer or query the api endpoints. Its important to note, that if you have nothing in your postgres database the API will return nothing.</p>
@@ -1905,7 +1920,7 @@ The above command is to only be used if running locally.
 <p><code>npm run start</code></p>
 
 <aside class="warning">
-The above command is to only be used if running locally.
+The above command is to only be used if running locally and assumes that the block explorer API is being run from the same server.
 </aside>
 
 <p>This will start a development server on <code>port 3000</code> and spin up an example block explorer that uses the API to query the postgres database.</p>
