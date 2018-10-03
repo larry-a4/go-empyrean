@@ -118,6 +118,10 @@ var (
 		Usage: "Data directory for the databases and keystore",
 		Value: DirectoryString{node.DefaultDataDir()},
 	}
+	PostgresFlag = cli.BoolFlag{
+		Name:  "disablepg",
+		Usage: "Disconnects the postgres instance used for Shyft Shakedown",
+	}
 	KeyStoreDirFlag = DirectoryFlag{
 		Name:  "keystore",
 		Usage: "Directory for the keystore (default = inside the datadir)",
@@ -309,10 +313,6 @@ var (
 		Name:  "trie-cache-gens",
 		Usage: "Number of trie node generations to keep in memory",
 		Value: int(state.MaxTrieCacheGen),
-	}
-	PostgresFlag = cli.BoolFlag{
-		Name:  "disablepg",
-		Usage: "Disconnects the postgres instance used for Shyft Shakedown",
 	}
 	// Miner settings
 	MiningEnabledFlag = cli.BoolFlag{
@@ -542,6 +542,9 @@ var (
 // if none (or the empty string) is specified. If the node is starting a testnet,
 // the a subdirectory of the specified datadir will be used.
 func MakeDataDir(ctx *cli.Context) string {
+	if ctx.GlobalBool(PostgresFlag.Name) {
+		core.DisconnectPG()
+	}
 	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
 		if ctx.GlobalBool(TestnetFlag.Name) {
 			return filepath.Join(path, "testnet")
@@ -1222,7 +1225,9 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chainDb ethdb.Database) {
 	var err error
 	chainDb = MakeChainDatabase(ctx, stack)
-
+	if ctx.GlobalBool(PostgresFlag.Name) {
+		core.DisconnectPG()
+	}
 	config, _, err := core.SetupGenesisBlock(chainDb, MakeGenesis(ctx))
 	if err != nil {
 		Fatalf("%v", err)
