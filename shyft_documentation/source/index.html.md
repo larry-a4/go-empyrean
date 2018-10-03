@@ -34,6 +34,12 @@ To install go please review the installation docs [here](https://golang.org/doc/
     
 To install postgres please review the installation docs [here](https://www.postgresql.org/docs/10/static/tutorial-install.html).
 
+To run postgres locally on Ubuntu/Debian follow the below steps:
+
+  - Install postgres [here](https://www.postgresql.org/docs/10/static/tutorial-install.html)
+  - `sudo apt update`
+  - `sudo apt install postgresql`
+
 ### Govendor and Packages/Dependencies
 
 > Download Go Vendor
@@ -159,7 +165,7 @@ Use the following credentials:
  ``Password: 'docker'``
   
  ``Database: 'shyftdb'``
-  
+    
 ### Docker Block Explorer Api 
 To access the shyftBlockExplorer open a browser and visit 
 
@@ -210,6 +216,12 @@ appears to have not been fixed: https://github.com/kardianos/govendor/issues/124
 
 **``govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^``**
 
+### Connecting to the Geth Console from Docker
+
+If you wish to connect to the Geth console while running in docker use the below command:
+
+**`sudo docker exec -it eedd geth attach http://localhost:8545`**
+
 <aside class="warning">
 The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive
 </aside>
@@ -234,7 +246,7 @@ To run the block explorer rest api that queries the postgres instance and return
 **``go run blockExplorerApi/*.go``**
 
 <aside class="warning">
-The above command is to only be used if running locally.
+The above command is to only be used if running locally and assumes that the block explorer API is being run from the same server.
 </aside>
 
 This will start a go server on port 8080 and allow you to either run the pre-existing block explorer or query the api endpoints. Its important to note, that if you have nothing in your postgres database the API will return nothing.
@@ -935,7 +947,7 @@ To run the Block Explorer UI, ensure that you have the API running as mentioned 
 ``npm run start``
 
 <aside class="warning">
-The above command is to only be used if running locally.
+The above command is to only be used if running locally and assumes that the block explorer API is being run from the same server.
 </aside>
 
 This will start a development server on ``port 3000`` and spin up an example block explorer that uses the API to query the postgres database.

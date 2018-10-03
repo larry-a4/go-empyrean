@@ -3,8 +3,6 @@ import classes from './table.css';
 import { Link } from 'react-router-dom'
 
 const TransactionTable = (props) => {
-    console.log("in transaction table")
-    console.log(props)
     window.bar = props
     let flag;
     if(props.txHash.indexOf("GENESIS") !== -1) {
