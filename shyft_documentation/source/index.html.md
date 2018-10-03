@@ -114,7 +114,14 @@ And then just issue `docker-compose up` to continue mining.
 From your local machine you can view the database by connecting to the database in the container at 
 **``127.0.0.1:8001``**
 
-Use User: 'postgres' Password: 'docker' Database: 'shyftdb'
+Use the following credentials: 
+ 
+ ``User: 'postgres'``
+ 
+ ``Password: 'docker'``
+  
+ ``Database: 'shyftdb'``
+  
 ### Docker Block Explorer Api 
 To access the shyftBlockExplorer open a browser and visit 
 

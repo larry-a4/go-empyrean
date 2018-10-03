@@ -43,9 +43,8 @@ This has some more information: [Ethereum Wiki](https://github.com/ethereum/go-e
 
 To add a new dependency, run govendor fetch <import-path> , and commit the changes to git. Then the deps will be accessible on other machines that pull from git.
 
-<aside class="notice">
-GOPATH is not strictly necessary however, for govendor it is much easier to use gopath as go will look for binaries in this directory ($GOPATH/bin). To set up GOPATH, read the govendor section.
-</aside>
+>GOPATH is not strictly necessary however, for govendor it is much easier to use gopath as go will look for binaries in this directory ($GOPATH/bin). To set up GOPATH, read the govendor section.
+
 
 #### Running Locally
 
@@ -59,8 +58,6 @@ Before running any CLI options ensure you run **`make geth`** in the root direct
 ``./shyft-geth.sh --start`` This starts GETH
 
 At this point you should see GETH running in the terminal and if you opened your postgres instance you should see data being populated into the tables. It might look something similiar to the image below.
-
-<img src="./images/geth.png" alt="Geth example">
 
 To stop Geth, **`crtl+C`** in the terminal window, if you proceed with the start script mentioned above the Shyft chain will begin from the last block height, if you wish to start the chain fresh from genesis follow the below steps:
 
@@ -96,7 +93,14 @@ And then just issue `docker-compose up` to continue mining.
 From your local machine you can view the database by connecting to the database in the container at 
 **``127.0.0.1:8001``**
 
-Use User: 'postgres' Password: 'docker' Database: 'shyftdb'
+Use the following credentials: 
+ 
+>``User: 'postgres'``
+ 
+>``Password: 'docker'``
+  
+>``Database: 'shyftdb'``
+ 
 #### Docker Block Explorer Api 
 To access the shyftBlockExplorer open a browser and visit 
 
