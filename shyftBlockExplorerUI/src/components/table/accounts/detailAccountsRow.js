@@ -5,7 +5,6 @@ import classes from './table.css';
 
 class AccountTransactionTable extends Component {
     render() {
-        console.log(this.props);
         let table;
         if(this.props.data.length < 1) {
            return <ErrorMessage />
