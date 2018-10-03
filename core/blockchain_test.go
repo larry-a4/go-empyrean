@@ -24,7 +24,6 @@ import (
 	"testing"
 	"time"
 	"encoding/json"
-
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
