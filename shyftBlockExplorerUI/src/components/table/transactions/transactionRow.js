@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import TransactionsTable from './transactionTable';
 import classes from './table.css';
-import axios from "axios/index";
+import axios from "axios";
 import ErrorMessage from './errorMessage';
+import {API_URL} from "../../../constants/apiURL";
 
 class TransactionTable extends Component {
     constructor(props) {
@@ -15,8 +16,7 @@ class TransactionTable extends Component {
 
     async componentDidMount() {
         try {
-            const response = await axios.get("http://0.0.0.0:8080/api/get_all_transactions")             
-            console.log(response)
+            const response = await axios.get(`${API_URL}/get_all_transactions`);
             if(response.data === "\n") {
                 this.setState({emptyDataSet: true})                                             
             } else {

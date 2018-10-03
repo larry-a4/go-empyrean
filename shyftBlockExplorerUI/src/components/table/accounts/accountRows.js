@@ -3,6 +3,7 @@ import AccountsTable from './accountsTable';
 import classes from './accounts.css';
 import axios from "axios/index";
 import ErrorMessage from './errorMessage';
+import {API_URL} from "../../../constants/apiURL";
 
 class AccountTable extends Component {
     constructor(props) {
@@ -15,7 +16,7 @@ class AccountTable extends Component {
 
     async componentDidMount() {
         try {
-            const response = await axios.get("http://0.0.0.0:8080/api/get_all_accounts");
+            const response = await axios.get(`${API_URL}/get_all_accounts`);
             if(response.data === "\n") {
                 this.setState({emptyDataSet: true})                                   
             } else {
