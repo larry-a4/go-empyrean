@@ -13,8 +13,8 @@ RUN \
 FROM alpine:3.8
 RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
 WORKDIR /go/src/github.com/ShyftEthereum/go-empyrean
-COPY --from=build-env /bin/geth /bin
-COPY --from=build-env /bin/bootnode /bin
+COPY --from=build-env /bin/geth /bin/
+COPY --from=build-env /bin/bootnode /bin/
 
 COPY ./shyft-cli/ ./shyft-cli/
 COPY ./unlockPasswords.txt ./
