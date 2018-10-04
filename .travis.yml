@@ -1,0 +1,16 @@
+language: go
+
+go:
+  - "1.10.4"
+  - "1.10"
+  - "1.9"
+  - "1.8"
+
+before_install:
+  - go get -u github.com/kardianos/govendor
+
+install:
+
+script:
+  -
+
