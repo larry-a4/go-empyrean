@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import InternalTable from './internalTable';
 import classes from './table.css';
-import axios from "axios/index";
+import axios from "axios";
+import {API_URL} from "../../../constants/apiURL";
 import ErrorMessage from './errorMessage';
 
 class InternalTransactionsTable extends Component {
@@ -15,7 +16,7 @@ class InternalTransactionsTable extends Component {
 
     async componentDidMount() {
         try {
-            const response = await axios.get("http://localhost:8080/api/get_internal_transactions/");                     
+            const response = await axios.get(`${API_URL}/get_internal_transactions/`);
             if(response.data === "\n") {
                 this.setState({emptyDataSet: true})                                   
             } else {

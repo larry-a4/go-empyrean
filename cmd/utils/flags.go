@@ -118,6 +118,10 @@ var (
 		Usage: "Data directory for the databases and keystore",
 		Value: DirectoryString{node.DefaultDataDir()},
 	}
+	PostgresFlag = cli.BoolFlag{
+		Name:  "disablepg",
+		Usage: "Disconnects the postgres instance used for Shyft Shakedown",
+	}
 	KeyStoreDirFlag = DirectoryFlag{
 		Name:  "keystore",
 		Usage: "Directory for the keystore (default = inside the datadir)",
@@ -538,6 +542,9 @@ var (
 // if none (or the empty string) is specified. If the node is starting a testnet,
 // the a subdirectory of the specified datadir will be used.
 func MakeDataDir(ctx *cli.Context) string {
+	if ctx.GlobalBool(PostgresFlag.Name) {
+		core.DisconnectPG()
+	}
 	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
 		if ctx.GlobalBool(TestnetFlag.Name) {
 			return filepath.Join(path, "testnet")
@@ -1191,6 +1198,9 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node) ethdb.Database {
 	if ctx.GlobalBool(LightModeFlag.Name) {
 		name = "lightchaindata"
 	}
+	if ctx.GlobalBool(PostgresFlag.Name) {
+		core.DisconnectPG()
+	}
 	chainDb, err := stack.OpenDatabase(name, cache, handles)
 	if err != nil {
 		Fatalf("Could not open database: %v", err)
@@ -1215,7 +1225,9 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chainDb ethdb.Database) {
 	var err error
 	chainDb = MakeChainDatabase(ctx, stack)
-
+	if ctx.GlobalBool(PostgresFlag.Name) {
+		core.DisconnectPG()
+	}
 	config, _, err := core.SetupGenesisBlock(chainDb, MakeGenesis(ctx))
 	if err != nil {
 		Fatalf("%v", err)
@@ -1248,8 +1260,6 @@ func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chai
 		cache.TrieNodeLimit = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheGCFlag.Name) / 100
 	}
 	vmcfg := vm.Config{EnablePreimageRecording: ctx.GlobalBool(VMEnableDebugFlag.Name)}
-	
-	fmt.Println("Calling NewBlock CHAIN in flags.go ******************************")
 	chain, err = core.NewBlockChain(chainDb,cache, config, engine, vmcfg)
 	if err != nil {
 		Fatalf("Can't create BlockChain: %v", err)

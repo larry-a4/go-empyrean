@@ -24,6 +24,9 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
+
+	"net/http"
+
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
@@ -47,6 +50,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
+	"github.com/gorilla/mux"
 )
 
 var BlockchainObject *core.BlockChain
@@ -106,18 +110,17 @@ func SNew(config *Config) (*Ethereum, error) {
 	stopDbUpgrade := upgradeDeduplicateData(Chaindb_global)
 	chainConfig, _, _ := core.SetupGenesisBlock(Chaindb_global, config.Genesis)
 	eth := &Ethereum{
-		config:         config,
-		chainDb:        Chaindb_global,
-		chainConfig:    chainConfig,
-		shutdownChan:   make(chan bool),
-		stopDbUpgrade:  stopDbUpgrade,
-		networkId:      config.NetworkId,
-		gasPrice:       config.GasPrice,
-		etherbase:      config.Etherbase,
-		bloomRequests:  make(chan chan *bloombits.Retrieval),
-		bloomIndexer:   NewBloomIndexer(Chaindb_global, params.BloomBitsBlocks),
+		config:        config,
+		chainDb:       Chaindb_global,
+		chainConfig:   chainConfig,
+		shutdownChan:  make(chan bool),
+		stopDbUpgrade: stopDbUpgrade,
+		networkId:     config.NetworkId,
+		gasPrice:      config.GasPrice,
+		etherbase:     config.Etherbase,
+		bloomRequests: make(chan chan *bloombits.Retrieval),
+		bloomIndexer:  NewBloomIndexer(Chaindb_global, params.BloomBitsBlocks),
 	}
-
 	eth.blockchain = BlockchainObject
 
 	return eth, nil
@@ -147,7 +150,6 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		return nil, genesisErr
 	}
 	log.Info("Initialised chain configuration", "config", chainConfig)
-	fmt.Println(config.GasPrice)
 	eth := &Ethereum{
 		config:         config,
 		chainDb:        chainDb,
@@ -181,6 +183,29 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	eth.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig)
 
 	BlockchainObject = eth.blockchain
+
+	go func() {
+		fmt.Println("starting server on 8081")
+		r := mux.NewRouter()
+		r.HandleFunc("/rollback_blocks/{blockhash}", func(w http.ResponseWriter, r *http.Request) {
+			vars := mux.Vars(r)
+			blockhash := vars["blockhash"]
+			commonhash := common.HexToHash(blockhash)
+			coinbase := eth.miner.Coinbase()
+			eth.miner.Stop()
+			blocknumber := BlockchainObject.GetBlockByHash(commonhash)
+			_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
+			eth.blockchain.SetHead(blocknumber.NumberU64())
+			err := core.RollbackPgDb(bHashes)
+			if err != nil {
+				panic(err)
+			}
+			eth.miner.Start(coinbase)
+			log.Info("rolled back blockchain removing blocks %+v\n", bHashes)
+		})
+
+		http.ListenAndServe(":8081", r)
+	}()
 
 	if err != nil {
 		return nil, err

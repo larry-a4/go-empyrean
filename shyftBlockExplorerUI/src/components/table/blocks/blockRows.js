@@ -3,6 +3,7 @@ import BlockTable from './blockTable';
 import classes from './table.css';
 import axios from "axios/index";
 import ErrorMessage from './errorMessage';
+import {API_URL} from "../../../constants/apiURL";
 
 class BlocksTable extends Component {
     constructor(props) {
@@ -14,18 +15,13 @@ class BlocksTable extends Component {
     }
 
     async componentDidMount() {
-        console.log("before try ")
-
         try {
-            console.log("before axios ")
-            const response = await axios.get("http://localhost:8080/api/get_all_blocks/");
+            const response = await axios.get(`${API_URL}/get_all_blocks/`);
             if(response.data === "\n") {
                 this.setState({emptyDataSet: true})                                   
             } else {
                 this.setState({emptyDataSet: false})                  
-            }      
-            console.log("after block rows response ")
-            console.log(response.data)
+            }
             await this.setState({data: response.data});
         } catch (err) {
             console.log(err);

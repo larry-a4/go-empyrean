@@ -167,7 +167,6 @@ func GetBlock(w http.ResponseWriter, r *http.Request) {
 
 // GetAllBlocks response
 func GetAllBlocks(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Request -> ", r)
 	sqldb, err := core.DBConnection()
 	block3 := core.SGetAllBlocks(sqldb)
 	if err != nil {

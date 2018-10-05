@@ -550,7 +550,7 @@ func (api *PrivateDebugAPI) TraceTransaction(ctx context.Context, hash common.Ha
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
 //@NOTE:SHYFT
-func (api *PrivateDebugAPI) STraceTransaction(ctx context.Context, hash common.Hash, config *TraceConfig) (interface{}, error) {
+func (api *PrivateDebugAPI) STraceTransaction(ctx context.Context, hash common.Hash, config *TraceConfig, bHash common.Hash) (interface{}, error) {
 	// NOTE:SHYFT
 	tx, blockHash, _, index := core.GetTransaction(api.eth.ChainDb(), hash)
 	if tx == nil {
@@ -564,14 +564,14 @@ func (api *PrivateDebugAPI) STraceTransaction(ctx context.Context, hash common.H
 	if err != nil {
 		return nil, err
 	}
-	return api.StraceTx(ctx, msg, vmctx, statedb, config, hash)
+	return api.StraceTx(ctx, msg, vmctx, statedb, config, hash, bHash)
 }
 
 // traceTx configures a new tracer according to the provided configuration, and
 // executes the given message in the provided environment. The return value will
 // be tracer dependent.
 //@NOTE:SHYFT
-func (api *PrivateDebugAPI) StraceTx(ctx context.Context, message core.Message, vmctx vm.Context, statedb *state.StateDB, config *TraceConfig, hash common.Hash) (interface{}, error) {
+func (api *PrivateDebugAPI) StraceTx(ctx context.Context, message core.Message, vmctx vm.Context, statedb *state.StateDB, config *TraceConfig, hash common.Hash, bHash common.Hash) (interface{}, error) {
 	// Assemble the structured logger or the JavaScript tracer
 	var (
 		tracer vm.Tracer
@@ -624,7 +624,7 @@ func (api *PrivateDebugAPI) StraceTx(ctx context.Context, message core.Message, 
 		}, nil
 
 	case *tracers.Tracer:
-		return tracer.SGetResult(hash)
+		return tracer.SGetResult(hash, bHash)
 
 	default:
 		panic(fmt.Sprintf("bad tracer type %T", tracer))

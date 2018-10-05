@@ -1,2 +1,5 @@
 #!/bin/sh
-rm -R ./shyftData
+rm -R -f ./shyftData
+rm -R -f ./pg-data
+rm -R -f ./ethash
+
