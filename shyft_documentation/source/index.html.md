@@ -130,6 +130,14 @@ fi
 The above instructions will NOT initialize a postgres instance and will not write data to the postgres instance and thus the API and block explorer UI will not be able to run properly.
 </aside>
 
+
+If you are installing postgresql locally for development on Ubuntu the app assumes that no password is set for the postgresql user and that the development user is provided with superuser privildges 
+  - if this is not the case you will need to modify the variable `connStrDefault` in `core/db.go` accordingly. Documentation on how to set up a development user are available [here](https://www.postgresql.org/docs/10/static/app-createuser.html)
+  
+  `sudo -i -u postgres`
+  
+  `creatuser <dev-user> --superuser`
+
 To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.
 ### Docker Images
 
@@ -1011,15 +1019,3 @@ In our case, we use `SWriteBlock()` for writing all our data. So far, it contain
 The existing transaction type in Geth did not allow the evm to call a helper function to retrieve the from address, essentially the sender. Therefore, we extended the functionality of the Transaction type to generate the from address through `*Transaction.From()`.
 
 ``./core/shyft_database_util.go``
-
-### Chain Rollbacks
-
-For development and testing purposes only, until a formal messaging system has been incorporated within go-empyrean, an endpoint is available and freely accessible to trigger a chain and postgresql database rollback.
-
-To trigger a chain/pg database rollback the following command should be executed:
-
-```
-curl <node ip address>:8081/rollback_blocks/<block hashheader to rollback to>
-
-ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838cad4fe6ae45f68410c8cd7cd640
-```
