@@ -301,9 +301,6 @@
                   <li>
                     <a href="#transaction-types-functions" class="toc-h2 toc-link" data-title="transaction-types-functions">Transaction Types Functions</a>
                   </li>
-                  <li>
-                    <a href="#chain-rollbacks" class="toc-h2 toc-link" data-title="chain-rollbacks">Chain Rollbacks</a>
-                  </li>
               </ul>
           </li>
           <li>
@@ -417,6 +414,13 @@ Once cloned, in a terminal window run the following command:</p>
 <aside class="warning">
 The above instructions will NOT initialize a postgres instance and will not write data to the postgres instance and thus the API and block explorer UI will not be able to run properly.
 </aside>
+
+<p>If you are installing postgresql locally for development on Ubuntu the app assumes that no password is set for the postgresql user and that the development user is provided with superuser privildges 
+  - if this is not the case you will need to modify the variable <code>connStrDefault</code> in <code>core/db.go</code> accordingly. Documentation on how to set up a development user are available <a href="https://www.postgresql.org/docs/10/static/app-createuser.html">here</a></p>
+
+<p><code>sudo -i -u postgres</code></p>
+
+<p><code>creatuser &lt;dev-user&gt; --superuser</code></p>
 
 <p>To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.</p>
 <h3 id='docker-images'>Docker Images</h3>
@@ -1970,14 +1974,7 @@ The above command is to only be used if running locally and assumes that the blo
 <p>The existing transaction type in Geth did not allow the evm to call a helper function to retrieve the from address, essentially the sender. Therefore, we extended the functionality of the Transaction type to generate the from address through <code>*Transaction.From()</code>.</p>
 
 <p><code>./core/shyft_database_util.go</code></p>
-<h3 id='chain-rollbacks'>Chain Rollbacks</h3>
-<p>For development and testing purposes only, until a formal messaging system has been incorporated within go-empyrean, an endpoint is available and freely accessible to trigger a chain and postgresql database rollback.</p>
-
-<p>To trigger a chain/pg database rollback the following command should be executed:</p>
-<pre class="highlight plaintext"><code>curl &lt;node ip address&gt;:8081/rollback_blocks/&lt;block hashheader to rollback to&gt;
-
-ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838cad4fe6ae45f68410c8cd7cd640
-</code></pre><h1 id='errors'>Errors</h1>
+<h1 id='errors'>Errors</h1>
 <aside class="notice">
 This error section is stored in a separate file in <code>includes/_errors.md</code>. Slate allows you to optionally separate out your docs into many files...just save them to the <code>includes</code> folder and add them to the top of your <code>index.md</code>'s frontmatter. Files are included in the order listed.
 </aside>
