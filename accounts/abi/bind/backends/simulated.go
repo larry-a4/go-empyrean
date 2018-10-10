@@ -34,13 +34,30 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
-	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/eth/filters"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/event"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
+	"testing"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
+	"github.com/docker/docker/pkg/reexec"
+	"os"
 )
+
+//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+func TestMain(m *testing.M) {
+	// Reset Pg DB
+	shyfttest.PgTestDbSetup()
+	// check if we have been reexec'd
+
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	shyfttest.PgTestTearDown()
+	os.Exit(retCode)
+}
 
 // This nil assignment ensures compile time that SimulatedBackend implements bind.ContractBackend.
 var _ bind.ContractBackend = (*SimulatedBackend)(nil)
@@ -72,7 +89,6 @@ type SimulatedBackend struct {
 // for testing purposes.
 func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 	database, _ := ethdb.NewMemDatabase()
-	core.TruncateTables()
 	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, Alloc: alloc}
 	genesis.MustCommit(database)
 	blockchain, _ := core.NewBlockChain(database, nil, genesis.Config, ethash.NewFaker(), vm.Config{})
@@ -93,21 +109,20 @@ func (b *SimulatedBackend) Commit() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	//@SHYFT //SETS UP OUR TEST ENV
-	core.TruncateTables()
-	eth.NewShyftTestLDB()
-	shyftTracer := new(eth.ShyftTracer)
-	core.SetIShyftTracer(shyftTracer)
-
-	ethConf := &eth.Config{
-		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-		Etherbase: common.HexToAddress(testAddress),
-		Ethash: ethash.Config{
-			PowMode: ethash.ModeTest,
-		},
-	}
-
-	eth.SetGlobalConfig(ethConf)
-	eth.InitTracerEnv()
+	//eth.NewShyftTestLDB()
+	//shyftTracer := new(eth.ShyftTracer)
+	//core.SetIShyftTracer(shyftTracer)
+	//
+	//ethConf := &eth.Config{
+	//	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+	//	Etherbase: common.HexToAddress(testAddress),
+	//	Ethash: ethash.Config{
+	//		PowMode: ethash.ModeTest,
+	//	},
+	//}
+	//
+	//eth.SetGlobalConfig(ethConf)
+	//eth.InitTracerEnv()
 	if _, err := b.blockchain.InsertChain([]*types.Block{b.pendingBlock}); err != nil {
 		panic(err) // This cannot happen unless the simulator is wrong, fail in that case
 	}

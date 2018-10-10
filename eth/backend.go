@@ -185,7 +185,6 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	BlockchainObject = eth.blockchain
 
 	go func() {
-		fmt.Println("starting server on 8081")
 		r := mux.NewRouter()
 		r.HandleFunc("/rollback_blocks/{blockhash}", func(w http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
@@ -201,7 +200,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 				panic(err)
 			}
 			eth.miner.Start(coinbase)
-			log.Info("rolled back blockchain removing blocks %+v\n", bHashes)
+			//log.Info("rolled back blockchain removing blocks %+v\n", bHashes)
 		})
 
 		http.ListenAndServe(":8081", r)
