@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import axios from 'axios';
 import Nav from "../components/nav/nav";
 import { BrowserRouter, Route } from 'react-router-dom'
-
+import { API_URL } from "../constants/apiURL";
 import Modal from 'react-bootstrap/lib/Modal';
 import Button from 'react-bootstrap/lib/Button';
 import Grid from 'react-bootstrap/lib/Grid';
@@ -51,7 +51,7 @@ class App extends Component {
 
     detailBlockHandler = async(blockNumber) => {
         try {
-            const response = await axios.get(`http://0.0.0.0:8080/api/get_block/${blockNumber}`)
+            const response = await axios.get(`${API_URL}/get_block/${blockNumber}`);
             await this.setState({ blockDetailData: response.data, overlayTriggered: true, overlayContent: "block" })
         }
         catch(error) {
@@ -60,9 +60,8 @@ class App extends Component {
     };
 
     detailTransactionHandler = async(txHash) => {
-        console.log("detail tx handler")
         try {
-            const response = await axios.get(`http://0.0.0.0:8080/api/get_transaction/${txHash}`);
+            const response = await axios.get(`${API_URL}/get_transaction/${txHash}`);
             await this.setState({ transactionDetailData: response.data, overlayTriggered: true, overlayContent: "transaction" })
         }
         catch(error) {
@@ -73,7 +72,7 @@ class App extends Component {
 
     detailAccountHandler = async(addr) => {
         try {
-            const response = await axios.get(`http://0.0.0.0:8080/api/get_account_txs/${addr}`)
+            const response = await axios.get(`${API_URL}/get_account_txs/${addr}`);
             await this.setState({ accountDetailData: response.data, reqAccount: addr, overlayTriggered: false, overlayContent: "account"  })
         }
         catch(error) {
@@ -82,10 +81,8 @@ class App extends Component {
     };
 
     detailInternalHandler = async(txHash) => {
-        console.log("********* detaik Internal ")
-
         try {
-            const response = await axios.get(`http://0.0.0.0:8080/api/get_internal_transactions/${txHash}`)
+            const response = await axios.get(`${API_URL}/get_internal_transactions/${txHash}`);
             await this.setState({ internalDetailData: response.data, reqAccount: txHash, overlayTriggered: true, overlayContent: "internal" })
         }
         catch(error) {
@@ -95,7 +92,7 @@ class App extends Component {
 
     getInternalTransactions = async() => {
         try {
-            const response = await axios.get(`http://0.0.0.0:8080/api/get_internal_transactions/`)
+            const response = await axios.get(`${API_URL}/get_internal_transactions/`);
             await this.setState({ internalTransactions: response.data,  overlayTriggered: false })
         }
         catch(error) {
@@ -106,7 +103,7 @@ class App extends Component {
 
     getAccounts = async() => {
         try {
-            const response = await axios.get(`http://0.0.0.0:8080/api/get_all_accounts`)
+            const response = await axios.get(`${API_URL}/get_all_accounts`);
             await this.setState({ accounts: response.data,  overlayTriggered: false })
         }
         catch(error) {
@@ -116,7 +113,7 @@ class App extends Component {
 
     getBlockTransactions = async(blockNumber) => {
         try {
-            const response = await axios.get(`http://0.0.0.0:8080/api/get_all_transactions_from_block/${blockNumber}`)
+            const response = await axios.get(`${API_URL}/get_all_transactions_from_block/${blockNumber}`);
             await this.setState({ blockTransactions: response.data, reqBlockNum: blockNumber })
         }
         catch(error) {
@@ -126,7 +123,7 @@ class App extends Component {
 
     getBlocksMined = async(coinbase) => {
         try {
-            const response = await axios.get(`http://0.0.0.0:8080/api/get_blocks_mined/${coinbase}`)
+            const response = await axios.get(`${API_URL}/get_blocks_mined/${coinbase}`);
             await this.setState({ blocksMined: response.data, reqCoinbase: coinbase })
         }
         catch(error) {

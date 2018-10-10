@@ -24,17 +24,18 @@ type SBlock struct {
 }
 
 type InteralWrite struct {
-	ID      int
-	Hash    string
-	Action  string
-	From    string
-	To      string
-	Value   string
-	Gas     uint64
-	GasUsed uint64
-	Input   string
-	Output  string
-	Time    string
+	ID      	int
+	Hash    	string
+	BlockHash 	string
+	Action  	string
+	From    	string
+	To      	string
+	Value   	string
+	Gas     	uint64
+	GasUsed 	uint64
+	Input   	string
+	Output  	string
+	Time    	string
 }
 
 type InternalArray struct {
@@ -47,6 +48,10 @@ type BlockRes struct {
 	coinbase string
 	number   string
 	Blocks   []SBlock
+}
+
+type BlockHash struct {
+	Hash string
 }
 
 type SAccounts struct {
@@ -67,7 +72,7 @@ type TxRes struct {
 
 type ShyftTxEntryPretty struct {
 	TxHash      string
-	To   		string
+	To          string
 	From        string
 	BlockHash   string
 	BlockNumber string
@@ -75,7 +80,7 @@ type ShyftTxEntryPretty struct {
 	GasPrice    uint64
 	Gas         uint64
 	GasLimit    uint64
-	Cost        uint64
+	Cost        string
 	Nonce       uint64
 	Status      string
 	IsContract  bool

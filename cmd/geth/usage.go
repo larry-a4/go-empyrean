@@ -223,6 +223,12 @@ var AppHelpFlagGroups = []flagGroup{
 		},
 	},
 	{
+		Name: "SHYFT",
+		Flags: []cli.Flag{
+			utils.PostgresFlag,
+		},
+	},
+	{
 		Name: "MISC",
 	},
 }

@@ -115,7 +115,6 @@ func (t *BlockTest) Run() error {
 		return err
 	}
 	defer chain.Stop()
-
 	validBlocks, err := t.insertBlocks(chain)
 	if err != nil {
 		return err
@@ -164,7 +163,6 @@ func (t *BlockTest) genesis(config *params.ChainConfig) *core.Genesis {
 */
 func (t *BlockTest) insertBlocks(blockchain *core.BlockChain) ([]btBlock, error) {
 	validBlocks := make([]btBlock, 0)
-	// insert the test blocks, which will execute all transactions
 	for _, b := range t.json.Blocks {
 		cb, err := b.decode()
 		if err != nil {
@@ -176,6 +174,7 @@ func (t *BlockTest) insertBlocks(blockchain *core.BlockChain) ([]btBlock, error)
 		}
 		// RLP decoding worked, try to insert into chain:
 		blocks := types.Blocks{cb}
+		core.TruncateTables()
 		i, err := blockchain.InsertChain(blocks)
 		if err != nil {
 			if b.BlockHeader == nil {

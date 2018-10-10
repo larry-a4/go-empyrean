@@ -14,6 +14,7 @@ services:
       - "30304:30304"
       - "31333:31333"
       - "31333:31333/udp"
+      - "8081:8081"
     volumes:
       - .:/go/src/ShyftNetwork/go-empyrean
     working_dir: /go/src/ShyftNetwork/go-empyrean
@@ -40,6 +41,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=postgres
   shyft_block_api:
     build:
       context: $PWD 

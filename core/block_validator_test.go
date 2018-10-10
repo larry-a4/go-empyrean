@@ -72,6 +72,7 @@ func TestHeaderVerification(t *testing.T) {
 			case <-time.After(25 * time.Millisecond):
 			}
 		}
+		TruncateTables()
 		chain.InsertChain(blocks[i : i+1])
 	}
 }

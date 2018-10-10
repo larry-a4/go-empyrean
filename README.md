@@ -1,10 +1,219 @@
+
+## Go Empyrean
+
+go-empyrean is based on a fork of go-ethereum. Much of the functionality and process for starting go-empyrean is the same as that for a regular ethereum node - as reflected in the notes detailed under the heading Go Ethereum below. Documentation for changes and enhancements added by Shyft is detailed under the section Shyft Notes below.
+
+## SHYFT NOTES
+
+https://shyftnetwork.github.io/go-empyrean/#setup
+
+#### Dependencies
+    
+ - go 1.10
+ - postgres 10
+    
+To install go please review the installation docs [here](https://golang.org/doc/install), but ensure you download version 1.10. If you would like to install go with a script please check out this repo [here](https://github.com/canha/golang-tools-install-script).
+    
+To install postgres please review the installation docs [here](https://www.postgresql.org/docs/10/static/tutorial-install.html).
+
+#### Govendor and Packages/Dependencies
+
+> Download Go Vendor
+
+```shell
+go get -u github.com/kardianos/govendor
+```
+
+> To run govendor globally, have this in your bash_profile file:
+
+```shell
+export GOPATH=$HOME/go
+export PATH=$PATH:$HOME/go/bin
+```
+
+> Then go_empyrean will need to be cloned to this directory:
+
+```shell
+$GOPATH/src/github.com/ShyftNetwork/
+```
+
+Geth uses govendor to manage packages/dependencies: [Go Vendor](https://github.com/kardianos/govendor)
+
+This has some more information: [Ethereum Wiki](https://github.com/ethereum/go-ethereum/wiki/Developers'-Guide)
+
+To add a new dependency, run govendor fetch <import-path> , and commit the changes to git. Then the deps will be accessible on other machines that pull from git.
+
+>GOPATH is not strictly necessary however, for govendor it is much easier to use gopath as go will look for binaries in this directory ($GOPATH/bin). To set up GOPATH, read the govendor section.
+
+
+#### Running Locally
+
+To begin running locally, please ensure you have correctly installed go 1.10 and postgres (make sure postgres is running). 
+Once cloned, in a terminal window run the following command:
+
+Before running any CLI options ensure you run **`make geth`** in the root directory.
+
+``.shyft-geth.sh --setup`` This sets up postgres and the shyft chain db
+
+``./shyft-geth.sh --start`` This starts GETH
+
+At this point you should see GETH running in the terminal and if you opened your postgres instance you should see data being populated into the tables. It might look something similiar to the image below.
+
+To stop Geth, **`crtl+C`** in the terminal window, if you proceed with the start script mentioned above the Shyft chain will begin from the last block height, if you wish to start the chain fresh from genesis follow the below steps:
+
+``./shyft-geth.sh --reset`` This drops postgres and chaindb data
+
+``./shyft-geth.sh --start`` Starts GETH
+
+To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.
+#### Docker Images
+
+Docker Images are available for ShyftGeth and the Postgresql Database which can be used for development and testing. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).
+
+**To build the images for the first time please run the following command:**
+
+`./shyft-geth.sh --setup # clears persisted directories prior to docker build`
+
+`docker-compose up --build`
+
+If you would like to reinitialize/rebuild the docker images you can run the above mentioned command as well.
+
+To launch ShyftGeth, PG, the ShyftBlock Explorer Api and UI anytime after initial build - issue the following commands from the root of the project directory:
+
+`./shyft-geth.sh --setup # clears persisted directories prior to docker build`
+
+**`docker-compose up`**
+
+To stop/pause mining - enter:
+
+**`docker-compose stop`**
+
+And then just issue `docker-compose up` to continue mining.
+#### Docker Postgresql - DB Connection
+From your local machine you can view the database by connecting to the database in the container at 
+**``127.0.0.1:8001``**
+
+Use the following credentials: 
+ 
+>``User: 'postgres'``
+ 
+>``Password: 'docker'``
+  
+>``Database: 'shyftdb'``
+ 
+#### Docker Block Explorer Api 
+To access the shyftBlockExplorer open a browser and visit 
+
+**``http://localhost:3000``**
+
+To rebuild any one of the services- issue the following commands:
+
+Services:
+
+   - ShyftGeth
+   - Postgres Instance
+   - Shyft Explorer API
+   - Shyft Example Explorer UI
+
+**``
+docker-compose up -d --no-deps --build <docker compose file service name> 
+``**
+
+ie. for shyftBlockExplorerApi:
+
+**``docker-compose up -d --no-deps --build shyft_block_api``**
+
+The Postgresql Database Container will persist the database data to the directory ``./pg-data`` _. So if you do want to reinitialize the database you should delete this directory as well as the blockchain data directories ``(./shyftData ./privatenet)`` prior to launching the docker containers. There is a shell script available to delete these folders to run it execute the following command:
+
+**``./shyft-cli/resetShyftGeth.sh``**
+
+Blockchain data is persisted to **``./ethash/.ethash and ./shyftData__``**. If you would like to reset the test blockchain you will need to delete the **``__./ethash ./shyftData & ./privatenet__``** directories.
+
+The docker container for the ShyftBlockExplorerApi utilizes govendor to minimize its image size. **If you would like the docker image for this container to reflect any uncommitted changes which may have occurred in the go-empyrean repository, ie. changes with respect to go-empyrean core (ie. cryptographic functions and database). Prior to launching the docker containers you should rebuild the vendor directory for the shyftBlockExplorerApi - by executing the following steps:**
+
+Remove existing shyftBlockExplorerApi vendor.json and vendored components:
+
+**``rm -rf shyftBlockExplorerApi/vendor``**
+
+reinitialize vendor.json
+
+**``cd shyftBlockExplorerApi && govendor init``**
+
+rebuild vendor.json using latest uncommitted changes
+
+**``govendor add +external``**
+
+Due to a bug in govendor and it not being able to pull in some dependencies that are c-header files 
+you should execute the following commands - see these issues - which whilst closed
+appears to have not been fixed: https://github.com/kardianos/govendor/issues/124 && https://github.com/kardianos/govendor/issues/61
+
+**``govendor remove github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^``**
+
+**``govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^``**
+
+NB: The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive/
+
+#### Shyft BlockExplorer API
+
+In order to store the block explorer database, a custom folder was created `./shyft_schema` that contains all the necessary functions to read and write to the explorer database.
+
+The main functions exist in `./core/shyft_database_util.go` and `./core/shyft_get_utils.go`
+
+To run the block explorer rest api that queries the postgres instance and returns a json body, open a new terminal window, navigate to the root directory of the project and run the following command:
+
+**``go run blockExplorerApi/*.go``**
+
+This will start a go server on port 8080 and allow you to either run the pre-existing block explorer or query the api endpoints. Its important to note, that if you have nothing in your postgres database the API will return nothing.
+
+#### Shyft Block Explorer UI
+
+To demonstrate the ability to create your own block explorer, a custom folder was created `./shyftBlockExplorerUI` that contains an example block explorer using react!
+
+To run the Block Explorer UI, ensure that you have the API running as mentioned above. Then run the following command in a terminal:
+
+``cd shyftBlockExplorerUI``
+
+``npm install``
+
+``npm run start``
+
+This will start a development server on ``port 3000`` and spin up an example block explorer that uses the API to query the postgres database.
+
+_TODO_
+
+- Find better dependency management solution that pulls in c header files without manual intervention
+- Reduce size of the ShytfGeth docker container which is responsible for mining and running the blockchain
+- Adjust docker scripts and ports to facilitate sending of test transactions
+- Modify Docker scripts to facilitate hot reloading during development
+
+#### CLI
+
+Run `./shyft-geth.sh` with one of the following flags:
+
+- `--setup` - Setups postgres and the shyft chain db.
+- `--start` - Starts geth.
+- `--reset` - Drops postgress and chain db, and reinstantiates both.
+- `--js [web3 filename]` - Executes web3 calls with a passed file name. If the file name is `sendTransactions.js`, `./shyft-geth.sh --js sendTransactions`.
+                                                                                                                                                                                                                                        
+#### Chain Rollbacks
+
+For development and testing purposes only, until a formal messaging system has been incorporated within go-empyrean, an endpoint is available and freely accessible to trigger a chain and postgresql database rollback.
+
+To trigger a chain/pg database rollback the following command should be executed:
+
+```
+curl <node ip address>:8081/rollback_blocks/<block hashheader to rollback to>
+
+ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838cad4fe6ae45f68410c8cd7cd640
+```
+
 ## Go Ethereum
 
 Official golang implementation of the Ethereum protocol.
 
-[![API Reference](https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667)](https://godoc.org/github.com/ethereum/go-ethereum)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ShyftNetwork/go-empyrean)](https://goreportcard.com/report/github.com/ShyftNetwork/go-empyrean)
-[![Build Status](https://travis-ci.org/ShyftNetwork/go-empyrean.svg?branch=development)](https://travis-ci.org/ShyftNetwork/go-empyrean)
+[![API Reference](https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667)](https://godoc.org/github.com/empyrean/go-ethereum)
+[![Go Report Card](https://goreportcard.com/badge/github.com/empyrean/go-ethereum)](https://goreportcard.com/report/github.com/empyrean/go-ethereum)
+[![Build Status](https://travis-ci.org/ShyftNetwork/go-empyrean.svg?branch=master)](https://travis-ci.org/ShyftNetwork/shyft_go-ethereum)
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ethereum/go-ethereum?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Automated builds are available for stable releases and the unstable master branch.
@@ -278,77 +487,6 @@ Which will start mining blocks and transactions on a single CPU thread, creditin
 the account specified by `--etherbase`. You can further tune the mining by changing the default gas
 limit blocks converge to (`--targetgaslimit`) and the price transactions are accepted at (`--gasprice`).
 
-## SHYFT NOTES
-
-#### CLI
-
-Run `./shyft-geth.sh` with one of the following flags:
-
-- `--setup` - Setups postgres and the shyft chain db.
-- `--start` - Starts geth.
-- `--reset` - Drops postgress and chain db, and reinstantiates both.
-- `--js [web3 filename]` - Executes web3 calls with a passed file name. If the file name is `sendTransactions.js`, `./shyft-geth.sh --js sendTransactions`.
-
-#### Docker Images
-
-Docker Images are available for ShyftGeth and the Postgresql Database which can be used for development and testing. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).
-
-To launch ShyftGeth, PG, the ShyftBlock Explorer Api and UI - issue the following command from the root of the project directory:
-
-`docker-compose up`
-
-If you would like to reinitialize/rebuild the docker images you can issue the following command:
-
-`docker-compose up --build`
-
-To rebuild any one of the services - issue the following commands:
-
-```
-docker-compose up -d --no-deps --build <docker compose file service name> 
-
-# ie. for shyftBlockExplorerApi:
-# docker-compose up -d --no-deps --build shyft_block_api
-```
-_The Postgresql Database Container will persist the database data to the directory ./pg-data _. So if you do want to reinitialize the database you should delete this directory as well as the blockchain data directories (./shyftData ./privatenet) prior to launching the docker containers. There is a shell script available to delete these folders to run it execute the following command:
-
-```./shyft-cli/resetShyftGeth.sh```
-
-From your local machine you can view the database by connecting to the database in the container at 127.0.0.1:8001. To access the shyftBlockExplorer open a browser and visit http://localhost:3000.
-
-__Blockchain data is persisted to ./ethash/.ethash and ./shyftData__. If you would like to reset the test blockchain you will need to delete the __./ethash ./shyftData & ./privatenet__ directories.
-
-The docker container for the ShyftBlockExplorerApi utilizes govendor to minimize its image size. __If you would like the docker image for this container to reflect any uncommitted changes which may have occurred in the go-empyrean repository, ie. changes with respect to go-empyrean core (ie. cryptographic functions and database). Prior to launching the docker containers you should rebuild the vendor directory for the shyftBlockExplorerApi - by executing the following steps:__
-
-```
-# remove existing shyftBlockExplorerApi vendor.json and vendored components:
-
-rm -rf shyftBlockExplorerApi/vendor
-
-# reinitialize vendor.json
-
-cd shyftBlockExplorerApi && govendor init
-
-# rebuild vendor.json using latest uncommitted changes
-
-govendor add +external
-
-# due to a bug in govendor and it not being able to pull in some dependencies that are c-header files 
-# you should execute the following commands - see these issues - which whilst closed
-# appears to have not been fixed: https://github.com/kardianos/govendor/issues/124 && https://github.com/kardianos/govendor/issues/61
-
-govendor remove github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^
-govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^
-
-```
-
-NB: The Shyft Geth docker image size is 1+ GB so make sure you have adequate space on your disk drive/
-
-_TODO_
-
-- Find better dependency management solution that pulls in c header files without manual intervention
-- Reduce size of the ShytfGeth docker container which is responsible for mining and running the blockchain
-- Adjust docker scripts and ports to facilitate sending of test transactions
-- Modify Docker scripts to facilitate hot reloading during development
 
 ## Contribution
 
