@@ -28,9 +28,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
-	"github.com/ShyftNetwork/go-empyrean/eth"
-	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 	"github.com/docker/docker/pkg/reexec"
 	"os"
 )
@@ -42,15 +39,11 @@ const (
 
 //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
 func TestMain(m *testing.M) {
-	// Reset Pg DB
-	shyfttest.PgTestDbSetup()
-	// check if we have been reexec'd
-
+	core.TruncateTables()
 	if reexec.Init() {
 		return
 	}
 	retCode := m.Run()
-	shyfttest.PgTestTearDown()
 	os.Exit(retCode)
 }
 
@@ -92,20 +85,7 @@ func TestWaitDeployed(t *testing.T) {
 			mined   = make(chan struct{})
 			ctx     = context.Background()
 		)
-		eth.NewShyftTestLDB()
-		shyftTracer := new(eth.ShyftTracer)
-		core.SetIShyftTracer(shyftTracer)
 
-		ethConf := &eth.Config{
-			Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-			Etherbase: common.HexToAddress(testAddress),
-			Ethash: ethash.Config{
-				PowMode: ethash.ModeTest,
-			},
-		}
-
-		eth.SetGlobalConfig(ethConf)
-		//eth.InitTracerEnv()
 		go func() {
 
 			address, err = bind.WaitDeployed(ctx, backend, tx)
