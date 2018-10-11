@@ -6,11 +6,6 @@ go:
   - "1.9"
   - "1.8"
 
-before_install:
-  - go get -u github.com/kardianos/govendor
-
-install:
-
 script:
-  -
+  - make geth
 
