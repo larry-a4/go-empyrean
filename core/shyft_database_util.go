@@ -256,11 +256,6 @@ func Transact(db *sqlx.DB, txFunc func(*sqlx.Tx) error) (err error) {
 func CreateAccount(addr string, balance string, nonce string) error {
 	sqldb, _ := DBConnection()
 	addr = strings.ToLower(addr)
-	//bal := new(big.Int)
-	//numericBalance, _ := bal.SetString(balance, 10)
-
-	//non := new(big.Int)
-	//intNonce, _ := non.SetString(nonce, 10)
 	return Transact(sqldb, func(tx *sqlx.Tx) error {
 
 		accountStmnt := shyftschema.FindOrCreateAcctStmnt

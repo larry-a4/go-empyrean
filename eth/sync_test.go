@@ -33,7 +33,7 @@ import (
 func TestMain(m *testing.M) {
 	shyfttest.PgTestDbSetup()
 	retCode := m.Run()
-	shyfttest.PgTestTearDown()
+	//shyfttest.PgTestTearDown()
 	os.Exit(retCode)
 }
 

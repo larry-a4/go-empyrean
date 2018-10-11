@@ -9,10 +9,6 @@ import (
 // PgTestDbSetup - reinitializes the pg database
 func PgTestDbSetup() {
 	core.DeletePgDb(core.DbName())
-	// cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/init_test_db.sh"
-	// cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	// _, err := cmd.Output()
-	// PgRecreateTables()
 	_, err := core.DBConnection()
 	if err != nil {
 		println(err.Error())
@@ -29,10 +25,6 @@ func PgTestTearDown() {
 func PgRecreateTables() {
 	core.DeletePgDb(core.DbName())
 	_, err := core.DBConnection()
-	// cmdStr := "$GOPATH/src/github.com/ShyftNetwork/go-empyrean/shyftdb/postgres_setup_test/recreate_tables_test.sh"
-	// cmd := exec.Command("/bin/sh", "-c", cmdStr)
-	// _, err := cmd.Output()
-
 	if err != nil {
 		println(err.Error())
 		return

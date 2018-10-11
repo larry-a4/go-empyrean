@@ -38,7 +38,7 @@ func TestMain(m *testing.M) {
 		return
 	}
 	retCode := m.Run()
-	shyfttest.PgTestTearDown()
+	//shyfttest.PgTestTearDown()
 	os.Exit(retCode)
 }
 

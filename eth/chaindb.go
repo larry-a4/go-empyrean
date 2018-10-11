@@ -39,8 +39,4 @@ func NewShyftTestLDB() (*ethdb.LDBDatabase, error) {
 	}
 	Chaindb_global = db
 	return db, err
-	//return db, func() {
-	//	db.Close()
-	//	os.RemoveAll(dirname)
-	//}
 }
