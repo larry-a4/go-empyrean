@@ -140,8 +140,7 @@ If you are installing postgresql locally for development on Ubuntu the app assum
 
 To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.
 ### Docker Images
-
-Docker Images are available for ShyftGeth and the Postgresql Database which can be used for development and testing. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).
+Two sets of Docker Images are available for ShyftGeth, the Postgresql Database, and the Shyft Blockchain Explorer, which can be used for local development and testnet connection. The development settings are included in docker-compose.yml, the testnet settings are included in docker-compose.production.yml (shyftgeth not mining by default). To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).
 
 **To build the images for the first time please run the following command:**
 
