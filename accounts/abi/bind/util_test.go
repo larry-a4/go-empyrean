@@ -30,6 +30,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"github.com/docker/docker/pkg/reexec"
 	"os"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
 
 // @SHYFT NOTE: test ShyftTracer
@@ -39,7 +40,8 @@ const (
 
 //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
 func TestMain(m *testing.M) {
-	core.TruncateTables()
+	testdb := shyfttest.PgTestDbSetup()
+	defer shyfttest.PgTestTearDown(testdb)
 	if reexec.Init() {
 		return
 	}

@@ -23,7 +23,6 @@ import (
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/internal/cmdtest"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 	"github.com/docker/docker/pkg/reexec"
 )
 
@@ -55,20 +54,11 @@ func init() {
 }
 
 //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-// func TestMain(m *testing.M) {
-// 	core.TruncateTables()
-// 	if reexec.Init() {
-// 		return
-// 	}
-// 	retCode := m.Run()
-// 	os.Exit(retCode)
-// }
+//
 
 // spawns geth with the given command line args. If the args don't set --datadir, the
 // child g gets a temporary data directory.
 func runGeth(t *testing.T, args ...string) *testgeth {
-	testdb := shyfttest.PgTestDbSetup()
-	defer shyfttest.PgTestTearDown(testdb)
 	tt := &testgeth{}
 	tt.TestCmd = cmdtest.NewTestCmd(t, tt)
 	for i, arg := range args {
@@ -98,6 +88,5 @@ func runGeth(t *testing.T, args ...string) *testgeth {
 	// Boot "geth". This actually runs the test binary but the TestMain
 	// function will prevent any tests from running.
 	tt.Run("geth-test", args...)
-
 	return tt
 }

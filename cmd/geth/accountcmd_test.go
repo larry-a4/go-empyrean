@@ -24,7 +24,20 @@ import (
 	"testing"
 
 	"github.com/cespare/cp"
+	"github.com/docker/docker/pkg/reexec"
+	"os"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
+
+func TestMain(m *testing.M) {
+	testdb := shyfttest.PgTestDbSetup()
+	defer shyfttest.PgTestTearDown(testdb)
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	os.Exit(retCode)
+}
 
 // These tests are 'smoke tests' for the account related
 // subcommands and flags.
