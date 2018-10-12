@@ -13,6 +13,8 @@ import (
 
 var blockExplorerDb *sqlx.DB
 
+var ActiveTestDb string
+
 const (
 	defaultTestDb  = "shyftdbtest"
 	defaultDb      = "shyftdb"
@@ -63,7 +65,7 @@ func DbName() string {
 	if flag.Lookup("test.v") == nil {
 		return defaultDb
 	} else {
-		return defaultTestDb
+		return ActiveTestDb
 	}
 }
 
