@@ -174,8 +174,7 @@ func TruncateTables() {
 	}
 	tx, _ := sqldb.Begin()
 	sqlStatement := `TRUNCATE TABLE txs, accounts, blocks, internaltxs RESTART IDENTITY CASCADE;`
-	res, err := tx.Exec(sqlStatement)
-	fmt.Println("POSTGRES RES", res)
+	_, err = tx.Exec(sqlStatement)
 	tx.Commit()
 	if err != nil {
 		panic(err)
