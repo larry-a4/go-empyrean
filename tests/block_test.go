@@ -24,7 +24,7 @@ import (
 
 func TestBlockchain(t *testing.T) {
 	t.Parallel()
-
+	shyfttest.PgTestDbSetup()
 	bt := new(testMatcher)
 	// General state tests are 'exported' as blockchain tests, but we can run them natively.
 	bt.skipLoad(`^GeneralStateTests/`)
@@ -38,7 +38,6 @@ func TestBlockchain(t *testing.T) {
 	// Still failing tests
 	bt.skipLoad(`^bcWalletTest.*_Byzantium$`)
 	bt.walk(t, blockTestDir, func(t *testing.T, name string, test *BlockTest) {
-		shyfttest.PgTestDbSetup()
 		if err := bt.checkFailure(t, name, test.Run()); err != nil {
 			t.Error(err)
 		}

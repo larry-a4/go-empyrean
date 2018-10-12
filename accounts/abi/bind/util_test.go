@@ -25,11 +25,9 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind/backends"
 	"github.com/ShyftNetwork/go-empyrean/common"
-	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
-	"github.com/ShyftNetwork/go-empyrean/eth"
 )
 
 // @SHYFT NOTE: test ShyftTracer
@@ -75,21 +73,21 @@ func TestWaitDeployed(t *testing.T) {
 			mined   = make(chan struct{})
 			ctx     = context.Background()
 		)
-		core.TruncateTables()
-		eth.NewShyftTestLDB()
-		shyftTracer := new(eth.ShyftTracer)
-		core.SetIShyftTracer(shyftTracer)
+		// core.TruncateTables()
+		// eth.NewShyftTestLDB()
+		// shyftTracer := new(eth.ShyftTracer)
+		// core.SetIShyftTracer(shyftTracer)
 
-		ethConf := &eth.Config{
-			Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-			Etherbase: common.HexToAddress(testAddress),
-			Ethash: ethash.Config{
-				PowMode: ethash.ModeTest,
-			},
-		}
+		// ethConf := &eth.Config{
+		// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+		// 	Etherbase: common.HexToAddress(testAddress),
+		// 	Ethash: ethash.Config{
+		// 		PowMode: ethash.ModeTest,
+		// 	},
+		// }
 
-		eth.SetGlobalConfig(ethConf)
-		eth.InitTracerEnv()
+		// eth.SetGlobalConfig(ethConf)
+		// eth.InitTracerEnv()
 		go func() {
 
 			address, err = bind.WaitDeployed(ctx, backend, tx)

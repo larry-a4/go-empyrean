@@ -76,13 +76,23 @@ func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, Alloc: alloc}
 	genesis.MustCommit(database)
 	blockchain, _ := core.NewBlockChain(database, nil, genesis.Config, ethash.NewFaker(), vm.Config{})
-
+	eth.NewShyftTestLDB()
+	shyftTracer := new(eth.ShyftTracer)
+	core.SetIShyftTracer(shyftTracer)
 	backend := &SimulatedBackend{
 		database:   database,
 		blockchain: blockchain,
 		config:     genesis.Config,
 		events:     filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, blockchain}, false),
 	}
+	traceConfig := &eth.Config{
+		Genesis:   &genesis,
+		Etherbase: common.HexToAddress(testAddress),
+		Ethash:    ethash.Config{PowMode: ethash.ModeTest},
+	}
+
+	eth.SetGlobalConfig(traceConfig)
+	eth.InitTracerEnv()
 	backend.rollback()
 	return backend
 }
@@ -93,21 +103,21 @@ func (b *SimulatedBackend) Commit() {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	//@SHYFT //SETS UP OUR TEST ENV
-	core.TruncateTables()
-	eth.NewShyftTestLDB()
-	shyftTracer := new(eth.ShyftTracer)
-	core.SetIShyftTracer(shyftTracer)
+	// core.TruncateTables()
+	// eth.NewShyftTestLDB()
+	// shyftTracer := new(eth.ShyftTracer)
+	// core.SetIShyftTracer(shyftTracer)
 
-	ethConf := &eth.Config{
-		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-		Etherbase: common.HexToAddress(testAddress),
-		Ethash: ethash.Config{
-			PowMode: ethash.ModeTest,
-		},
-	}
+	// ethConf := &eth.Config{
+	// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+	// 	Etherbase: common.HexToAddress(testAddress),
+	// 	Ethash: ethash.Config{
+	// 		PowMode: ethash.ModeTest,
+	// 	},
+	// }
 
-	eth.SetGlobalConfig(ethConf)
-	eth.InitTracerEnv()
+	// eth.SetGlobalConfig(ethConf)
+	// eth.InitTracerEnv()
 	if _, err := b.blockchain.InsertChain([]*types.Block{b.pendingBlock}); err != nil {
 		panic(err) // This cannot happen unless the simulator is wrong, fail in that case
 	}

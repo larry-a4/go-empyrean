@@ -29,12 +29,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ShyftNetwork/go-empyrean/common"
-	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
-	"github.com/ShyftNetwork/go-empyrean/core"
-	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/params"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
 
 var (
@@ -191,7 +186,6 @@ func (tm *testMatcher) checkFailure(t *testing.T, name string, err error) error 
 // where TestType is the type of the test contained in test files.
 func (tm *testMatcher) walk(t *testing.T, dir string, runTest interface{}) {
 	// Walk the directory.
-	shyfttest.PgTestDbSetup()
 	dirinfo, err := os.Stat(dir)
 	if os.IsNotExist(err) || !dirinfo.IsDir() {
 		fmt.Fprintf(os.Stderr, "can't find test files in %s, did you clone the tests submodule?\n", dir)
@@ -206,8 +200,7 @@ func (tm *testMatcher) walk(t *testing.T, dir string, runTest interface{}) {
 			return nil
 		}
 		if filepath.Ext(path) == ".json" {
-			// shyfttest.PgTestDbSetup()
-			t.Run(name, func(t *testing.T) { shyfttest.PgTestDbSetup(); tm.runTestFile(t, path, name, runTest) })
+			t.Run(name, func(t *testing.T) { tm.runTestFile(t, path, name, runTest) })
 		}
 		return nil
 	})
@@ -220,7 +213,7 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 	if r, _ := tm.findSkip(name); r != "" {
 		t.Skip(r)
 	}
-	t.Parallel()
+	// t.Parallel()
 
 	// Load the file as map[string]<testType>.
 	m := makeMapFromTestFunc(runTest)
@@ -230,42 +223,43 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 
 	// Run all tests from the map. Don't wrap in a subtest if there is only one test in the file.
 	// @SHYFT NOTE: Clear pg database
-	shyfttest.PgTestDbSetup()
+	// shyfttest.PgTestDbSetup()
 	//@SHYFT //SETS UP OUR TEST ENV
-	core.TruncateTables()
-	eth.NewShyftTestLDB()
-	shyftTracer := new(eth.ShyftTracer)
-	core.SetIShyftTracer(shyftTracer)
+	// core.TruncateTables()
+	// eth.NewShyftTestLDB()
+	// shyftTracer := new(eth.ShyftTracer)
+	// core.SetIShyftTracer(shyftTracer)
 
-	ethConf := &eth.Config{
-		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-		Etherbase: common.HexToAddress(testAddress),
-		Ethash: ethash.Config{
-			PowMode: ethash.ModeTest,
-		},
-	}
+	// ethConf := &eth.Config{
+	// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+	// 	Etherbase: common.HexToAddress(testAddress),
+	// 	Ethash: ethash.Config{
+	// 		PowMode: ethash.ModeTest,
+	// 	},
+	// }
 
-	eth.SetGlobalConfig(ethConf)
-	eth.InitTracerEnv()
+	// eth.SetGlobalConfig(ethConf)
+	// eth.InitTracerEnv()
 	keys := sortedMapKeys(m)
 	if len(keys) == 1 {
 		// shyfttest.PgTestDbSetup()
 		//@SHYFT //SETS UP OUR TEST ENV
-		core.TruncateTables()
-		eth.NewShyftTestLDB()
-		shyftTracer := new(eth.ShyftTracer)
-		core.SetIShyftTracer(shyftTracer)
+		// core.TruncateTables()
+		// eth.NewShyftTestLDB()
+		// shyftTracer := new(eth.ShyftTracer)
+		// core.SetIShyftTracer(shyftTracer)
 
-		ethConf := &eth.Config{
-			Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-			Etherbase: common.HexToAddress(testAddress),
-			Ethash: ethash.Config{
-				PowMode: ethash.ModeTest,
-			},
-		}
+		// ethConf := &eth.Config{
+		// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+		// 	Etherbase: common.HexToAddress(testAddress),
+		// 	Ethash: ethash.Config{
+		// 		PowMode: ethash.ModeTest,
+		// 	},
+		// }
 
-		eth.SetGlobalConfig(ethConf)
-		eth.InitTracerEnv()
+		// eth.SetGlobalConfig(ethConf)
+		// eth.InitTracerEnv()
+		fmt.Sprintf("Running Test %s \n", name)
 		runTestFunc(runTest, t, name, m, keys[0])
 	} else {
 		for _, key := range keys {
@@ -274,8 +268,7 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 				if r, _ := tm.findSkip(name); r != "" {
 					t.Skip(r)
 				}
-				// shyfttest.PgTestDbSetup()
-
+				// shyfttest.PgTestTearDown()
 				runTestFunc(runTest, t, name, m, key)
 			})
 		}
@@ -304,7 +297,8 @@ func sortedMapKeys(m reflect.Value) []string {
 }
 
 func runTestFunc(runTest interface{}, t *testing.T, name string, m reflect.Value, key string) {
-	// shyfttest.PgTestDbSetup()
+	// shyfttest.PgTestTearDown()
+	fmt.Println("Running Test ->", name)
 	reflect.ValueOf(runTest).Call([]reflect.Value{
 		reflect.ValueOf(t),
 		reflect.ValueOf(name),

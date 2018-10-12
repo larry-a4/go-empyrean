@@ -29,6 +29,10 @@ func chaindb(ctx *node.ServiceContext, config *Config) (ethdb.Database, error) {
 
 // NewShyftTestLDB - returns a (*ethdb.LDBDatabase, func())
 func NewShyftTestLDB() (*ethdb.LDBDatabase, error) {
+	if Chaindb_global != nil {
+		Chaindb_global.Close()
+		os.RemoveAll("shyftdb_test_")
+	}
 	dirname, err := ioutil.TempDir(os.TempDir(), "shyftdb_test_")
 	if err != nil {
 		panic("failed to create test file: " + err.Error())
