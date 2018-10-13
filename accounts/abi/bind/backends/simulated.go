@@ -40,7 +40,22 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
 	"github.com/ShyftNetwork/go-empyrean/eth"
+	"testing"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
+	"github.com/docker/docker/pkg/reexec"
+	"os"
 )
+
+//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+func TestMain(m *testing.M) {
+	testdb := shyfttest.PgTestDbSetup()
+	defer shyfttest.PgTestTearDown(testdb)
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	os.Exit(retCode)
+}
 
 // This nil assignment ensures compile time that SimulatedBackend implements bind.ContractBackend.
 var _ bind.ContractBackend = (*SimulatedBackend)(nil)
