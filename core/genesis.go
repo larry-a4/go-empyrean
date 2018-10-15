@@ -321,6 +321,8 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return g.Config
 	case ghash == params.MainnetGenesisHash:
 		return params.MainnetChainConfig
+	case ghash == params.ShyftnetGenesisHash:
+		return params.ShyftNetworkChainConfig
 	case ghash == params.TestnetGenesisHash:
 		return params.TestnetChainConfig
 	default:
@@ -426,6 +428,18 @@ func DefaultGenesisBlock() *Genesis {
 		GasLimit:   5000,
 		Difficulty: big.NewInt(17179869184),
 		Alloc:      decodePrealloc(mainnetAllocData),
+	}
+}
+
+// DefaultShyftGenesisBlock returns Shyft network genesis block.
+func DefaultShyftGenesisBlock() *Genesis {
+	return &Genesis{
+		Config: 	params.ShyftNetworkChainConfig,
+		Nonce:		66,
+		ExtraData:  hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000"),
+		GasLimit:   24011655,
+		Difficulty: big.NewInt(1048576),
+		Alloc: decodePrealloc(shyftNetworkAllocData),
 	}
 }
 
