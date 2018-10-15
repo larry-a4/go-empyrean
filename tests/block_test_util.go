@@ -174,6 +174,21 @@ func (t *BlockTest) insertBlocks(blockchain *core.BlockChain) ([]btBlock, error)
 		}
 		// RLP decoding worked, try to insert into chain:
 		blocks := types.Blocks{cb}
+		// @SHYFT
+		// eth.NewShyftTestLDB()
+		// shyftTracer := new(eth.ShyftTracer)
+		// core.SetIShyftTracer(shyftTracer)
+
+		// ethConf := &eth.Config{
+		// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
+		// 	Etherbase: common.HexToAddress(testAddress),
+		// 	Ethash: ethash.Config{
+		// 		PowMode: ethash.ModeTest,
+		// 	},
+		// }
+
+		// eth.SetGlobalConfig(ethConf)
+		// eth.InitTracerEnv()
 		core.TruncateTables()
 		i, err := blockchain.InsertChain(blocks)
 		if err != nil {
@@ -193,6 +208,7 @@ func (t *BlockTest) insertBlocks(blockchain *core.BlockChain) ([]btBlock, error)
 		}
 		validBlocks = append(validBlocks, b)
 	}
+	// shyfttest.PgTestTearDown()
 	return validBlocks, nil
 }
 

@@ -57,8 +57,8 @@ const blocksTable = `
 CREATE TABLE IF NOT EXISTS blocks (
   hash text primary key,
   coinbase text,
-  gasused numeric,
-  gaslimit numeric,
+  gasused numeric(78,0),
+  gaslimit numeric(78,0),
   txcount numeric,
   unclecount numeric,
   age timestamp,
@@ -66,9 +66,9 @@ CREATE TABLE IF NOT EXISTS blocks (
   unclehash text,
   difficulty bigint,
   size text,
-  nonce numeric,
-  rewards numeric,
-  number bigint
+  nonce numeric(78,0),
+  rewards numeric(78,0),
+  number numeric(78,0)
 );`
 
 // AccountBlock - struct for reading and writing database data

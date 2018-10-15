@@ -19,12 +19,12 @@ package tests
 import (
 	"testing"
 
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
+	"github.com/ShyftNetwork/go-empyrean/core"
 )
 
 func TestBlockchain(t *testing.T) {
-	t.Parallel()
-
+	// t.Parallel()
+	core.TruncateTables()
 	bt := new(testMatcher)
 	// General state tests are 'exported' as blockchain tests, but we can run them natively.
 	bt.skipLoad(`^GeneralStateTests/`)
@@ -38,7 +38,6 @@ func TestBlockchain(t *testing.T) {
 	// Still failing tests
 	bt.skipLoad(`^bcWalletTest.*_Byzantium$`)
 	bt.walk(t, blockTestDir, func(t *testing.T, name string, test *BlockTest) {
-		shyfttest.PgTestDbSetup()
 		if err := bt.checkFailure(t, name, test.Run()); err != nil {
 			t.Error(err)
 		}

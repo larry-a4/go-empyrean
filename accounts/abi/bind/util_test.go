@@ -22,15 +22,16 @@ import (
 	"testing"
 	"time"
 
+	"os"
+
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind/backends"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
-	"github.com/docker/docker/pkg/reexec"
-	"os"
 	"github.com/ShyftNetwork/go-empyrean/shyfttest"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 // @SHYFT NOTE: test ShyftTracer

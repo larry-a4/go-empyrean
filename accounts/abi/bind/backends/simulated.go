@@ -34,12 +34,12 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
+	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/eth/filters"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/event"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
-	"github.com/ShyftNetwork/go-empyrean/eth"
 )
 
 // This nil assignment ensures compile time that SimulatedBackend implements bind.ContractBackend.
@@ -89,6 +89,7 @@ func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 		Etherbase: common.HexToAddress(testAddress),
 		Ethash:    ethash.Config{PowMode: ethash.ModeTest},
 	}
+
 	eth.SetGlobalConfig(traceConfig)
 	eth.InitTracerEnv()
 	backend.rollback()

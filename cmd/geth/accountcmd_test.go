@@ -23,10 +23,11 @@ import (
 	"strings"
 	"testing"
 
+	"os"
+
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 	"github.com/cespare/cp"
 	"github.com/docker/docker/pkg/reexec"
-	"os"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
 
 func TestMain(m *testing.M) {
