@@ -27,7 +27,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	
+
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/accounts/keystore"
 	"github.com/ShyftNetwork/go-empyrean/common"
@@ -1136,6 +1136,9 @@ func RegisterEthService(stack *node.Node, cfg *eth.Config) {
 		})
 	} else {
 		err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
+			//if flag.Lookup("test.v") != nil {
+			//	cfg.Genesis = core.DefaultGenesisBlock()
+			//}
 			fullNode, err := eth.New(ctx, cfg)
 			if fullNode != nil && cfg.LightServ > 0 {
 				ls, _ := les.NewLesServer(fullNode, cfg)

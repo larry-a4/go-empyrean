@@ -31,7 +31,8 @@ import (
 
 //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
 func TestMain(m *testing.M) {
-	shyfttest.PgTestDbSetup()
+	testdb := shyfttest.PgTestDbSetup()
+	defer shyfttest.PgTestTearDown(testdb)
 	retCode := m.Run()
 	//shyfttest.PgTestTearDown()
 	os.Exit(retCode)
