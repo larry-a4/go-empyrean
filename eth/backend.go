@@ -132,7 +132,6 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	shyft_tracer := new(ShyftTracer)
 	core.SetIShyftTracer(shyft_tracer)
 	SetGlobalConfig(config)
-
 	if config.SyncMode == downloader.LightSync {
 		return nil, errors.New("can't run eth.Ethereum in light sync mode, use les.LightEthereum")
 	}

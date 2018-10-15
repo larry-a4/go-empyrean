@@ -53,21 +53,6 @@ func init() {
 	})
 }
 
-//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-
-// func TestMain(m *testing.M) {
-// 	// Reset Pg DB
-// 	shyfttest.PgTestDbSetup()
-// 	// check if we have been reexec'd
-
-// 	if reexec.Init() {
-// 		return
-// 	}
-// 	retCode := m.Run()
-// 	shyfttest.PgTestTearDown()
-// 	os.Exit(retCode)
-// }
-
 // spawns geth with the given command line args. If the args don't set --datadir, the
 // child g gets a temporary data directory.
 func runGeth(t *testing.T, args ...string) *testgeth {

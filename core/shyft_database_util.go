@@ -299,8 +299,6 @@ func InsertBlock(blockData stypes.SBlock) {
 	sqlStatement := `INSERT INTO blocks(hash, coinbase, number, gasUsed, gasLimit, txCount, uncleCount, age, parentHash, uncleHash, difficulty, size, rewards, nonce) VALUES(($1), ($2), ($3), ($4), ($5), ($6), ($7), ($8), ($9), ($10), ($11), ($12),($13), ($14)) RETURNING number;`
 	qerr := sqldb.QueryRow(sqlStatement, strings.ToLower(blockData.Hash), strings.ToLower(blockData.Coinbase), blockData.Number, blockData.GasUsed, blockData.GasLimit, blockData.TxCount, blockData.UncleCount, blockData.Age, blockData.ParentHash, blockData.UncleHash, blockData.Difficulty, blockData.Size, blockData.Rewards, strconv.FormatUint(blockData.Nonce, 10)).Scan(&blockData.Number)
 	if qerr != nil {
-		fmt.Println("INSERT BLOCK ISSUE Executing This Command")
-		fmt.Println(fmt.Sprintf(sqlStatement, strings.ToLower(blockData.Hash), strings.ToLower(blockData.Coinbase), blockData.Number, blockData.GasUsed, blockData.GasLimit, blockData.TxCount, blockData.UncleCount, blockData.Age, blockData.ParentHash, blockData.UncleHash, blockData.Difficulty, blockData.Size, blockData.Rewards, blockData.Nonce))
 		panic(qerr)
 	}
 }

@@ -420,7 +420,7 @@ func GenesisBlockForTesting(db ethdb.Database, addr common.Address, balance *big
 }
 
 // DefaultGenesisBlock returns the Ethereum main net genesis block.
-func DefaultGenesisBlock() *Genesis {
+func DefaultGenesisBlockForEthereum() *Genesis {
 	return &Genesis{
 		Config:     params.MainnetChainConfig,
 		Nonce:      66,
@@ -432,7 +432,7 @@ func DefaultGenesisBlock() *Genesis {
 }
 
 // DefaultShyftGenesisBlock returns Shyft network genesis block.
-func DefaultShyftGenesisBlock() *Genesis {
+func DefaultGenesisBlock() *Genesis {
 	return &Genesis{
 		Config: 	params.ShyftNetworkChainConfig,
 		Nonce:		66,
