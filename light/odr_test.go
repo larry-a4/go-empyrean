@@ -106,7 +106,10 @@ func (odr *testOdr) Retrieve(ctx context.Context, req OdrRequest) error {
 
 type odrTestFn func(ctx context.Context, db ethdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error)
 
-func TestOdrGetBlockLes1(t *testing.T) { testChainOdr(t, 1, odrGetBlock) }
+func TestOdrGetBlockLes1(t *testing.T) {
+	core.TruncateTables()
+	testChainOdr(t, 1, odrGetBlock)
+}
 
 func odrGetBlock(ctx context.Context, db ethdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
 	var block *types.Block
@@ -141,7 +144,10 @@ func odrGetReceipts(ctx context.Context, db ethdb.Database, bc *core.BlockChain,
 	return rlp, nil
 }
 
-func TestOdrAccountsLes1(t *testing.T) { testChainOdr(t, 1, odrAccounts) }
+func TestOdrAccountsLes1(t *testing.T) {
+	core.TruncateTables()
+	testChainOdr(t, 1, odrAccounts)
+}
 
 func odrAccounts(ctx context.Context, db ethdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
 	dummyAddr := common.HexToAddress("1234567812345678123456781234567812345678")
@@ -165,7 +171,10 @@ func odrAccounts(ctx context.Context, db ethdb.Database, bc *core.BlockChain, lc
 	return res, st.Error()
 }
 
-func TestOdrContractCallLes1(t *testing.T) { testChainOdr(t, 1, odrContractCall) }
+func TestOdrContractCallLes1(t *testing.T) {
+	core.TruncateTables()
+	testChainOdr(t, 1, odrContractCall)
+}
 
 type callmsg struct {
 	types.Message
