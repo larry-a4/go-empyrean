@@ -39,6 +39,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 	"github.com/ShyftNetwork/go-empyrean/trie"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 const (
@@ -47,9 +48,12 @@ const (
 
 //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
 func TestMain(m *testing.M) {
-	shyfttest.PgTestDbSetup()
+	testdb := shyfttest.PgTestDbSetup()
+	defer shyfttest.PgTestTearDown(testdb)
+	if reexec.Init() {
+		return
+	}
 	retCode := m.Run()
-	//shyfttest.PgTestTearDown()
 	os.Exit(retCode)
 }
 
@@ -118,7 +122,10 @@ func odrGetBlock(ctx context.Context, db ethdb.Database, bc *core.BlockChain, lc
 	return rlp, nil
 }
 
-func TestOdrGetReceiptsLes1(t *testing.T) { testChainOdr(t, 1, odrGetReceipts) }
+func TestOdrGetReceiptsLes1(t *testing.T) {
+	core.TruncateTables()
+	testChainOdr(t, 1, odrGetReceipts)
+}
 
 func odrGetReceipts(ctx context.Context, db ethdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
 	var receipts types.Receipts
