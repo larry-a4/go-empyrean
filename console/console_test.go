@@ -131,7 +131,6 @@ func newTester(t *testing.T, confOverride func(*eth.Config)) *tester {
 	}
 	prompter := &hookedPrompter{scheduler: make(chan string)}
 	printer := new(bytes.Buffer)
-
 	console, err := New(Config{
 		DataDir:  stack.DataDir(),
 		DocRoot:  "testdata",
@@ -146,7 +145,6 @@ func newTester(t *testing.T, confOverride func(*eth.Config)) *tester {
 	// Create the final tester and return
 	var ethereum *eth.Ethereum
 	stack.Service(&ethereum)
-
 	return &tester{
 		workspace: workspace,
 		stack:     stack,

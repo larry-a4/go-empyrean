@@ -1136,9 +1136,6 @@ func RegisterEthService(stack *node.Node, cfg *eth.Config) {
 		})
 	} else {
 		err = stack.Register(func(ctx *node.ServiceContext) (node.Service, error) {
-			//if flag.Lookup("test.v") != nil {
-			//	cfg.Genesis = core.DefaultShyftGenesisBlock()
-			//}
 			fullNode, err := eth.New(ctx, cfg)
 			if fullNode != nil && cfg.LightServ > 0 {
 				ls, _ := les.NewLesServer(fullNode, cfg)

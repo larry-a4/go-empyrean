@@ -126,7 +126,6 @@ func New(conf *Config) (*Node, error) {
 func (n *Node) Register(constructor ServiceConstructor) error {
 	n.lock.Lock()
 	defer n.lock.Unlock()
-
 	if n.server != nil {
 		return ErrNodeRunning
 	}
@@ -164,7 +163,6 @@ func (n *Node) Start() error {
 	}
 	running := &p2p.Server{Config: n.serverConfig}
 	n.log.Info("Starting peer-to-peer node", "instance", n.serverConfig.Name)
-
 	// Otherwise copy and specialize the P2P configuration
 	services := make(map[reflect.Type]Service)
 	for _, constructor := range n.serviceFuncs {
@@ -179,10 +177,13 @@ func (n *Node) Start() error {
 			ctx.services[kind] = s
 		}
 		// Construct and save the service
+		//fmt.Println("CTX", ctx)
 		service, err := constructor(ctx)
 		if err != nil {
+			fmt.Println("ERROR", err)
 			return err
 		}
+		//fmt.Println("SERVICE", service)
 		kind := reflect.TypeOf(service)
 		if _, exists := services[kind]; exists {
 			return &DuplicateServiceError{Kind: kind}

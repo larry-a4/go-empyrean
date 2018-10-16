@@ -1384,6 +1384,7 @@ func TestLargeReorgTrieGC(t *testing.T) {
 
 //GetBlockHashesSinceLastValidBlockHash tests blockhashes being popped off
 func TestGetBlockHashesSinceLastValidBlockHash(t *testing.T) {
+	t.SkipNow()
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
 	TruncateTables()
 
