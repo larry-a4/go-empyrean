@@ -34,6 +34,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
+	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 
 	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/eth/filters"
@@ -41,24 +42,18 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/event"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
-
-	"os"
-	"testing"
-
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
-	"github.com/docker/docker/pkg/reexec"
 )
 
 //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-func TestMain(m *testing.M) {
-	testdb := shyfttest.PgTestDbSetup()
-	defer shyfttest.PgTestTearDown(testdb)
-	if reexec.Init() {
-		return
-	}
-	retCode := m.Run()
-	os.Exit(retCode)
-}
+// func TestMain(m *testing.M) {
+// 	testdb := shyfttest.PgTestDbSetup()
+// 	defer shyfttest.PgTestTearDown(testdb)
+// 	if reexec.Init() {
+// 		return
+// 	}
+// 	retCode := m.Run()
+// 	os.Exit(retCode)
+// }
 
 // This nil assignment ensures compile time that SimulatedBackend implements bind.ContractBackend.
 var _ bind.ContractBackend = (*SimulatedBackend)(nil)
@@ -86,11 +81,14 @@ type SimulatedBackend struct {
 	config *params.ChainConfig
 }
 
+var testDb string
+
 // NewSimulatedBackend creates a new binding backend using a simulated blockchain
 // for testing purposes.
 func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 	database, _ := ethdb.NewMemDatabase()
-	core.TruncateTables()
+	testDb = shyfttest.PgTestDbSetup()
+	// core.TruncateTables()
 	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, Alloc: alloc}
 	genesis.MustCommit(database)
 	blockchain, _ := core.NewBlockChain(database, nil, genesis.Config, ethash.NewFaker(), vm.Config{})
