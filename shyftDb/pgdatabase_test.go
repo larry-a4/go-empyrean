@@ -48,13 +48,13 @@ var tx, _ = types.NewTransaction(
 )
 
 func TestDbCreationExistence(t *testing.T) {
-	core.DeletePgDb(core.DbName())
+	core.DeletePgDb(core.DbName)
 	db, err := core.InitDB()
 	if err != nil || err == sql.ErrNoRows {
 		fmt.Println(err)
 	}
 	t.Run("Creates the PG DB if it Doesnt Exist", func(t *testing.T) {
-		_, err = core.DbExists(core.DbName())
+		_, err = core.DbExists(core.DbName)
 		if err != nil || err == sql.ErrNoRows {
 			t.Errorf("Error in Database Connection - DB doesn't Exist - %s", err)
 		}
@@ -96,7 +96,7 @@ func TestDbCreationExistence(t *testing.T) {
 			t.Errorf("Test Failed as wanted: %s  - got: %s", want, tablenames)
 		}
 	})
-	core.DeletePgDb(core.DbName())
+	core.DeletePgDb(core.DbName)
 	db, err = core.InitDB()
 	if err != nil || err == sql.ErrNoRows {
 		fmt.Println(err)
@@ -114,7 +114,7 @@ func deleteAllTables(db *sqlx.DB) {
 
 func TestCreateAccount(t *testing.T) {
 	t.Run("CreateAccount - creates an account in the PG db ", func(t *testing.T) {
-		core.DeletePgDb(core.DbName())
+		core.DeletePgDb(core.DbName)
 		db, err := core.InitDB()
 		deleteAllTables(db)
 		addr := "0x7ef5a6135f1fd6a02593eedc869c6d41d934aef8"
@@ -170,7 +170,7 @@ func TestInsertTx(t *testing.T) {
 		IsContract:  false,
 	}
 	t.Run("InsertTx - No Account exists inserts a transaction to the database and updates/creates accounts accordingly", func(t *testing.T) {
-		core.DeletePgDb(core.DbName())
+		core.DeletePgDb(core.DbName)
 		db, _ := core.InitDB()
 
 		core.InsertTx(txData)
@@ -318,7 +318,7 @@ var (
 )
 
 func insertBlocksTransactions() (map[string][]shyftschema.Account, []string) {
-	core.DeletePgDb(core.DbName())
+	core.DeletePgDb(core.DbName)
 	db, _ := core.InitDB()
 	key, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 	signer := types.NewEIP155Signer(big.NewInt(2147483647))

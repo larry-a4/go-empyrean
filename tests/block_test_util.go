@@ -208,7 +208,6 @@ func (t *BlockTest) insertBlocks(blockchain *core.BlockChain) ([]btBlock, error)
 		}
 		validBlocks = append(validBlocks, b)
 	}
-	// shyfttest.PgTestTearDown()
 	return validBlocks, nil
 }
 

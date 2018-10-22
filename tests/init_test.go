@@ -222,44 +222,8 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 		t.Fatal(err)
 	}
 
-	// Run all tests from the map. Don't wrap in a subtest if there is only one test in the file.
-	// @SHYFT NOTE: Clear pg database
-	// shyfttest.PgTestDbSetup()
-	//@SHYFT //SETS UP OUR TEST ENV
-	// core.TruncateTables()
-	// eth.NewShyftTestLDB()
-	// shyftTracer := new(eth.ShyftTracer)
-	// core.SetIShyftTracer(shyftTracer)
-
-	// ethConf := &eth.Config{
-	// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-	// 	Etherbase: common.HexToAddress(testAddress),
-	// 	Ethash: ethash.Config{
-	// 		PowMode: ethash.ModeTest,
-	// 	},
-	// }
-
-	// eth.SetGlobalConfig(ethConf)
-	// eth.InitTracerEnv()
 	keys := sortedMapKeys(m)
 	if len(keys) == 1 {
-		// shyfttest.PgTestDbSetup()
-		//@SHYFT //SETS UP OUR TEST ENV
-		// core.TruncateTables()
-		// eth.NewShyftTestLDB()
-		// shyftTracer := new(eth.ShyftTracer)
-		// core.SetIShyftTracer(shyftTracer)
-
-		// ethConf := &eth.Config{
-		// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-		// 	Etherbase: common.HexToAddress(testAddress),
-		// 	Ethash: ethash.Config{
-		// 		PowMode: ethash.ModeTest,
-		// 	},
-		// }
-
-		// eth.SetGlobalConfig(ethConf)
-		// eth.InitTracerEnv()
 		runTestFunc(runTest, t, name, m, keys[0])
 	} else {
 		for _, key := range keys {
@@ -269,7 +233,6 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 					t.Skip(r)
 				}
 				core.TruncateTables()
-				// shyfttest.PgTestTearDown()
 				runTestFunc(runTest, t, name, m, key)
 			})
 		}
@@ -298,7 +261,6 @@ func sortedMapKeys(m reflect.Value) []string {
 }
 
 func runTestFunc(runTest interface{}, t *testing.T, name string, m reflect.Value, key string) {
-	// shyfttest.PgTestTearDown()
 	reflect.ValueOf(runTest).Call([]reflect.Value{
 		reflect.ValueOf(t),
 		reflect.ValueOf(name),

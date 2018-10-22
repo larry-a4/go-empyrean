@@ -17,26 +17,15 @@
 package eth
 
 import (
-	"os"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/p2p/discover"
 )
-
-//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-func TestMain(m *testing.M) {
-	testdb := shyfttest.PgTestDbSetup()
-	defer shyfttest.PgTestTearDown(testdb)
-	retCode := m.Run()
-	//shyfttest.PgTestTearDown()
-	os.Exit(retCode)
-}
 
 // Tests that fast sync gets disabled as soon as a real block is successfully
 // imported into the blockchain.

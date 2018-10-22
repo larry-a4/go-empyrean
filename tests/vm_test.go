@@ -17,26 +17,10 @@
 package tests
 
 import (
-	"os"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
-	"github.com/docker/docker/pkg/reexec"
 )
-
-func TestMain(m *testing.M) {
-	// Reset Pg DB
-	shyfttest.PgTestDbSetup()
-	// check if we have been reexec'd
-
-	if reexec.Init() {
-		return
-	}
-	retCode := m.Run()
-	//shyfttest.PgTestTearDown()
-	os.Exit(retCode)
-}
 
 func TestVM(t *testing.T) {
 	t.Parallel()

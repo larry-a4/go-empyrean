@@ -15,6 +15,8 @@ var blockExplorerDb *sqlx.DB
 
 var ActiveTestDb string
 
+var DbName string
+
 const (
 	defaultTestDb  = "shyftdbtest"
 	defaultDb      = "shyftdb"
@@ -29,11 +31,18 @@ func InitDB() (*sqlx.DB, error) {
 	// DBENV defaults to local for purposes of running the correct local
 	// database connection parameters but will use docker connection parameters if DBENV=docker
 
+	if flag.Lookup("test.v") != nil {
+		DbName = AssignTestDbInstanceName()
+		ActiveTestDb = DbName
+	} else {
+		DbName = defaultDb
+	}
+
 	// Check for existence of Database
-	exist, _ := DbExists(DbName())
+	exist, _ := DbExists(DbName)
 	if !exist {
 		// create the db
-		CreatePgDb(DbName())
+		CreatePgDb(DbName)
 	}
 	// connect to the designated db & create tables if necessary
 	blockExplorerDb = Connect(ShyftConnectStr())
@@ -43,7 +52,7 @@ func InitDB() (*sqlx.DB, error) {
 
 // ShyftConnectStr - Returns the Connection String With The appropriate database
 func ShyftConnectStr() string {
-	return fmt.Sprintf("%s%s%s", ConnectionStr(), " dbname=", DbName())
+	return fmt.Sprintf("%s%s%s", ConnectionStr(), " dbname=", DbName)
 }
 
 // Connect - return a connection to a postgres database wi
@@ -60,14 +69,22 @@ func Connect(connectURL string) *sqlx.DB {
 	return db
 }
 
-// DbName - gets the correct db name based on the environment
-func DbName() string {
-	if flag.Lookup("test.v") == nil {
-		return defaultDb
-	} else {
-		return ActiveTestDb
-	}
-}
+// // DbName - gets the correct db name based on the environment
+// func DbName() string {
+// 	if flag.Lookup("test.v") == nil {
+// 		return defaultDb
+// 	}
+// }
+
+// // PgTestDbSetup - reinitializes the pg database and returns the name of the testdb
+// func PgTestDbSetup() string {
+// 	// Check Db Instances - and get a db name to use
+
+// 	db := AssignTestDbInstanceName()
+// 	ActiveTestDb = db
+
+// 	return ActiveTestDb
+// }
 
 // CreatePgDb - Creates a DB
 func CreatePgDb(dbName string) {

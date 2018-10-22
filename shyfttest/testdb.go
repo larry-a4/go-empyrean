@@ -36,11 +36,11 @@ func PgTestTearDown(dbname string) {
 }
 
 // PgRecreateTables - recreates pg database tables
-func PgRecreateTables() {
-	core.DeletePgDb(core.DbName())
-	_, err := core.DBConnection()
-	if err != nil {
-		println(err.Error())
-		return
-	}
-}
+// func PgRecreateTables() {
+// 	core.DeletePgDb(core.DbName())
+// 	_, err := core.DBConnection()
+// 	if err != nil {
+// 		println(err.Error())
+// 		return
+// 	}
+// }

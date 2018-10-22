@@ -23,22 +23,8 @@ import (
 	"strings"
 	"testing"
 
-	"os"
-
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 	"github.com/cespare/cp"
-	"github.com/docker/docker/pkg/reexec"
 )
-
-func TestMain(m *testing.M) {
-	testdb := shyfttest.PgTestDbSetup()
-	defer shyfttest.PgTestTearDown(testdb)
-	if reexec.Init() {
-		return
-	}
-	retCode := m.Run()
-	os.Exit(retCode)
-}
 
 // These tests are 'smoke tests' for the account related
 // subcommands and flags.
@@ -217,7 +203,7 @@ Passphrase: {{.InputLine "foobar"}}
 func TestUnlockFlagPasswordFile(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
 	geth := runGeth(t,
-		 "--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
+		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--password", "testdata/passwords.txt", "--unlock", "0,2",
 		"js", "testdata/empty.js")
 	geth.ExpectExit()
