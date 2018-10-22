@@ -21,6 +21,7 @@ import (
 
 	"github.com/ShyftNetwork/go-empyrean/shyft_schema"
 	"github.com/jmoiron/sqlx"
+	"log"
 )
 
 type ShyftTracer struct{}
@@ -48,18 +49,22 @@ var tx, _ = types.NewTransaction(
 )
 
 func TestDbCreationExistence(t *testing.T) {
+	fmt.Println("dbName #1",core.DbName)
 	core.DeletePgDb(core.DbName)
 	db, err := core.InitDB()
+	fmt.Println("dbName #2",core.DbName)
 	if err != nil || err == sql.ErrNoRows {
 		fmt.Println(err)
 	}
 	t.Run("Creates the PG DB if it Doesnt Exist", func(t *testing.T) {
+		fmt.Println("dbName #3",core.DbName)
 		_, err = core.DbExists(core.DbName)
 		if err != nil || err == sql.ErrNoRows {
 			t.Errorf("Error in Database Connection - DB doesn't Exist - %s", err)
 		}
 	})
 	t.Run("Creates the Tables Required from the Migration Schema", func(t *testing.T) {
+		fmt.Println("dbName #4",core.DbName)
 		db, err := core.InitDB()
 		if err != nil || err == sql.ErrNoRows {
 			fmt.Println(err)
@@ -96,8 +101,10 @@ func TestDbCreationExistence(t *testing.T) {
 			t.Errorf("Test Failed as wanted: %s  - got: %s", want, tablenames)
 		}
 	})
+	fmt.Println("dbName #5",core.DbName)
 	core.DeletePgDb(core.DbName)
 	db, err = core.InitDB()
+	fmt.Println("dbName #6",core.DbName)
 	if err != nil || err == sql.ErrNoRows {
 		fmt.Println(err)
 	}
@@ -114,8 +121,10 @@ func deleteAllTables(db *sqlx.DB) {
 
 func TestCreateAccount(t *testing.T) {
 	t.Run("CreateAccount - creates an account in the PG db ", func(t *testing.T) {
+		fmt.Println("dbName #7",core.DbName)
 		core.DeletePgDb(core.DbName)
 		db, err := core.InitDB()
+		fmt.Println("dbName #8",core.DbName)
 		deleteAllTables(db)
 		addr := "0x7ef5a6135f1fd6a02593eedc869c6d41d934aef8"
 		balance, _ := new(big.Int).SetString("3500000000", 10)
@@ -359,6 +368,7 @@ func insertBlocksTransactions() (map[string][]shyftschema.Account, []string) {
 	blockAccounts := map[string][]shyftschema.Account{}
 	for _, bl := range blocks {
 		// Write and verify the block in the database
+		core.TruncateTables()
 		err := core.SWriteBlock(bl, receipts)
 		if err != nil {
 			panic(err)
@@ -467,11 +477,14 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 		if len(rollbackTxs) != 2 {
 			t.Errorf("Got %d db transactions on rollback -  Expected 2", len(rollbackTxs))
 		}
+		fmt.Println("dbName FAILING Test ::", core.DbName)
 		for _, acct := range blockAccounts[blockHashes[0]] {
 			fetchDbBalanceStmnt := `SELECT * FROM accounts WHERE addr = $1`
 			acctCheck := shyftschema.Account{}
 			err = db.Get(&acctCheck, fetchDbBalanceStmnt, acct.Addr)
+			log.Printf("%+v", acct.Addr)
 			if err != nil {
+				log.Printf("THIS IS THE ERROR")
 				panic(err)
 			}
 			if acctCheck.Balance != acct.Balance || acctCheck.Nonce != acct.Nonce {
