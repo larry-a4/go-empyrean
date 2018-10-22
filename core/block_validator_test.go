@@ -26,35 +26,33 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
-	"github.com/docker/docker/pkg/reexec"
-	"os"
 )
 
 var testDbInstances []string
 
-//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-func TestMain(m *testing.M) {
-	ActiveTestDb = AssignTestDbInstanceName()
-	_, err := DBConnection()
-	if err != nil {
-		println(err.Error())
-		return
-	}
-	if reexec.Init() {
-		return
-	}
-	defer PgTestTearDown(ActiveTestDb)
-	retCode := m.Run()
-	os.Exit(retCode)
-}
+// //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+// func pgTestDbSetup(m *testing.M) {
+// 	ActiveTestDb = AssignTestDbInstanceName()
+// 	_, err := DBConnection()
+// 	if err != nil {
+// 		println(err.Error())
+// 		return
+// 	}
+// 	if reexec.Init() {
+// 		return
+// 	}
+// 	defer pgTestTearDown(ActiveTestDb)
+// 	retCode := m.Run()
+// 	os.Exit(retCode)
+// }
 
-// PgTestTearDown - resets the pg test database
-func PgTestTearDown(dbname string) {
-	// remove db from list of active dbs
-	index := SliceIndex(len(testDbInstances), func(i int) bool { return testDbInstances[i] == dbname })
-	testDbInstances = append(testDbInstances[:index], testDbInstances[index+1:]...)
-	DeletePgDb(dbname)
-}
+// // PgTestTearDown - resets the pg test database
+// func pgTestTearDown(dbname string) {
+// 	// remove db from list of active dbs
+// 	index := SliceIndex(len(testDbInstances), func(i int) bool { return testDbInstances[i] == dbname })
+// 	testDbInstances = append(testDbInstances[:index], testDbInstances[index+1:]...)
+// 	DeletePgDb(dbname)
+// }
 
 // Tests that simple header verification works, for both good and bad blocks.
 func TestHeaderVerification(t *testing.T) {
@@ -72,7 +70,7 @@ func TestHeaderVerification(t *testing.T) {
 	// Run the header checker for blocks one-by-one, checking for both valid and invalid nonces
 	chain, _ := NewBlockChain(testdb, nil, params.TestChainConfig, ethash.NewFaker(), vm.Config{})
 	defer chain.Stop()
-
+	TruncateTables()
 	for i := 0; i < len(blocks); i++ {
 		for j, valid := range []bool{true, false} {
 			var results <-chan error

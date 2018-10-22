@@ -37,20 +37,20 @@ import (
 )
 
 //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-func TestMain(m *testing.M) {
-	testdb := shyfttest.PgTestDbSetup()
-	defer shyfttest.PgTestTearDown(testdb)
-	if reexec.Init() {
-		return
-	}
-	retCode := m.Run()
-	os.Exit(retCode)
-}
+// func TestMain(m *testing.M) {
+// 	testdb := shyfttest.PgTestDbSetup()
+// 	defer shyfttest.PgTestTearDown(testdb)
+// 	if reexec.Init() {
+// 		return
+// 	}
+// 	retCode := m.Run()
+// 	os.Exit(retCode)
+// }
 
 const (
 	testInstance = "console-tester"
 	testAddress  = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
-	)
+)
 
 // hookedPrompter implements UserPrompter to simulate use input via channels.
 type hookedPrompter struct {
@@ -94,10 +94,23 @@ type tester struct {
 	output    *bytes.Buffer
 }
 
+//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+func TestMain(m *testing.M) {
+	testdb := shyfttest.PgTestDbSetup()
+	defer shyfttest.PgTestTearDown(testdb)
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	os.Exit(retCode)
+}
+
 // newTester creates a test environment based on which the console can operate.
 // Please ensure you call Close() on the returned tester to avoid leaks.
 func newTester(t *testing.T, confOverride func(*eth.Config)) *tester {
 	// Create a temporary storage for the node keys and initialize it
+	core.TruncateTables()
+
 	workspace, err := ioutil.TempDir("", "console-tester-")
 	if err != nil {
 		t.Fatalf("failed to create temporary keystore: %v", err)

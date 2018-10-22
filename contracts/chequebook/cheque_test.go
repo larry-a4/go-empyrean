@@ -34,7 +34,7 @@ import (
 	"github.com/docker/docker/pkg/reexec"
 )
 
-//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
+// //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
 func TestMain(m *testing.M) {
 	testdb := shyfttest.PgTestDbSetup()
 	defer shyfttest.PgTestTearDown(testdb)
@@ -55,6 +55,8 @@ var (
 )
 
 func newTestBackend() *backends.SimulatedBackend {
+	testdb := shyfttest.PgTestDbSetup()
+	defer shyfttest.PgTestTearDown(testdb)
 	return backends.NewSimulatedBackend(core.GenesisAlloc{
 		addr0: {Balance: big.NewInt(1000000000)},
 		addr1: {Balance: big.NewInt(1000000000)},
@@ -69,11 +71,14 @@ func deploy(prvKey *ecdsa.PrivateKey, amount *big.Int, backend *backends.Simulat
 	if err != nil {
 		return common.Address{}, err
 	}
+	core.TruncateTables()
 	backend.Commit()
 	return addr, nil
 }
 
 func TestIssueAndReceive(t *testing.T) {
+	// testdb := shyfttest.PgTestDbSetup()
+	// defer shyfttest.PgTestTearDown(testdb)
 	path := filepath.Join(os.TempDir(), "chequebook-test.json")
 	backend := newTestBackend()
 	addr0, err := deploy(key0, big.NewInt(0), backend)
@@ -122,6 +127,8 @@ func TestIssueAndReceive(t *testing.T) {
 }
 
 func TestCheckbookFile(t *testing.T) {
+	// testdb := shyfttest.PgTestDbSetup()
+	// defer shyfttest.PgTestTearDown(testdb)
 	path := filepath.Join(os.TempDir(), "chequebook-test.json")
 	backend := newTestBackend()
 	chbook, err := NewChequebook(path, addr0, key0, backend)
@@ -156,6 +163,8 @@ func TestCheckbookFile(t *testing.T) {
 }
 
 func TestVerifyErrors(t *testing.T) {
+	// testdb := shyfttest.PgTestDbSetup()
+	// defer shyfttest.PgTestTearDown(testdb)
 	path0 := filepath.Join(os.TempDir(), "chequebook-test-0.json")
 	backend := newTestBackend()
 	contr0, err := deploy(key0, common.Big2, backend)
@@ -233,7 +242,8 @@ func TestVerifyErrors(t *testing.T) {
 }
 
 func TestDeposit(t *testing.T) {
-	core.TruncateTables()
+	// testdb := shyfttest.PgTestDbSetup()
+	// defer shyfttest.PgTestTearDown(testdb)
 	path0 := filepath.Join(os.TempDir(), "chequebook-test-0.json")
 	backend := newTestBackend()
 	contr0, _ := deploy(key0, new(big.Int), backend)
@@ -373,6 +383,8 @@ func TestDeposit(t *testing.T) {
 }
 
 func TestCash(t *testing.T) {
+	// testdb := shyfttest.PgTestDbSetup()
+	// defer shyfttest.PgTestTearDown(testdb)
 	path := filepath.Join(os.TempDir(), "chequebook-test.json")
 	backend := newTestBackend()
 	contr0, _ := deploy(key0, common.Big2, backend)

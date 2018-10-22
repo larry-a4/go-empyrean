@@ -120,6 +120,7 @@ func DbExists(dbname string) (bool, error) {
 	switch {
 	case error == sql.ErrNoRows:
 		sqldb.Close()
+		fmt.Println("DB Exists ", error)
 		return false, error
 	case error != nil:
 		return false, error

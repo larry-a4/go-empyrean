@@ -193,7 +193,6 @@ func AccountExists(addr string) (string, string, error) {
 	sqldb, _ := DBConnection()
 	var addressBalance, accountNonce string
 	sqlExistsStatement := `SELECT balance, nonce from accounts WHERE addr = ($1)`
-
 	err := sqldb.QueryRow(sqlExistsStatement, strings.ToLower(addr)).Scan(&addressBalance, &accountNonce)
 	switch {
 	case err == sql.ErrNoRows:
@@ -362,7 +361,6 @@ func InsertTx(txData stypes.ShyftTxEntryPretty) error {
 		//
 		return nil
 	})
-	return nil
 }
 
 //InsertInternals - Inserts transactions to pg internaltxs and updates/creates accounts/accountblocks tables

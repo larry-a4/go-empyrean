@@ -34,7 +34,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 
 	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/eth/filters"
@@ -87,7 +86,6 @@ var testDb string
 // for testing purposes.
 func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 	database, _ := ethdb.NewMemDatabase()
-	testDb = shyfttest.PgTestDbSetup()
 	// core.TruncateTables()
 	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, Alloc: alloc}
 	genesis.MustCommit(database)
@@ -109,6 +107,7 @@ func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 
 	eth.SetGlobalConfig(traceConfig)
 	eth.InitTracerEnv()
+
 	backend.rollback()
 	return backend
 }
@@ -117,6 +116,7 @@ func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 // fresh new state.
 func (b *SimulatedBackend) Commit() {
 	b.mu.Lock()
+
 	defer b.mu.Unlock()
 	if _, err := b.blockchain.InsertChain([]*types.Block{b.pendingBlock}); err != nil {
 		panic(err) // This cannot happen unless the simulator is wrong, fail in that case
