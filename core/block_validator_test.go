@@ -28,32 +28,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
 
-var testDbInstances []string
-
-// //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-// func pgTestDbSetup(m *testing.M) {
-// 	ActiveTestDb = AssignTestDbInstanceName()
-// 	_, err := DBConnection()
-// 	if err != nil {
-// 		println(err.Error())
-// 		return
-// 	}
-// 	if reexec.Init() {
-// 		return
-// 	}
-// 	defer pgTestTearDown(ActiveTestDb)
-// 	retCode := m.Run()
-// 	os.Exit(retCode)
-// }
-
-// // PgTestTearDown - resets the pg test database
-// func pgTestTearDown(dbname string) {
-// 	// remove db from list of active dbs
-// 	index := SliceIndex(len(testDbInstances), func(i int) bool { return testDbInstances[i] == dbname })
-// 	testDbInstances = append(testDbInstances[:index], testDbInstances[index+1:]...)
-// 	DeletePgDb(dbname)
-// }
-
 // Tests that simple header verification works, for both good and bad blocks.
 func TestHeaderVerification(t *testing.T) {
 	// Create a simple chain to verify

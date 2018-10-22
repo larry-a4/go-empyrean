@@ -30,20 +30,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/contracts/chequebook/contract"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
-	"github.com/docker/docker/pkg/reexec"
 )
-
-// //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-func TestMain(m *testing.M) {
-	testdb := shyfttest.PgTestDbSetup()
-	defer shyfttest.PgTestTearDown(testdb)
-	if reexec.Init() {
-		return
-	}
-	retCode := m.Run()
-	os.Exit(retCode)
-}
 
 var (
 	key0, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
@@ -55,8 +42,6 @@ var (
 )
 
 func newTestBackend() *backends.SimulatedBackend {
-	testdb := shyfttest.PgTestDbSetup()
-	defer shyfttest.PgTestTearDown(testdb)
 	return backends.NewSimulatedBackend(core.GenesisAlloc{
 		addr0: {Balance: big.NewInt(1000000000)},
 		addr1: {Balance: big.NewInt(1000000000)},
@@ -77,8 +62,6 @@ func deploy(prvKey *ecdsa.PrivateKey, amount *big.Int, backend *backends.Simulat
 }
 
 func TestIssueAndReceive(t *testing.T) {
-	// testdb := shyfttest.PgTestDbSetup()
-	// defer shyfttest.PgTestTearDown(testdb)
 	path := filepath.Join(os.TempDir(), "chequebook-test.json")
 	backend := newTestBackend()
 	addr0, err := deploy(key0, big.NewInt(0), backend)
@@ -127,8 +110,6 @@ func TestIssueAndReceive(t *testing.T) {
 }
 
 func TestCheckbookFile(t *testing.T) {
-	// testdb := shyfttest.PgTestDbSetup()
-	// defer shyfttest.PgTestTearDown(testdb)
 	path := filepath.Join(os.TempDir(), "chequebook-test.json")
 	backend := newTestBackend()
 	chbook, err := NewChequebook(path, addr0, key0, backend)
@@ -163,8 +144,6 @@ func TestCheckbookFile(t *testing.T) {
 }
 
 func TestVerifyErrors(t *testing.T) {
-	// testdb := shyfttest.PgTestDbSetup()
-	// defer shyfttest.PgTestTearDown(testdb)
 	path0 := filepath.Join(os.TempDir(), "chequebook-test-0.json")
 	backend := newTestBackend()
 	contr0, err := deploy(key0, common.Big2, backend)
@@ -242,8 +221,6 @@ func TestVerifyErrors(t *testing.T) {
 }
 
 func TestDeposit(t *testing.T) {
-	// testdb := shyfttest.PgTestDbSetup()
-	// defer shyfttest.PgTestTearDown(testdb)
 	path0 := filepath.Join(os.TempDir(), "chequebook-test-0.json")
 	backend := newTestBackend()
 	contr0, _ := deploy(key0, new(big.Int), backend)
@@ -383,8 +360,6 @@ func TestDeposit(t *testing.T) {
 }
 
 func TestCash(t *testing.T) {
-	// testdb := shyfttest.PgTestDbSetup()
-	// defer shyfttest.PgTestTearDown(testdb)
 	path := filepath.Join(os.TempDir(), "chequebook-test.json")
 	backend := newTestBackend()
 	contr0, _ := deploy(key0, common.Big2, backend)

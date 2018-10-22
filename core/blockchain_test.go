@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -37,44 +36,8 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
 
-// @SHYFT NOTE: Added to clear and reset pg db before test
-// Setup DB for Testing Before Each Test
-
-func TestMain(m *testing.M) {
-	testdb := PgTestDbSetup()
-	defer PgTestTearDown(testdb)
-	retCode := m.Run()
-	os.Exit(retCode)
-}
-
-// PgTestDbSetup - reinitializes the pg database and returns the name of the testdb
-func PgTestDbSetup() string {
-	// Check Db Instances - and get a db name to use
-	db := AssignTestDbInstanceName()
-	ActiveTestDb = db
-	_, err := DBConnection()
-	if err != nil {
-		println(err.Error())
-		return ""
-	}
-
-	return ActiveTestDb
-}
-
-func PgTestTearDown(dbname string) {
-	// remove db from list of active dbs
-	index := SliceIndex(len(TestDbInstances), func(i int) bool { return TestDbInstances[i] == dbname })
-	if index != -1 {
-		TestDbInstances = append(TestDbInstances[:index], TestDbInstances[index+1:]...)
-		DeletePgDb(dbname)
-	}
-}
-
 // Test fork of length N starting from block i
 func testFork(t *testing.T, blockchain *BlockChain, i, n int, full bool, comparator func(td1, td2 *big.Int)) {
-	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	testdb := PgTestDbSetup()
-	defer PgTestTearDown(testdb)
 	TruncateTables()
 	db, blockchain2, err := newCanonical(ethash.NewFaker(), i, full)
 	if err != nil {
@@ -213,7 +176,6 @@ func TestLastBlock(t *testing.T) {
 	defer blockchain.Stop()
 
 	blocks := makeBlockChain(blockchain.CurrentBlock(), 1, ethash.NewFullFaker(), blockchain.db, 0)
-	// testdb := PgTestDbSetup()
 	if _, err := blockchain.InsertChain(blocks); err != nil {
 		t.Fatalf("Failed to insert block: %v", err)
 	}
@@ -567,9 +529,6 @@ func TestBlocksInsertNonceError(t *testing.T)  { testInsertNonceError(t, true) }
 func testInsertNonceError(t *testing.T, full bool) {
 	for i := 1; i < 25 && !t.Failed(); i++ {
 		// Create a pristine chain and database
-		//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-		testdb := PgTestDbSetup()
-		defer PgTestTearDown(testdb)
 		db, blockchain, err := newCanonical(ethash.NewFaker(), 0, full)
 		if err != nil {
 			t.Fatalf("failed to create pristine chain: %v", err)
@@ -709,7 +668,6 @@ func TestFastVsFullChains(t *testing.T) {
 			t.Errorf("block #%d: canonical hash mismatch: have %v, want %v", i, fhash, ahash)
 		}
 	}
-	// PgTestTearDown(testdb2)
 }
 
 // Tests that various import methods move the chain head pointers to the correct
@@ -751,12 +709,10 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 	gspec.MustCommit(archiveDb)
 
 	archive, _ := NewBlockChain(archiveDb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
-	testdba := PgTestDbSetup()
 	if n, err := archive.InsertChain(blocks); err != nil {
 		t.Fatalf("failed to process block %d: %v", n, err)
 	}
 	defer archive.Stop()
-	defer PgTestTearDown(testdba)
 
 	assert(t, "archive", archive, height, height, height)
 	archive.Rollback(remove)
