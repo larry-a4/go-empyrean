@@ -18,12 +18,14 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/cespare/cp"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 // These tests are 'smoke tests' for the account related
@@ -31,6 +33,13 @@ import (
 //
 // For most tests, the test files from package accounts
 // are copied into a temporary keystore directory.
+func TestMain(m *testing.M) {
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	os.Exit(retCode)
+}
 
 func tmpDatadirWithKeystore(t *testing.T) string {
 	datadir := tmpdir(t)

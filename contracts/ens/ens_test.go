@@ -18,6 +18,7 @@ package ens
 
 import (
 	"math/big"
+	"os"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
@@ -25,6 +26,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/contracts/ens/contract"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 var (
@@ -33,6 +35,14 @@ var (
 	hash   = crypto.Keccak256Hash([]byte("my content"))
 	addr   = crypto.PubkeyToAddress(key.PublicKey)
 )
+
+func TestMain(m *testing.M) {
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	os.Exit(retCode)
+}
 
 func TestENS(t *testing.T) {
 	contractBackend := backends.NewSimulatedBackend(core.GenesisAlloc{addr: {Balance: big.NewInt(1000000000)}})
