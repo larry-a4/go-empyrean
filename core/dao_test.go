@@ -29,6 +29,7 @@ import (
 // Tests that DAO-fork enabled clients can properly filter out fork-commencing
 // blocks based on their extradata fields.
 func TestDAOForkRangeExtradata(t *testing.T) {
+	InitDB()
 	forkBlock := big.NewInt(32)
 
 	// Generate a common prefix for both pro-forkers and non-forkers

@@ -18,9 +18,18 @@ package params
 
 import (
 	"math/big"
+	"os"
+	"os/exec"
 	"reflect"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 func TestCheckCompatible(t *testing.T) {
 	type test struct {

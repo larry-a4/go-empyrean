@@ -17,10 +17,13 @@
 package miner
 
 import (
+	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 // noopHeaderRetriever is an implementation of headerRetriever that always
@@ -29,6 +32,16 @@ type noopHeaderRetriever struct{}
 
 func (r *noopHeaderRetriever) GetHeaderByNumber(number uint64) *types.Header {
 	return nil
+}
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
 }
 
 // Tests that inserting blocks into the unconfirmed set accumulates them until

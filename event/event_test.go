@@ -18,6 +18,8 @@ package event
 
 import (
 	"math/rand"
+	"os"
+	"os/exec"
 	"sync"
 	"testing"
 	"time"
@@ -25,6 +27,12 @@ import (
 
 type testEvent int
 
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 func TestSubCloseUnsub(t *testing.T) {
 	// the point of this test is **not** to panic
 	var mux TypeMux

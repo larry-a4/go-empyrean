@@ -1,6 +1,22 @@
 package metrics
 
-import "testing"
+import (
+	"os"
+	"os/exec"
+	"testing"
+
+	"github.com/docker/docker/pkg/reexec"
+)
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 func BenchmarkCounter(b *testing.B) {
 	c := NewCounter()

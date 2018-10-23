@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strings"
 	"testing"
 	"time"
@@ -79,6 +80,13 @@ type tester struct {
 	console   *Console
 	input     *hookedPrompter
 	output    *bytes.Buffer
+}
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
 }
 
 // newTester creates a test environment based on which the console can operate.

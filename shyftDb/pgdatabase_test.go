@@ -366,6 +366,7 @@ func insertBlocksTransactions() (map[string][]shyftschema.Account, []string) {
 	blocks := []*types.Block{block1, block2, block3}
 	blockHashes := []string{}
 	blockAccounts := map[string][]shyftschema.Account{}
+  core.TruncateTables()
 	for _, bl := range blocks {
 		// Write and verify the block in the database
 		core.TruncateTables()

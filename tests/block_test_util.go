@@ -23,6 +23,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
+	"os/exec"
+	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
@@ -89,6 +92,13 @@ type btHeaderMarshaling struct {
 	GasLimit   math.HexOrDecimal64
 	GasUsed    math.HexOrDecimal64
 	Timestamp  *math.HexOrDecimal256
+}
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
 }
 
 func (t *BlockTest) Run() error {

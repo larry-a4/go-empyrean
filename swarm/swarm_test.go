@@ -17,11 +17,19 @@
 package swarm
 
 import (
+	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 )
 
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 func TestParseEnsAPIAddress(t *testing.T) {
 	for _, x := range []struct {
 		description string

@@ -142,7 +142,7 @@ func testBlockChainImport(chain types.Blocks, blockchain *BlockChain) error {
 // the database if successful.
 func testHeaderChainImport(chain []*types.Header, blockchain *BlockChain) error {
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	TruncateTables()
+	// TruncateTables()
 	for _, header := range chain {
 		// Try and validate the header
 		if err := blockchain.engine.VerifyHeader(blockchain, header, false); err != nil {
@@ -168,7 +168,7 @@ func insertChain(done chan bool, blockchain *BlockChain, chain types.Blocks, t *
 
 func TestLastBlock(t *testing.T) {
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	TruncateTables()
+	InitDB()
 	_, blockchain, err := newCanonical(ethash.NewFaker(), 0, true)
 	if err != nil {
 		t.Fatalf("failed to create pristine chain: %v", err)
@@ -176,6 +176,7 @@ func TestLastBlock(t *testing.T) {
 	defer blockchain.Stop()
 
 	blocks := makeBlockChain(blockchain.CurrentBlock(), 1, ethash.NewFullFaker(), blockchain.db, 0)
+	TruncateTables()
 	if _, err := blockchain.InsertChain(blocks); err != nil {
 		t.Fatalf("Failed to insert block: %v", err)
 	}
@@ -315,6 +316,7 @@ func TestBrokenBlockChain(t *testing.T)  { testBrokenChain(t, true) }
 
 func testBrokenChain(t *testing.T, full bool) {
 	// Make chain starting from genesis
+	TruncateTables()
 	db, blockchain, err := newCanonical(ethash.NewFaker(), 10, full)
 	if err != nil {
 		t.Fatalf("failed to make new canonical chain: %v", err)
@@ -471,7 +473,8 @@ func TestReorgBadBlockHashes(t *testing.T)  { testReorgBadHashes(t, true) }
 
 func testReorgBadHashes(t *testing.T, full bool) {
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	TruncateTables()
+	// TruncateTables()
+	InitDB()
 	// Create a pristine chain and database
 	db, blockchain, err := newCanonical(ethash.NewFaker(), 0, full)
 	if err != nil {
@@ -480,7 +483,7 @@ func testReorgBadHashes(t *testing.T, full bool) {
 	// Create a chain, import and ban afterwards
 	headers := makeHeaderChain(blockchain.CurrentHeader(), 4, ethash.NewFaker(), db, 10)
 	blocks := makeBlockChain(blockchain.CurrentBlock(), 4, ethash.NewFaker(), db, 10)
-
+	TruncateTables()
 	if full {
 		if _, err = blockchain.InsertChain(blocks); err != nil {
 			t.Errorf("failed to import blocks: %v", err)
@@ -527,6 +530,7 @@ func TestHeadersInsertNonceError(t *testing.T) { testInsertNonceError(t, false) 
 func TestBlocksInsertNonceError(t *testing.T)  { testInsertNonceError(t, true) }
 
 func testInsertNonceError(t *testing.T, full bool) {
+	InitDB()
 	for i := 1; i < 25 && !t.Failed(); i++ {
 		// Create a pristine chain and database
 		db, blockchain, err := newCanonical(ethash.NewFaker(), 0, full)
@@ -596,7 +600,7 @@ func TestFastVsFullChains(t *testing.T) {
 		signer  = types.NewEIP155Signer(gspec.Config.ChainId)
 	)
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	TruncateTables()
+	// TruncateTables()
 	blocks, receipts := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), gendb, 1024, func(i int, block *BlockGen) {
 		block.SetCoinbase(common.Address{0x00})
 
@@ -621,7 +625,7 @@ func TestFastVsFullChains(t *testing.T) {
 	archive, _ := NewBlockChain(archiveDb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
 	defer archive.Stop()
 	// testdb2 := PgTestDbSetup()
-	TruncateTables()
+	// TruncateTables()
 	if n, err := archive.InsertChain(blocks); err != nil {
 		t.Fatalf("failed to process block %d: %v", n, err)
 	}
@@ -836,7 +840,7 @@ func TestChainTxReorgs(t *testing.T) {
 		}
 	})
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	TruncateTables()
+	// TruncateTables()
 	if _, err := blockchain.InsertChain(chain); err != nil {
 		t.Fatalf("failed to insert forked chain: %v", err)
 	}
@@ -918,6 +922,7 @@ func TestLogReorgs(t *testing.T) {
 }
 
 func TestReorgSideEvent(t *testing.T) {
+	InitDB()
 	var (
 		db, _   = ethdb.NewMemDatabase()
 		key1, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
@@ -1266,6 +1271,7 @@ func TestBlockchainHeaderchainReorgConsistency(t *testing.T) {
 // Tests that importing small side forks doesn't leave junk in the trie database
 // cache (which would eventually cause memory issues).
 func TestTrieForkGC(t *testing.T) {
+	InitDB()
 	// Generate a canonical chain to act as the main dataset
 	engine := ethash.NewFaker()
 
@@ -1314,6 +1320,7 @@ func TestTrieForkGC(t *testing.T) {
 // Tests that doing large reorgs works even if the state associated with the
 // forking point is not available any more.
 func TestLargeReorgTrieGC(t *testing.T) {
+	InitDB()
 	// Generate the original common chain segment and the two competing forks
 	engine := ethash.NewFaker()
 
@@ -1354,7 +1361,7 @@ func TestLargeReorgTrieGC(t *testing.T) {
 		}
 	}
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	TruncateTables()
+	// TruncateTables()
 	// Import the head of the competitor chain, triggering the reorg and ensure we
 	// successfully reprocess all the stashed away blocks.
 	if _, err := chain.InsertChain(competitor[len(competitor)-2:]); err != nil {
@@ -1371,7 +1378,7 @@ func TestLargeReorgTrieGC(t *testing.T) {
 func TestGetBlockHashesSinceLastValidBlockHash(t *testing.T) {
 	t.SkipNow()
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	TruncateTables()
+	// TruncateTables()
 
 	var (
 		gendb, _ = ethdb.NewMemDatabase()

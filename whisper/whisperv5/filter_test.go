@@ -19,6 +19,8 @@ package whisperv5
 import (
 	"math/big"
 	mrand "math/rand"
+	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -27,6 +29,13 @@ import (
 )
 
 var seed int64
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../../dao_shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 // InitSingleTest should be called in the beginning of every
 // test, which uses RNG, in order to make the tests

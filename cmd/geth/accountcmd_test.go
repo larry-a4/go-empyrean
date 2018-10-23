@@ -19,6 +19,7 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -33,11 +34,14 @@ import (
 //
 // For most tests, the test files from package accounts
 // are copied into a temporary keystore directory.
+
 func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../../shyft-cli/shyftTestDbClean.sh")
 	if reexec.Init() {
 		return
 	}
 	retCode := m.Run()
+	exec.Command("/bin/sh", "../../shyft-cli/shyftTestDbClean.sh")
 	os.Exit(retCode)
 }
 

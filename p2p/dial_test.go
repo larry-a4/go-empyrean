@@ -19,14 +19,23 @@ package p2p
 import (
 	"encoding/binary"
 	"net"
+	"os"
+	"os/exec"
 	"reflect"
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/ShyftNetwork/go-empyrean/p2p/discover"
 	"github.com/ShyftNetwork/go-empyrean/p2p/netutil"
+	"github.com/davecgh/go-spew/spew"
 )
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 func init() {
 	spew.Config.Indent = "\t"
