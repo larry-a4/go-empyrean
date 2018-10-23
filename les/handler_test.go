@@ -39,7 +39,6 @@ import (
 )
 
 //@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-
 const (
 	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
@@ -53,13 +52,18 @@ func expectResponse(r p2p.MsgReader, msgcode, reqID, bv uint64, data interface{}
 }
 
 // Tests that block headers can be retrieved from a remote chain based on user queries.
-func TestGetBlockHeadersLes1(t *testing.T) { testGetBlockHeaders(t, 1) }
-func TestGetBlockHeadersLes2(t *testing.T) { testGetBlockHeaders(t, 2) }
+func TestGetBlockHeadersLes1(t *testing.T) {
+	core.InitDB()
+	testGetBlockHeaders(t, 1)
+}
+func TestGetBlockHeadersLes2(t *testing.T) {
+	core.InitDB()
+	testGetBlockHeaders(t, 2)
+}
 
 func testGetBlockHeaders(t *testing.T, protocol int) {
 	db, _ := ethdb.NewMemDatabase()
 	// @SHYFT NOTE: clear pg db
-	// core.TruncateTables()
 	pm := newTestProtocolManagerMust(t, false, downloader.MaxHashFetch+15, nil, nil, nil, db)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)

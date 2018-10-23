@@ -25,7 +25,6 @@ const (
 func TestBlock(t *testing.T) {
 	//SET UP FOR TEST FUNCTIONS
 	eth.NewShyftTestLDB()
-	core.InitDB()
 	shyftTracer := new(eth.ShyftTracer)
 	core.SetIShyftTracer(shyftTracer)
 
@@ -40,7 +39,6 @@ func TestBlock(t *testing.T) {
 	eth.SetGlobalConfig(ethConf)
 	core.TruncateTables()
 	eth.InitTracerEnv()
-	core.TruncateTables()
 
 	key, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 	signer := types.NewEIP155Signer(big.NewInt(2147483647))
