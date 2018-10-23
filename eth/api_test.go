@@ -17,14 +17,23 @@
 package eth
 
 import (
+	"os"
+	"os/exec"
 	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
+	"github.com/davecgh/go-spew/spew"
 )
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 var dumper = spew.ConfigState{Indent: "    "}
 

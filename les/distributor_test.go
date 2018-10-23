@@ -20,6 +20,8 @@ package les
 
 import (
 	"math/rand"
+	"os"
+	"os/exec"
 	"sync"
 	"testing"
 	"time"
@@ -28,6 +30,14 @@ import (
 type testDistReq struct {
 	cost, procTime, order uint64
 	canSendTo             map[*testDistPeer]struct{}
+}
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	core.InitDb()
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
 }
 
 func (r *testDistReq) getCost(dp distPeer) uint64 {

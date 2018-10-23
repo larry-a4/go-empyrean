@@ -22,6 +22,8 @@ import (
 	"encoding/binary"
 	"io/ioutil"
 	"math/rand"
+	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -41,6 +43,13 @@ type ServerTestParams struct {
 	low   uint32
 	upp   uint32
 	key   *ecdsa.PrivateKey
+}
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
 }
 
 func assert(statement bool, text string, t *testing.T) {

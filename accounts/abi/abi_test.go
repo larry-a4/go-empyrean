@@ -22,6 +22,8 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -55,6 +57,12 @@ const jsondata2 = `
 	{ "type" : "function", "name" : "sliceMultiAddress", "constant" : false, "inputs" : [ { "name" : "a", "type" : "address[]" }, { "name" : "b", "type" : "address[]" } ] }
 ]`
 
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 func TestReader(t *testing.T) {
 	Uint256, _ := NewType("uint256")
 	exp := ABI{

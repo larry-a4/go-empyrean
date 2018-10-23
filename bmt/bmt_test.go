@@ -23,6 +23,8 @@ import (
 	"hash"
 	"io"
 	"math/rand"
+	"os"
+	"os/exec"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -34,6 +36,13 @@ import (
 const (
 	maxproccnt = 8
 )
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 // TestRefHasher tests that the RefHasher computes the expected BMT hash for
 // all data lengths between 0 and 256 bytes

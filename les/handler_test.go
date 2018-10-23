@@ -53,11 +53,9 @@ func expectResponse(r p2p.MsgReader, msgcode, reqID, bv uint64, data interface{}
 
 // Tests that block headers can be retrieved from a remote chain based on user queries.
 func TestGetBlockHeadersLes1(t *testing.T) {
-	core.InitDB()
 	testGetBlockHeaders(t, 1)
 }
 func TestGetBlockHeadersLes2(t *testing.T) {
-	core.InitDB()
 	testGetBlockHeaders(t, 2)
 }
 

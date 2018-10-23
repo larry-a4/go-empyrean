@@ -19,6 +19,7 @@ package ens
 import (
 	"math/big"
 	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
@@ -37,10 +38,12 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
 	if reexec.Init() {
 		return
 	}
 	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
 	os.Exit(retCode)
 }
 

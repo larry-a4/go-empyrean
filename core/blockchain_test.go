@@ -1301,7 +1301,7 @@ func TestTrieForkGC(t *testing.T) {
 	}
 	for i := 0; i < len(blocks); i++ {
 		//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-		// TruncateTables()
+		TruncateTables()
 		if _, err := chain.InsertChain(blocks[i : i+1]); err != nil {
 			t.Fatalf("block %d: failed to insert into chain: %v", i, err)
 		}

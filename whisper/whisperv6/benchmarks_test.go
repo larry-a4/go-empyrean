@@ -18,11 +18,20 @@ package whisperv6
 
 import (
 	"crypto/sha256"
+	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"golang.org/x/crypto/pbkdf2"
 )
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 func BenchmarkDeriveKeyMaterial(b *testing.B) {
 	for i := 0; i < b.N; i++ {

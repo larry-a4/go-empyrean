@@ -3,6 +3,8 @@ package shyftdb
 import (
 	"encoding/json"
 	"math/big"
+	"os"
+	"os/exec"
 
 	"strings"
 	"testing"
@@ -21,6 +23,13 @@ type ShyftTracer struct{}
 const (
 	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 func TestBlock(t *testing.T) {
 	//SET UP FOR TEST FUNCTIONS

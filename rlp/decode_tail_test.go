@@ -19,6 +19,9 @@ package rlp
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"os/exec"
+	"testing"
 )
 
 type structWithTail struct {
@@ -26,6 +29,12 @@ type structWithTail struct {
 	C    []uint `rlp:"tail"`
 }
 
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 func ExampleDecode_structTagTail() {
 	// In this example, the "tail" struct tag is used to decode lists of
 	// differing length into a struct.
