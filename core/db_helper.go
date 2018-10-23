@@ -1,7 +1,6 @@
 package core
 
 import (
-	"log"
 	"regexp"
 	"strconv"
 )
@@ -61,7 +60,6 @@ func AssignTestDbInstanceName() string {
 		}
 	}
 	dbNameAssigned = defaultTestDb + "_" + strconv.Itoa(dbInt)
-	log.Printf("Test DB INSTANCES - %+v\n", TestDbInstances)
 	TestDbInstances = append(TestDbInstances, dbNameAssigned)
 	return dbNameAssigned
 }

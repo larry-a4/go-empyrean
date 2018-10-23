@@ -49,23 +49,18 @@ var tx, _ = types.NewTransaction(
 )
 
 func TestDbCreationExistence(t *testing.T) {
-	fmt.Println("dbName #1",core.DbName)
-	core.DeletePgDb(core.DbName)
 	db, err := core.InitDB()
-	fmt.Println("dbName #2",core.DbName)
 	if err != nil || err == sql.ErrNoRows {
 		fmt.Println(err)
 	}
 	t.Run("Creates the PG DB if it Doesnt Exist", func(t *testing.T) {
-		fmt.Println("dbName #3",core.DbName)
+
 		_, err = core.DbExists(core.DbName)
 		if err != nil || err == sql.ErrNoRows {
 			t.Errorf("Error in Database Connection - DB doesn't Exist - %s", err)
 		}
 	})
 	t.Run("Creates the Tables Required from the Migration Schema", func(t *testing.T) {
-		fmt.Println("dbName #4",core.DbName)
-		db, err := core.InitDB()
 		if err != nil || err == sql.ErrNoRows {
 			fmt.Println(err)
 		}
@@ -101,13 +96,10 @@ func TestDbCreationExistence(t *testing.T) {
 			t.Errorf("Test Failed as wanted: %s  - got: %s", want, tablenames)
 		}
 	})
-	fmt.Println("dbName #5",core.DbName)
-	core.DeletePgDb(core.DbName)
-	db, err = core.InitDB()
-	fmt.Println("dbName #6",core.DbName)
 	if err != nil || err == sql.ErrNoRows {
 		fmt.Println(err)
 	}
+	core.DeletePgDb(core.DbName)
 	db.Close()
 }
 
@@ -121,11 +113,7 @@ func deleteAllTables(db *sqlx.DB) {
 
 func TestCreateAccount(t *testing.T) {
 	t.Run("CreateAccount - creates an account in the PG db ", func(t *testing.T) {
-		fmt.Println("dbName #7",core.DbName)
-		core.DeletePgDb(core.DbName)
 		db, err := core.InitDB()
-		fmt.Println("dbName #8",core.DbName)
-		deleteAllTables(db)
 		addr := "0x7ef5a6135f1fd6a02593eedc869c6d41d934aef8"
 		balance, _ := new(big.Int).SetString("3500000000", 10)
 		accountNonce := strconv.Itoa(int(1))
@@ -149,6 +137,7 @@ func TestCreateAccount(t *testing.T) {
 			t.Errorf("Account: Got %v Accounts Created: Expected addr: %s balance: %d nonce %s", newDbAccounts, addr, balance, accountNonce)
 		}
 	})
+	core.DeletePgDb(core.DbName)
 }
 
 func TestInsertTx(t *testing.T) {
@@ -179,9 +168,7 @@ func TestInsertTx(t *testing.T) {
 		IsContract:  false,
 	}
 	t.Run("InsertTx - No Account exists inserts a transaction to the database and updates/creates accounts accordingly", func(t *testing.T) {
-		core.DeletePgDb(core.DbName)
 		db, _ := core.InitDB()
-
 		core.InsertTx(txData)
 		dbTransactions := []shyftschema.PgTransaction{}
 		err := db.Select(&dbTransactions, "SELECT * FROM txs")
@@ -236,14 +223,11 @@ func TestInsertTx(t *testing.T) {
 			t.Errorf("Got %+v \nExpected %s %s %s", toAcctBl, txData.To, txData.BlockHash, txData.Amount)
 		}
 	})
-	//TODO: Add tests for:
-	//         Multiple Transactions re AccountBlock Generation
-	//         Rollback
+	core.DeletePgDb(core.DbName)
 }
 
 func TestGenesisBlockCreationDeveloper(t *testing.T) {
 	db, _ := core.InitDB()
-	deleteAllTables(db)
 	edb, _ := eth.NewShyftTestLDB()
 	shyftTracer := new(eth.ShyftTracer)
 	core.SetIShyftTracer(shyftTracer)
@@ -259,7 +243,6 @@ func TestGenesisBlockCreationDeveloper(t *testing.T) {
 	eth.SetGlobalConfig(ethConf)
 
 	t.Run("SetupGenesisBlock - populates the pg accounts, transactions, and accountblocks appropriately", func(t *testing.T) {
-		deleteAllTables(db)
 		core.SetupGenesisBlock(edb, ethConf.Genesis)
 		newDbAccounts := []shyftschema.Account{}
 		err := db.Select(&newDbAccounts, "SELECT * FROM accounts")
@@ -319,6 +302,7 @@ func TestGenesisBlockCreationDeveloper(t *testing.T) {
 			}
 		}
 	})
+	core.DeletePgDb(core.DbName)
 }
 
 var (
@@ -326,8 +310,7 @@ var (
 	BlockHashes   []string
 )
 
-func insertBlocksTransactions() (map[string][]shyftschema.Account, []string) {
-	core.DeletePgDb(core.DbName)
+func insertBlocksTransactions() (map[string][]shyftschema.Account, []string, *sqlx.DB) {
 	db, _ := core.InitDB()
 	key, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 	signer := types.NewEIP155Signer(big.NewInt(2147483647))
@@ -341,11 +324,6 @@ func insertBlocksTransactions() (map[string][]shyftschema.Account, []string) {
 	mytx3, _ := types.SignTx(tx3, signer, key)
 	txs := []*types.Transaction{mytx1, mytx2}
 	txs1 := []*types.Transaction{mytx3}
-
-	//Nonce,Value, GasLimit, Gasprice, data
-	contractCreation := types.NewContractCreation(1, big.NewInt(111), 1111, big.NewInt(11111), []byte{0x11, 0x11, 0x11})
-	mytx4, _ := types.SignTx(contractCreation, signer, key)
-	txs2 := []*types.Transaction{mytx4}
 
 	receipt := &types.Receipt{
 		Status:            types.ReceiptStatusSuccessful,
@@ -362,11 +340,10 @@ func insertBlocksTransactions() (map[string][]shyftschema.Account, []string) {
 
 	block1 := types.NewBlock(&types.Header{Number: big.NewInt(323)}, txs, nil, receipts)
 	block2 := types.NewBlock(&types.Header{Number: big.NewInt(320)}, txs1, nil, receipts)
-	block3 := types.NewBlock(&types.Header{Number: big.NewInt(322)}, txs2, nil, receipts)
+	block3 := types.NewBlock(&types.Header{Number: big.NewInt(322)}, txs, nil, receipts)
 	blocks := []*types.Block{block1, block2, block3}
 	blockHashes := []string{}
 	blockAccounts := map[string][]shyftschema.Account{}
-  core.TruncateTables()
 	for _, bl := range blocks {
 		// Write and verify the block in the database
 		core.TruncateTables()
@@ -380,23 +357,15 @@ func insertBlocksTransactions() (map[string][]shyftschema.Account, []string) {
 			panic(err)
 		}
 		blockHashes = append(blockHashes, bl.Hash().Hex())
-		blockAccounts[bl.Hash().Hex()] = newDbAccounts
+
+		blockAccounts[bl.Transactions()[0].To().Hex()] = newDbAccounts
+		blockAccounts[bl.Transactions()[0].From().Hex()] = newDbAccounts
 	}
-	// fmt.Println("Blocks Inserted Resulting In The Following Balances:")
-	// for k, v := range blockAccounts {
-	// 	fmt.Printf("\n@block insertion %s \n", k)
-	// 	fmt.Println("*********************************************************************")
-	// 	for _, acct := range v {
-	// 		fmt.Printf("%+v \n", acct)
-	// 	}
-	// 	fmt.Println("*********************************************************************")
-	// }
-	return blockAccounts, blockHashes
+	return blockAccounts, blockHashes, db
 }
 func TestRollbackReconcilesAccounts(t *testing.T) {
 	t.Run("PgRollback - of all blocks reverses all account balances", func(t *testing.T) {
-		_, blockHashes := insertBlocksTransactions()
-		db, _ := core.InitDB()
+		_, blockHashes, db := insertBlocksTransactions()
 
 		// Rollback 1 blocks
 		core.RollbackPgDb(blockHashes[0:])
@@ -432,15 +401,16 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 		if len(rollbackTxs) != 0 {
 			t.Errorf("Got %d db transactions on rollback -  Expected 0", len(rollbackTxs))
 		}
+		core.DeletePgDb(core.DbName)
 	})
 	t.Run("PgRollback - 2 Blocks- reverses all account balances accordingly", func(t *testing.T) {
-		blockAccounts, blockHashes := insertBlocksTransactions()
-		db, _ := core.InitDB()
+		blockAccounts, blockHashes, db := insertBlocksTransactions()
 		fmt.Println("Rollback by 2 blocks should yield the following balances:")
 		fmt.Println("*********************************************************************")
 		fmt.Printf("\n@block insertion %s \n", blockHashes[0])
 		fmt.Println("*********************************************************************")
-		for _, acct := range blockAccounts[blockHashes[0]] {
+		fmt.Println("BLOCK ACCOUNTS",blockAccounts)
+		for _, acct := range blockAccounts {
 			fmt.Printf("%+v \n", acct)
 		}
 		fmt.Println("*********************************************************************")
@@ -478,12 +448,11 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 		if len(rollbackTxs) != 2 {
 			t.Errorf("Got %d db transactions on rollback -  Expected 2", len(rollbackTxs))
 		}
-		fmt.Println("dbName FAILING Test ::", core.DbName)
 		for _, acct := range blockAccounts[blockHashes[0]] {
 			fetchDbBalanceStmnt := `SELECT * FROM accounts WHERE addr = $1`
 			acctCheck := shyftschema.Account{}
 			err = db.Get(&acctCheck, fetchDbBalanceStmnt, acct.Addr)
-			log.Printf("%+v", acct.Addr)
+			log.Printf("ERR ACCOUNT %+v", acct.Addr)
 			if err != nil {
 				log.Printf("THIS IS THE ERROR")
 				panic(err)
@@ -492,10 +461,10 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 				t.Errorf("Got Balance: %s Nonce: %d Expected Balance: %s Nonce: %d - Addr: %s\n", acctCheck.Balance, acctCheck.Nonce, acct.Balance, acct.Nonce, acct.Addr)
 			}
 		}
+		core.DeletePgDb(core.DbName)
 	})
 	t.Run("PgRollback - 1 Blocks- reverses all account balances accordingly", func(t *testing.T) {
-		blockAccounts, blockHashes := insertBlocksTransactions()
-		db, _ := core.InitDB()
+		blockAccounts, blockHashes, db := insertBlocksTransactions()
 		fmt.Println("Rollback by 2 blocks should yield the following balances:")
 		fmt.Println("*********************************************************************")
 		fmt.Printf("\n@block insertion %s \n", blockHashes[1])
@@ -550,4 +519,5 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 			}
 		}
 	})
+	core.DeletePgDb(core.DbName)
 }
