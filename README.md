@@ -1,6 +1,11 @@
 
 ## Go Empyrean
 
+[![API Reference](https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667)](https://godoc.org/github.com/ShyftNetwork/go-empyrean)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ShyftNetwork/go-empyrean)](https://goreportcard.com/report/github.com/ShyftNetwork/go-empyrean)
+[![Build Status](https://travis-ci.org/ShyftNetwork/go-empyrean.svg?branch=development)](https://travis-ci.org/ShyftNetwork/shyft_go-ethereum)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ethereum/go-ethereum?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 go-empyrean is based on a fork of go-ethereum. Much of the functionality and process for starting go-empyrean is the same as that for a regular ethereum node - as reflected in the notes detailed under the heading Go Ethereum below. Documentation for changes and enhancements added by Shyft is detailed under the section Shyft Notes below.
 
 ## SHYFT NOTES
@@ -68,7 +73,7 @@ To stop Geth, **`crtl+C`** in the terminal window, if you proceed with the start
 To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.
 #### Docker Images
 
-Docker Images are available for ShyftGeth and the Postgresql Database which can be used for development and testing. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).
+Two sets of Docker Images are available for ShyftGeth, the Postgresql Database, and the Shyft Blockchain Explorer, which can be used for local development and testnet connection. The development settings are included in docker-compose.yml, the testnet settings are included in docker-compose.production.yml. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).
 
 **To build the images for the first time please run the following command:**
 
@@ -210,11 +215,6 @@ ie. curl localhost:8081/rollback_blocks/0x6c7db5b09bda0277b480aece97d2efac70838c
 ## Go Ethereum
 
 Official golang implementation of the Ethereum protocol.
-
-[![API Reference](https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667)](https://godoc.org/github.com/empyrean/go-ethereum)
-[![Go Report Card](https://goreportcard.com/badge/github.com/empyrean/go-ethereum)](https://goreportcard.com/report/github.com/empyrean/go-ethereum)
-[![Build Status](https://travis-ci.org/ShyftNetwork/go-empyrean.svg?branch=master)](https://travis-ci.org/ShyftNetwork/shyft_go-ethereum)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ethereum/go-ethereum?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Automated builds are available for stable releases and the unstable master branch.
 Binary archives are published at https://geth.ethereum.org/downloads/.
