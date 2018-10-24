@@ -35,7 +35,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"gopkg.in/olebedev/go-duktape.v3"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
-	"github.com/ShyftNetwork/go-empyrean/core"
 )
 
 // bigIntegerJS is the minified version of https://github.com/peterolson/BigInteger.js.
@@ -621,7 +620,7 @@ func (i *Internals) SWriteInteralTxs(hash common.Hash, bHash common.Hash) {
 
 //@NOTE:SHYFT
 func (i *Internals) InternalRecursive(hash common.Hash, bHash common.Hash) {
-	core.SWriteInteralTxs(hash, bHash, i)
+	i.SWriteInteralTxs(hash, bHash)
 	lengthOfCalls := len(i.Calls)
 	if lengthOfCalls == 0 {
 		return
