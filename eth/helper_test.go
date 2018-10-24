@@ -22,7 +22,6 @@ package eth
 import (
 	"crypto/ecdsa"
 	"crypto/rand"
-	"fmt"
 	"math/big"
 	"sort"
 	"sync"
@@ -51,7 +50,6 @@ var (
 // with the given number of blocks already known, and potential notification
 // channels for different events.
 func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, error) {
-	fmt.Printf("Active Databases %+v\n", core.TestDbInstances)
 	var (
 		evmux  = new(event.TypeMux)
 		engine = ethash.NewFaker()

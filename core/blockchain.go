@@ -90,7 +90,7 @@ type BlockChain struct {
 	cacheConfig *CacheConfig        // Cache configuration for pruning
 
 	db ethdb.Database // Low level persistent database to store final content in
-
+	shyftDb ethdb.SDatabase
 	triegc *prque.Prque  // Priority queue mapping block numbers to tries to gc
 	gcproc time.Duration // Accumulates canonical block processing for trie dumping
 
@@ -134,7 +134,8 @@ type BlockChain struct {
 // NewBlockChain returns a fully initialised block chain using information
 // available in the database. It initialises the default Ethereum Validator and
 // Processor.
-func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *params.ChainConfig, engine consensus.Engine, vmConfig vm.Config) (*BlockChain, error) {
+func NewBlockChain(db ethdb.Database, shyftDb ethdb.SDatabase, cacheConfig *CacheConfig, chainConfig *params.ChainConfig, engine consensus.Engine, vmConfig vm.Config) (*BlockChain, error) {
+	fmt.Println("DOES THIS RUN?")
 	if cacheConfig == nil {
 		cacheConfig = &CacheConfig{
 			TrieNodeLimit: 256 * 1024 * 1024,
@@ -151,6 +152,7 @@ func NewBlockChain(db ethdb.Database, cacheConfig *CacheConfig, chainConfig *par
 		chainConfig:  chainConfig,
 		cacheConfig:  cacheConfig,
 		db:           db,
+		shyftDb:      shyftDb,
 		triegc:       prque.New(),
 		stateCache:   state.NewDatabase(db),
 		quit:         make(chan struct{}),
@@ -1023,7 +1025,7 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 		bc.insert(block)
 		// NOTE:SHYFT - Write block data for block explorer
 		if GlobalPG != "disconnect" {
-			if err := SWriteBlock(block, receipts); err != nil {
+			if err := SWriteBlock(bc.shyftDb, block, receipts); err != nil {
 				return NonStatTy, err
 			}
 		}

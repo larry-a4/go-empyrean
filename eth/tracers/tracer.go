@@ -29,12 +29,13 @@ import (
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
-	"github.com/ShyftNetwork/go-empyrean/core"
-	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"gopkg.in/olebedev/go-duktape.v3"
+	"github.com/ShyftNetwork/go-empyrean/ethdb"
+	"github.com/ShyftNetwork/go-empyrean/core"
 )
 
 // bigIntegerJS is the minified version of https://github.com/peterolson/BigInteger.js.
@@ -591,6 +592,7 @@ type Internals struct {
 	Output  string
 	Time    string
 	Calls   []*Internals
+	Db 		*ethdb.SDatabase
 }
 
 //@NOTE:SHYFT
@@ -613,13 +615,13 @@ func (i *Internals) SWriteInteralTxs(hash common.Hash, bHash common.Hash) {
 		Output:  	i.Output,
 		Time:    	i.Time,
 	}
+	fmt.Println(iTx)
 	//@TODO WRITE OVER TRANSACTION STRUCT
-	core.InsertInternals(iTx)
 }
 
 //@NOTE:SHYFT
 func (i *Internals) InternalRecursive(hash common.Hash, bHash common.Hash) {
-	i.SWriteInteralTxs(hash, bHash)
+	core.SWriteInteralTxs(hash, bHash, i)
 	lengthOfCalls := len(i.Calls)
 	if lengthOfCalls == 0 {
 		return

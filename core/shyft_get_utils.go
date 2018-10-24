@@ -124,23 +124,23 @@ func SGetRecentBlock(sqldb *sqlx.DB) string {
 	return string(json)
 }
 
-func SGetRecentBlockHash() string {
-	sqldb, _ := DBConnection()
-	sqlStatement := `SELECT hash FROM blocks WHERE number=(SELECT MAX(number) FROM blocks);`
-	tx, _ := sqldb.Begin()
-	row := sqldb.QueryRow(sqlStatement)
-	tx.Commit()
-	var hash string
-
-	row.Scan(
-		&hash)
-
-	blockhash := stypes.BlockHash{
-		Hash: hash,
-	}
-	json, _ := json.Marshal(blockhash)
-	return string(json)
-}
+//func SGetRecentBlockHash() string {
+//	sqldb, _ := DBConnection()
+//	sqlStatement := `SELECT hash FROM blocks WHERE number=(SELECT MAX(number) FROM blocks);`
+//	tx, _ := sqldb.Begin()
+//	row := sqldb.QueryRow(sqlStatement)
+//	tx.Commit()
+//	var hash string
+//
+//	row.Scan(
+//		&hash)
+//
+//	blockhash := stypes.BlockHash{
+//		Hash: hash,
+//	}
+//	json, _ := json.Marshal(blockhash)
+//	return string(json)
+//}
 
 func SGetAllTransactionsFromBlock(sqldb *sqlx.DB, blockNumber string) string {
 	var arr stypes.TxRes

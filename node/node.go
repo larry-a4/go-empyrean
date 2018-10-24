@@ -649,6 +649,10 @@ func (n *Node) OpenDatabase(name string, cache, handles int) (ethdb.Database, er
 	return ethdb.NewLDBDatabase(n.config.resolvePath(name), cache, handles)
 }
 
+func (n *Node) OpenShyftDatabase() (ethdb.SDatabase, error) {
+	return ethdb.NewShyftDatabase()
+}
+
 // ResolvePath returns the absolute path of a resource in the instance directory.
 func (n *Node) ResolvePath(x string) string {
 	return n.config.resolvePath(x)

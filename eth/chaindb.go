@@ -9,9 +9,14 @@ import (
 )
 
 var Chaindb_global ethdb.Database
+var Shyftdb_global ethdb.SDatabase
 
 func SetChainDB(db ethdb.Database) {
 	Chaindb_global = db
+}
+
+func SetShyftChainDB(db ethdb.SDatabase) {
+	Shyftdb_global = db
 }
 
 func chaindb(ctx *node.ServiceContext, config *Config) (ethdb.Database, error) {
@@ -23,6 +28,18 @@ func chaindb(ctx *node.ServiceContext, config *Config) (ethdb.Database, error) {
 	if err == nil {
 		SetChainDB(chainDb)
 		return Chaindb_global, nil
+	}
+	return nil, err
+}
+
+func shyftdb(ctx *node.ServiceContext) (ethdb.SDatabase, error) {
+	if Shyftdb_global != nil {
+		return Shyftdb_global, nil
+	}
+	shyftDb, err := CreateShyftDB(ctx)
+	if err == nil {
+		SetShyftChainDB(shyftDb)
+		return Shyftdb_global, nil
 	}
 	return nil, err
 }

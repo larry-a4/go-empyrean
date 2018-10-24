@@ -1,71 +1,354 @@
-package shyftdb_test
+package core
+
+import (
+	"encoding/json"
+	"os"
+	"testing"
+
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"runtime"
+	"github.com/jmoiron/sqlx"
+
+	"github.com/ShyftNetwork/go-empyrean/eth"
+	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
+)
+
+type ShyftTracer struct{}
+
+const (
+	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
+)
+
+var GenesisAcctAddresses = []string{"0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000001",
+	"0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000003",
+	"0x0000000000000000000000000000000000000004", "0x0000000000000000000000000000000000000005",
+	"0x0000000000000000000000000000000000000006", "0x0000000000000000000000000000000000000007",
+	"0x0000000000000000000000000000000000000008"}
+
+var SQLDB *sqlx.DB
+
+//var tx, _ = types.NewTransaction(3, common.HexToAddress("b94f5374fce5edbc8e2a8697c15331677e6ebf0b"), big.NewInt(10), 2000, big.NewInt(1), common.FromHex("5544"), ).WithSignature(types.HomesteadSigner{}, common.Hex2Bytes("98ff921201554726367d2be8c804a7ff89ccf285ebc57dff8ae4c44b9c19ac4a8887321be575c8095f789dd4c743dfe42c1820f9231f98a962b210e3ac2452a301"), )
+
+func init() {
+	runtime.LockOSThread()
+}
+
+func TestMain(m *testing.M) {
+	go func() {
+		os.Exit(m.Run())
+	}()
+	sqldb, err := InitDB()
+	if err != nil {
+		panic(err)
+	}
+	SQLDB = sqldb
+}
+
+func SetUpTracerEnv() {
+	eth.NewShyftTestLDB()
+	shyftTracer := new(eth.ShyftTracer)
+	SetIShyftTracer(shyftTracer)
+
+	ethConf := &eth.Config{
+		Genesis:   DeveloperGenesisBlock(15, common.Address{}),
+		Etherbase: common.HexToAddress(testAddress),
+		Ethash: ethash.Config{
+			PowMode: ethash.ModeTest,
+		},
+	}
+
+	eth.SetGlobalConfig(ethConf)
+	eth.InitTracerEnv()
+}
+
+func TestBlock(t *testing.T) {
+	//SET UP FOR TEST FUNCTIONS
+	SetUpTracerEnv()
+
+	//key, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+	//signer := types.NewEIP155Signer(big.NewInt(2147483647))
+	//
+	////Nonce, To Address,Value, GasLimit, Gasprice, data
+	//tx1 := types.NewTransaction(1, common.BytesToAddress([]byte{0x11}), big.NewInt(5), 1111, big.NewInt(11111), []byte{0x11, 0x11, 0x11})
+	//mytx1, _ := types.SignTx(tx1, signer, key)
+	//tx2 := types.NewTransaction(2, common.BytesToAddress([]byte{0x22}), big.NewInt(5), 2222, big.NewInt(22222), []byte{0x22, 0x22, 0x22})
+	//mytx2, _ := types.SignTx(tx2, signer, key)
+	//tx3 := types.NewTransaction(3, common.BytesToAddress([]byte{0x33}), big.NewInt(5), 3333, big.NewInt(33333), []byte{0x33, 0x33, 0x33})
+	//mytx3, _ := types.SignTx(tx3, signer, key)
+	//txs := []*types.Transaction{mytx1, mytx2}
+	//txs1 := []*types.Transaction{mytx3}
+	//
+	////Nonce,Value, GasLimit, Gasprice, data
+	//contractCreation := types.NewContractCreation(1, big.NewInt(111), 1111, big.NewInt(11111), []byte{0x11, 0x11, 0x11})
+	//mytx4, _ := types.SignTx(contractCreation, signer, key)
+	//txs2 := []*types.Transaction{mytx4}
+	//
+	//receipt := &types.Receipt{
+	//	Status:            types.ReceiptStatusSuccessful,
+	//	CumulativeGasUsed: 1,
+	//	Logs: []*types.Log{
+	//		{Address: common.BytesToAddress([]byte{0x11})},
+	//		{Address: common.BytesToAddress([]byte{0x01, 0x11})},
+	//	},
+	//	TxHash:          common.BytesToHash([]byte{0x11, 0x11}),
+	//	ContractAddress: common.BytesToAddress([]byte{0x01, 0x11, 0x11}),
+	//	GasUsed:         111111,
+	//}
+	//receipts := []*types.Receipt{receipt}
+	//
+	//block1 := types.NewBlock(&types.Header{Number: big.NewInt(323)}, txs, nil, receipts)
+	//block2 := types.NewBlock(&types.Header{Number: big.NewInt(320)}, txs1, nil, receipts)
+	//block3 := types.NewBlock(&types.Header{Number: big.NewInt(322)}, txs2, nil, receipts)
+	//blocks := []*types.Block{block1, block2, block3}
+
+	//fromAddr := "0x71562b71999873db5b286df957af199ec94617f7"
+	//core.CreateAccount(fromAddr, "201", "1")
+
+	t.Run("TestBlockToReturnBlock", func(t *testing.T) {
+		for _, bl := range CreateTestBlocks() {
+			// Write and verify the block in the database
+			if err := SWriteBlock(bl, CreateTestReceipts()); err != nil {
+				t.Fatalf("Failed to write block into database: %v", err)
+			}
+		}
+		blocks := CreateTestBlocks()
+
+		entry := SGetBlock(SQLDB, blocks[0].Number().String())
+		byt := []byte(entry)
+		var data stypes.SBlock
+		json.Unmarshal(byt, &data)
+
+		//TODO Difficulty, rewards, age
+		if blocks[0].Hash().String() != data.Hash {
+			t.Fatalf("Block Hash [%v]: Block hash not found", blocks[0].Hash().String())
+		}
+		if blocks[0].Coinbase().String() != data.Coinbase {
+			t.Fatalf("Block coinbase [%v]: Block coinbase not found", blocks[0].Coinbase().String())
+		}
+		if blocks[0].Number().String() != data.Number {
+			t.Fatalf("Block number [%v]: Block number not found", blocks[0].Number().String())
+		}
+		if blocks[0].GasUsed() != data.GasUsed {
+			t.Fatalf("Gas Used [%v]: Gas used not found", blocks[0].GasUsed())
+		}
+		if blocks[0].GasLimit() != data.GasLimit {
+			t.Fatalf("Gas Limit [%v]: Gas limit not found", blocks[0].GasLimit())
+		}
+		if blocks[0].Transactions().Len() != data.TxCount {
+			t.Fatalf("Tx Count [%v]: Tx Count not found", blocks[0].Transactions().Len())
+		}
+		if len(blocks[0].Uncles()) != data.UncleCount {
+			t.Fatalf("Uncle count [%v]: Uncle count not found", len(blocks[0].Uncles()))
+		}
+		if blocks[0].ParentHash().String() != data.ParentHash {
+			t.Fatalf("Parent hash [%v]: Parent hash not found", blocks[0].ParentHash().String())
+		}
+		if blocks[0].UncleHash().String() != data.UncleHash {
+			t.Fatalf("Uncle hash [%v]: Uncle hash not found", blocks[0].UncleHash().String())
+		}
+		if blocks[0].Size().String() != data.Size {
+			t.Fatalf("Size [%v]: Size not found", blocks[0].Size().String())
+		}
+		if blocks[0].Nonce() != data.Nonce {
+			t.Fatalf("Block nonce [%v]: Block nonce not found", blocks[0].Nonce())
+		}
+
+		if getAllBlocks := SGetAllBlocks(SQLDB); len(getAllBlocks) == 0 {
+			t.Fatalf("GetAllBlocks [%v]: GetAllBlocks did not return correctly", getAllBlocks)
+		}
+
+		if getAllBlocksMinedByAddress := SGetAllBlocksMinedByAddress(SQLDB, blocks[0].Coinbase().String()); len(getAllBlocksMinedByAddress) == 0 {
+			t.Fatalf("GetAllBlocksMinedByAddress [%v]: GetAllBlocksMinedByAddress did not return correctly", getAllBlocksMinedByAddress)
+		}
+	})
+}
+//	t.Run("TestGetRecentBlock", func(t *testing.T) {
+//		response := core.SGetRecentBlock(SQLDB)
+//		byteRes := []byte(response)
+//		var recentBlock stypes.SBlock
+//		json.Unmarshal(byteRes, &recentBlock)
 //
-//import (
-//	"database/sql"
-//	"fmt"
-//	"math/big"
-//	"strconv"
-//	"strings"
-//	"testing"
-//	"time"
+//		if block1.Hash().String() != recentBlock.Hash {
+//			t.Fatalf("Block Hash [%v]: Block hash not found", block1.Hash().String())
+//		}
+//		if block1.Coinbase().String() != recentBlock.Coinbase {
+//			t.Fatalf("Block coinbase [%v]: Block coinbase not found", block1.Coinbase().String())
+//		}
+//		if block1.Number().String() != recentBlock.Number {
+//			t.Fatalf("Block number [%v]: Block number not found", block1.Number().String())
+//		}
+//		if block1.GasUsed() != recentBlock.GasUsed {
+//			t.Fatalf("Gas Used [%v]: Gas used not found", block1.GasUsed())
+//		}
+//		if block1.GasLimit() != recentBlock.GasLimit {
+//			t.Fatalf("Gas Limit [%v]: Gas limit not found", block1.GasLimit())
+//		}
+//		if block1.Transactions().Len() != recentBlock.TxCount {
+//			t.Fatalf("Tx Count [%v]: Tx Count not found", block1.Transactions().Len())
+//		}
+//		if len(block1.Uncles()) != recentBlock.UncleCount {
+//			t.Fatalf("Uncle count [%v]: Uncle count not found", len(block1.Uncles()))
+//		}
+//		if block1.ParentHash().String() != recentBlock.ParentHash {
+//			t.Fatalf("Parent hash [%v]: Parent hash not found", block1.ParentHash().String())
+//		}
+//		if block1.UncleHash().String() != recentBlock.UncleHash {
+//			t.Fatalf("Uncle hash [%v]: Uncle hash not found", block1.UncleHash().String())
+//		}
+//		if block1.Size().String() != recentBlock.Size {
+//			t.Fatalf("Size [%v]: Size not found", block1.Size().String())
+//		}
+//		if block1.Nonce() != recentBlock.Nonce {
+//			t.Fatalf("Block nonce [%v]: Block nonce not found", block1.Nonce())
+//		}
 //
-//	"github.com/lib/pq"
-//
-//	"github.com/ShyftNetwork/go-empyrean/common"
-//	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
-//	"github.com/ShyftNetwork/go-empyrean/core"
-//	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
-//	"github.com/ShyftNetwork/go-empyrean/core/types"
-//	"github.com/ShyftNetwork/go-empyrean/crypto"
-//	"github.com/ShyftNetwork/go-empyrean/eth"
-//
-//	"github.com/ShyftNetwork/go-empyrean/shyft_schema"
-//	"github.com/jmoiron/sqlx"
-//)
-//
-//type ShyftTracer struct{}
-//
-//const (
-//	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
-//)
-//
-//var GenesisAcctAddresses = []string{"0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000001",
-//	"0x0000000000000000000000000000000000000002", "0x0000000000000000000000000000000000000003",
-//	"0x0000000000000000000000000000000000000004", "0x0000000000000000000000000000000000000005",
-//	"0x0000000000000000000000000000000000000006", "0x0000000000000000000000000000000000000007",
-//	"0x0000000000000000000000000000000000000008"}
-//
-//var tx, _ = types.NewTransaction(
-//	3,
-//	common.HexToAddress("b94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
-//	big.NewInt(10),
-//	2000,
-//	big.NewInt(1),
-//	common.FromHex("5544"),
-//).WithSignature(
-//	types.HomesteadSigner{},
-//	common.Hex2Bytes("98ff921201554726367d2be8c804a7ff89ccf285ebc57dff8ae4c44b9c19ac4a8887321be575c8095f789dd4c743dfe42c1820f9231f98a962b210e3ac2452a301"),
-//)
-//
-//func TestDbCreationExistence(t *testing.T) {
-//	db, err := core.InitDB()
-//	if err != nil || err == sql.ErrNoRows {
-//		fmt.Println(err)
-//	}
-//	t.Run("Creates the PG DB if it Doesnt Exist", func(t *testing.T) {
-//
-//		_, err = core.DbExists(core.DbName)
-//		if err != nil || err == sql.ErrNoRows {
-//			t.Errorf("Error in Database Connection - DB doesn't Exist - %s", err)
+//		if allTxsFromBlock := core.SGetAllTransactionsFromBlock(SQLDB, block2.Number().String()); len(allTxsFromBlock) == 0 {
+//			t.Fatalf("GetAllTransactionsFromBlock [%v]: GetAllTransactionsFromBlock did not return correctly", allTxsFromBlock)
 //		}
 //	})
-//	t.Run("Creates the Tables Required from the Migration Schema", func(t *testing.T) {
-//		if err != nil || err == sql.ErrNoRows {
-//			fmt.Println(err)
+//
+//	t.Run("TestContractCreationTx", func(t *testing.T) {
+//		var contractAddressFromReciept string
+//		for _, receipt := range receipts {
+//			contractAddressFromReciept = (*types.ReceiptForStorage)(receipt).ContractAddress.String()
 //		}
+//
+//		for _, tx := range txs2 {
+//			txn := core.SGetTransaction(SQLDB, tx.Hash().String())
+//			byt := []byte(txn)
+//			var data stypes.ShyftTxEntryPretty
+//			json.Unmarshal(byt, &data)
+//
+//			if tx.Hash().String() != data.TxHash {
+//				t.Fatalf("txHash [%v]: tx Hash not found", tx.Hash().String())
+//			}
+//			if contractAddressFromReciept != data.To {
+//				t.Fatalf("Contract Addr [%v]: Contract addr not found", contractAddressFromReciept)
+//			}
+//			if strings.ToLower(tx.From().String()) != data.From {
+//				t.Fatalf("From Addr [%v]: From addr not found", tx.From().String())
+//			}
+//			if tx.Nonce() != data.Nonce {
+//				t.Fatalf("Nonce [%v]: Nonce not found", tx.Nonce())
+//			}
+//			if tx.Gas() != data.Gas {
+//				t.Fatalf("Gas [%v]: Gas not found", tx.Gas())
+//			}
+//			if tx.GasPrice().Uint64() != data.GasPrice {
+//				t.Fatalf("Gas Price [%v]: Gas price not found", tx.GasPrice().String())
+//			}
+//			if block1.GasLimit() != data.GasLimit {
+//				t.Fatalf("Gas Limit [%v]: Gas limit not found", block1.GasLimit())
+//			}
+//			if block3.Hash().String() != data.BlockHash {
+//				t.Fatalf("Block Hash [%v]: Block hash not found", block1.Hash().String())
+//			}
+//			if block3.Number().String() != data.BlockNumber {
+//				t.Fatalf("Block Number [%v]: Block number not found", block1.Number().String())
+//			}
+//			if tx.Value().String() != data.Amount {
+//				t.Fatalf("Amount [%v]: Amount not found", tx.Value().String())
+//			}
+//			if tx.Cost().String() != data.Cost {
+//				t.Fatalf("Cost [%v]: Cost not found", tx.Cost().String())
+//			}
+//			var status string
+//			if receipt.Status == 1 {
+//				status = "SUCCESS"
+//			}
+//			if receipt.Status == 0 {
+//				status = "FAIL"
+//			}
+//			if status != data.Status {
+//				t.Fatalf("Receipt status [%v]: Receipt status not found", status)
+//			}
+//			var isContract bool
+//			if tx.To() != nil {
+//				isContract = false
+//			} else {
+//				isContract = true
+//			}
+//			if isContract != data.IsContract {
+//				t.Fatalf("isContract [%v]: isContract bool is incorrect", isContract)
+//			}
+//		}
+//	})
+//
+//	t.Run("TestTransactionsToReturnTransactions", func(t *testing.T) {
+//		for _, tx := range txs {
+//			txn := core.SGetTransaction(SQLDB, tx.Hash().String())
+//			byt := []byte(txn)
+//			var data stypes.ShyftTxEntryPretty
+//			json.Unmarshal(byt, &data)
+//
+//			//TODO age, data
+//			if strings.ToLower(tx.Hash().String()) != data.TxHash {
+//				t.Fatalf("txHash [%v]: tx Hash not found", tx.Hash().String())
+//			}
+//			if strings.ToLower(tx.From().String()) != data.From {
+//				t.Fatalf("From Addr [%v]: From addr not found", tx.From().String())
+//			}
+//			if strings.ToLower(tx.To().String()) != data.To {
+//				t.Fatalf("To Addr [%v]: To addr not found", tx.To().String())
+//			}
+//			if tx.Nonce() != data.Nonce {
+//				t.Fatalf("Nonce [%v]: Nonce not found", tx.Nonce())
+//			}
+//			if tx.Gas() != data.Gas {
+//				t.Fatalf("Gas [%v]: Gas not found", tx.Gas())
+//			}
+//			if tx.GasPrice().Uint64() != data.GasPrice {
+//				t.Fatalf("Gas Price [%v]: Gas price not found", tx.GasPrice().String())
+//			}
+//			if block1.GasLimit() != data.GasLimit {
+//				t.Fatalf("Gas Limit [%v]: Gas limit not found", block1.GasLimit())
+//			}
+//			if block1.Hash().String() != data.BlockHash {
+//				t.Fatalf("Block Hash [%v]: Block hash not found", block1.Hash().String())
+//			}
+//			if block1.Number().String() != data.BlockNumber {
+//				t.Fatalf("Block Number [%v]: Block number not found", block1.Number().String())
+//			}
+//			if tx.Value().String() != data.Amount {
+//				t.Fatalf("Amount [%v]: Amount not found", tx.Value().String())
+//			}
+//			if tx.Cost().String() != data.Cost {
+//				t.Fatalf("Cost [%v]: Cost not found", tx.Cost().String())
+//			}
+//			var status string
+//			if receipt.Status == 1 {
+//				status = "SUCCESS"
+//			}
+//			if receipt.Status == 0 {
+//				status = "FAIL"
+//			}
+//			if status != data.Status {
+//				t.Fatalf("Receipt status [%v]: Receipt status not found", status)
+//			}
+//			var isContract bool
+//			if tx.To() != nil {
+//				isContract = false
+//			} else {
+//				isContract = true
+//			}
+//			if isContract != data.IsContract {
+//				t.Fatalf("isContract [%v]: isContract bool is incorrect", isContract)
+//			}
+//		}
+//		if getAllTx := core.SGetAllTransactions(SQLDB); len(getAllTx) == 0 {
+//			t.Fatalf("GetAllTransactions [%v]: GetAllTransactions did not return correctly", getAllTx)
+//		}
+//	})
+//}
+//
+//func TestDbCreationExistence(t *testing.T) {
+//	//db, err := core.InitDB()
+//
+//	t.Run("Creates the Tables Required from the Migration Schema", func(t *testing.T) {
 //		tableNameQuery := `select table_name from information_schema.tables where table_schema = 'public' AND table_type = 'BASE TABLE' order by table_name ASC;`
-//		db = core.Connect(core.ShyftConnectStr())
-//		rows, err := db.Query(tableNameQuery)
+//		SQLDB = core.Connect(core.ShyftConnectStr())
+//		rows, err := SQLDB.Query(tableNameQuery)
 //		if err != nil {
 //			panic(err)
 //		}
@@ -95,11 +378,7 @@ package shyftdb_test
 //			t.Errorf("Test Failed as wanted: %s  - got: %s", want, tablenames)
 //		}
 //	})
-//	if err != nil || err == sql.ErrNoRows {
-//		fmt.Println(err)
-//	}
-//	core.DeletePgDb(core.DbName)
-//	db.Close()
+//	SQLDB.Close()
 //}
 //
 //func deleteAllTables(db *sqlx.DB) {
@@ -109,7 +388,7 @@ package shyftdb_test
 //	db.MustExec("TRUNCATE txs CASCADE;")
 //	db.MustExec("TRUNCATE internalTxs CASCADE")
 //}
-//
+
 //func TestCreateAccount(t *testing.T) {
 //	t.Run("CreateAccount - creates an account in the PG db ", func(t *testing.T) {
 //		db, err := core.InitDB()

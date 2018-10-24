@@ -94,6 +94,7 @@ type BloomIndexer struct {
 	size uint64 // section size to generate bloombits for
 
 	db  ethdb.Database       // database instance to write index data and metadata into
+	shyftdb ethdb.SDatabase
 	gen *bloombits.Generator // generator to rotate the bloom bits crating the bloom index
 
 	section uint64      // Section is the section number being processed currently
@@ -102,14 +103,15 @@ type BloomIndexer struct {
 
 // NewBloomIndexer returns a chain indexer that generates bloom bits data for the
 // canonical chain for fast logs filtering.
-func NewBloomIndexer(db ethdb.Database, size uint64) *core.ChainIndexer {
+func NewBloomIndexer(db ethdb.Database, shyftdb ethdb.SDatabase, size uint64) *core.ChainIndexer {
 	backend := &BloomIndexer{
-		db:   db,
-		size: size,
+		db:     	db,
+		shyftdb:	shyftdb,
+		size: 		size,
 	}
 	table := ethdb.NewTable(db, string(core.BloomBitsIndexPrefix))
 
-	return core.NewChainIndexer(db, table, backend, size, bloomConfirms, bloomThrottling, "bloombits")
+	return core.NewChainIndexer(db, table, shyftdb,backend, size, bloomConfirms, bloomThrottling, "bloombits")
 }
 
 // Reset implements core.ChainIndexerBackend, starting a new bloombits index

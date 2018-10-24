@@ -18,20 +18,15 @@ package core
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
-	"strconv"
 	"strings"
-	"time"
-
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/common/math"
-	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
@@ -148,92 +143,6 @@ func (e *GenesisMismatchError) Error() string {
 	return fmt.Sprintf("database already contains an incompatible genesis block (have %x, new %x)", e.Stored[:8], e.New[:8])
 }
 
-//WriteShyftGen writes the genesis block to Shyft db
-//@NOTE:SHYFT
-func WriteShyftGen(gen *Genesis, block *types.Block) {
-	for k, v := range gen.Alloc {
-		_, _, err := AccountExists(k.String())
-		switch {
-		case err == sql.ErrNoRows:
-			var toAddr *common.Address
-			var data []byte
-			var gasPrice uint64
-			var cost string
-			//Initializing proper types for tx struct
-			toAddr = &k
-			cost = "0"
-			gasPrice = 0
-			//Appending GENESIS to address stored as txHash and From Addr
-			Genesis := []string{"GENESIS_", k.String()}
-			GENESIS := "GENESIS"
-			txHash := strings.Join(Genesis, k.String())
-			//Create the accountNonce, set to 1 (1 incoming tx), format type
-			accountNonce := v.Nonce + 1
-
-			i, err := strconv.ParseInt(block.Time().String(), 10, 64)
-			if err != nil {
-				panic(err)
-			}
-			age := time.Unix(i, 0)
-			txData := stypes.ShyftTxEntryPretty{
-				TxHash:      txHash,
-				From:        GENESIS,
-				To:          toAddr.String(),
-				BlockHash:   block.Header().Hash().Hex(),
-				BlockNumber: block.Header().Number.String(),
-				Amount:      v.Balance.String(),
-				Cost:        cost,
-				GasPrice:    gasPrice,
-				GasLimit:    block.GasLimit(),
-				Gas:         block.GasUsed(),
-				Nonce:       accountNonce,
-				Age:         age,
-				Data:        data,
-				Status:      "SUCCESS",
-				IsContract:  false,
-			}
-			//Create account and store tx
-			InsertTx(txData)
-
-		default:
-			log.Info("Found Genesis Block")
-		}
-	}
-}
-
-// WriteShyftBlockZero writes block 0 to postgres db
-func WriteShyftBlockZero(block *types.Block, gen *Genesis) error {
-
-	i, error := strconv.ParseInt(block.Time().String(), 10, 64)
-	if error != nil {
-		panic(error)
-	}
-	age := time.Unix(i, 0)
-
-	blockData := stypes.SBlock{
-		Hash:       block.Header().Hash().Hex(),
-		Coinbase:   block.Header().Coinbase.String(),
-		Number:     block.Header().Number.String(),
-		GasUsed:    block.Header().GasUsed,
-		GasLimit:   block.Header().GasLimit,
-		TxCount:    len(gen.Alloc),
-		UncleCount: len(block.Uncles()),
-		Age:        age,
-		ParentHash: block.ParentHash().String(),
-		UncleHash:  block.UncleHash().String(),
-		Difficulty: block.Difficulty().String(),
-		Size:       block.Size().String(),
-		Nonce:      block.Nonce(),
-		Rewards:    "0",
-	}
-	exist := BlockExists(blockData.Hash)
-	if !exist {
-		InsertBlock(blockData)
-		log.Info("Block zero written to DB")
-	}
-	return nil
-}
-
 // SetupGenesisBlock writes or updates the genesis 7block in db.
 // The block that will be used is:
 //
@@ -247,7 +156,7 @@ func WriteShyftBlockZero(block *types.Block, gen *Genesis) error {
 // error is a *params.ConfigCompatError and the new, unwritten config is returned.
 //
 // The returned chain configuration is never nil.
-func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig, common.Hash, error) {
+func SetupGenesisBlock(db ethdb.Database, shyftDb ethdb.SDatabase, genesis *Genesis) (*params.ChainConfig, common.Hash, error) {
 	if genesis != nil && genesis.Config == nil {
 		return params.AllEthashProtocolChanges, common.Hash{}, errGenesisNoConfig
 	}
@@ -263,12 +172,12 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 		block, err := genesis.Commit(db)
 		//@NOTE:SHYFT SWITCH CASE ENSURES SHYFT GENESIS FUNCTIONS ARE ONLY CALLED ONCE
 		if GlobalPG != "disconnect" {
-			exist := BlockExists(block.Hash().String())
+			exist := shyftDb.BlockExists(block.Hash().String())
 			if !exist {
 				//@NOTE:SHYFT WRITE TO BLOCK ZERO DB
-				WriteShyftBlockZero(block, genesis)
+				WriteShyftBlockZero(shyftDb, block, genesis)
 				//@NOTE:SHYFT WRITE TO DB
-				WriteShyftGen(genesis, block)
+				WriteShyftGen(shyftDb, genesis, block)
 				log.Info("Genesis Block Written")
 			}
 		}

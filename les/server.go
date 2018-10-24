@@ -51,7 +51,7 @@ type LesServer struct {
 
 func NewLesServer(eth *eth.Ethereum, config *eth.Config) (*LesServer, error) {
 	quitSync := make(chan struct{})
-	pm, err := NewProtocolManager(eth.BlockChain().Config(), false, ServerProtocolVersions, config.NetworkId, eth.EventMux(), eth.Engine(), newPeerSet(), eth.BlockChain(), eth.TxPool(), eth.ChainDb(), nil, nil, quitSync, new(sync.WaitGroup))
+	pm, err := NewProtocolManager(eth.BlockChain().Config(), false, ServerProtocolVersions, config.NetworkId, eth.EventMux(), eth.Engine(), newPeerSet(), eth.BlockChain(), eth.TxPool(), eth.ChainDb(), eth.ShyftDb(), nil, nil, quitSync, new(sync.WaitGroup))
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +66,8 @@ func NewLesServer(eth *eth.Ethereum, config *eth.Config) (*LesServer, error) {
 		protocolManager:  pm,
 		quitSync:         quitSync,
 		lesTopics:        lesTopics,
-		chtIndexer:       light.NewChtIndexer(eth.ChainDb(), false),
-		bloomTrieIndexer: light.NewBloomTrieIndexer(eth.ChainDb(), false),
+		chtIndexer:       light.NewChtIndexer(eth.ChainDb(), eth.ShyftDb(), false),
+		bloomTrieIndexer: light.NewBloomTrieIndexer(eth.ChainDb(), eth.ShyftDb(), false),
 	}
 	logger := log.New()
 

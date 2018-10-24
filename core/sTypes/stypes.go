@@ -2,6 +2,7 @@ package stypes
 
 import (
 	"time"
+	"github.com/ShyftNetwork/go-empyrean/ethdb"
 )
 
 //SBlock type
@@ -36,6 +37,21 @@ type InteralWrite struct {
 	Input   	string
 	Output  	string
 	Time    	string
+}
+
+//@NOTE:SHYFT
+type Internals struct {
+	Type    string
+	From    string
+	To      string
+	Value   string
+	Gas     string
+	GasUsed string
+	Input   string
+	Output  string
+	Time    string
+	Calls   []*Internals
+	Db 		*ethdb.SDatabase
 }
 
 type InternalArray struct {

@@ -171,7 +171,11 @@ func initGenesis(ctx *cli.Context) error {
 		if err != nil {
 			utils.Fatalf("Failed to open database: %v", err)
 		}
-		_, hash, err := core.SetupGenesisBlock(chaindb, genesis)
+		shyftdb, err := stack.OpenShyftDatabase()
+		if err != nil {
+			utils.Fatalf("Failed to open SHYFT database: %v", err)
+		}
+		_, hash, err := core.SetupGenesisBlock(chaindb, shyftdb, genesis)
 		if err != nil {
 			utils.Fatalf("Failed to write genesis block: %v", err)
 		}
@@ -185,7 +189,7 @@ func importChain(ctx *cli.Context) error {
 		utils.Fatalf("This command requires an argument.")
 	}
 	stack := makeFullNode(ctx)
-	chain, chainDb := utils.MakeChain(ctx, stack)
+	chain, chainDb, _ := utils.MakeChain(ctx, stack)
 	defer chainDb.Close()
 
 	// Start periodically gathering memory profiles
@@ -279,7 +283,7 @@ func exportChain(ctx *cli.Context) error {
 		utils.Fatalf("This command requires an argument.")
 	}
 	stack := makeFullNode(ctx)
-	chain, _ := utils.MakeChain(ctx, stack)
+	chain, _, _ := utils.MakeChain(ctx, stack)
 	start := time.Now()
 
 	var err error
@@ -313,10 +317,10 @@ func copyDb(ctx *cli.Context) error {
 	}
 	// Initialize a new chain for the running node to sync into
 	stack := makeFullNode(ctx)
-	chain, chainDb := utils.MakeChain(ctx, stack)
+	chain, chainDb, shyftDb := utils.MakeChain(ctx, stack)
 
 	syncmode := *utils.GlobalTextMarshaler(ctx, utils.SyncModeFlag.Name).(*downloader.SyncMode)
-	dl := downloader.New(syncmode, chainDb, new(event.TypeMux), chain, nil, nil)
+	dl := downloader.New(syncmode, chainDb, shyftDb, new(event.TypeMux), chain, nil, nil)
 
 	// Create a source peer to satisfy downloader requests from
 	db, err := ethdb.NewLDBDatabase(ctx.Args().First(), ctx.GlobalInt(utils.CacheFlag.Name), 256)
@@ -385,7 +389,7 @@ func removeDB(ctx *cli.Context) error {
 
 func dump(ctx *cli.Context) error {
 	stack := makeFullNode(ctx)
-	chain, chainDb := utils.MakeChain(ctx, stack)
+	chain, chainDb, _ := utils.MakeChain(ctx, stack)
 	for _, arg := range ctx.Args() {
 		var block *types.Block
 		if hashish(arg) {
@@ -413,16 +417,6 @@ func dump(ctx *cli.Context) error {
 func hashish(x string) bool {
 	_, err := strconv.Atoi(x)
 	return err != nil
-}
-
-func setGlobalPG (str string) string {
-	var GlobalPG = str
-	return GlobalPG
-}
-
-func disconnectPG(ctx *cli.Context) (error) {
-	setGlobalPG("disconnect")
-	return nil
 }
 
 

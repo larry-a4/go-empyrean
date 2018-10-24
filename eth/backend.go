@@ -25,8 +25,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"net/http"
-
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
@@ -36,7 +34,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/bloombits"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
-	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
 	"github.com/ShyftNetwork/go-empyrean/eth/filters"
 	"github.com/ShyftNetwork/go-empyrean/eth/gasprice"
@@ -50,7 +47,9 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
+	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 var BlockchainObject *core.BlockChain
@@ -81,7 +80,7 @@ type Ethereum struct {
 
 	// DB interfaces
 	chainDb ethdb.Database // Block chain database
-
+	shyftDb ethdb.SDatabase // Shyft Postgres database
 	eventMux       *event.TypeMux
 	engine         consensus.Engine
 	accountManager *accounts.Manager
@@ -108,7 +107,7 @@ func (s *Ethereum) AddLesServer(ls LesServer) {
 
 func SNew(config *Config) (*Ethereum, error) {
 	stopDbUpgrade := upgradeDeduplicateData(Chaindb_global)
-	chainConfig, _, _ := core.SetupGenesisBlock(Chaindb_global, config.Genesis)
+	chainConfig, _, _ := core.SetupGenesisBlock(Chaindb_global, Shyftdb_global, config.Genesis)
 	eth := &Ethereum{
 		config:        config,
 		chainDb:       Chaindb_global,
@@ -119,7 +118,7 @@ func SNew(config *Config) (*Ethereum, error) {
 		gasPrice:      config.GasPrice,
 		etherbase:     config.Etherbase,
 		bloomRequests: make(chan chan *bloombits.Retrieval),
-		bloomIndexer:  NewBloomIndexer(Chaindb_global, params.BloomBitsBlocks),
+		bloomIndexer:  NewBloomIndexer(Chaindb_global, Shyftdb_global, params.BloomBitsBlocks),
 	}
 	eth.blockchain = BlockchainObject
 
@@ -142,8 +141,12 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	if err != nil {
 		return nil, err
 	}
+	shyftDb, err := shyftdb(ctx)
+	if err != nil {
+		return nil, err
+	}
 	stopDbUpgrade := upgradeDeduplicateData(chainDb)
-	chainConfig, genesisHash, genesisErr := core.SetupGenesisBlock(chainDb, config.Genesis)
+	chainConfig, genesisHash, genesisErr := core.SetupGenesisBlock(chainDb, shyftDb, config.Genesis)
 	if _, ok := genesisErr.(*params.ConfigCompatError); genesisErr != nil && !ok {
 		return nil, genesisErr
 	}
@@ -151,6 +154,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	eth := &Ethereum{
 		config:         config,
 		chainDb:        chainDb,
+		shyftDb:   		shyftDb,
 		chainConfig:    chainConfig,
 		eventMux:       ctx.EventMux,
 		accountManager: ctx.AccountManager,
@@ -161,7 +165,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		gasPrice:       config.GasPrice,
 		etherbase:      config.Etherbase,
 		bloomRequests:  make(chan chan *bloombits.Retrieval),
-		bloomIndexer:   NewBloomIndexer(chainDb, params.BloomBitsBlocks),
+		bloomIndexer:   NewBloomIndexer(chainDb, shyftDb, params.BloomBitsBlocks),
 	}
 	log.Info("Initialising Ethereum protocol", "versions", ProtocolVersions, "network", config.NetworkId)
 
@@ -177,7 +181,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		cacheConfig = &core.CacheConfig{Disabled: config.NoPruning, TrieNodeLimit: config.TrieCache, TrieTimeLimit: config.TrieTimeout}
 	)
 
-	eth.blockchain, err = core.NewBlockChain(chainDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig)
+	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig)
 
 	BlockchainObject = eth.blockchain
 	go func() {
@@ -191,7 +195,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 			blocknumber := BlockchainObject.GetBlockByHash(commonhash)
 			_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
 			eth.blockchain.SetHead(blocknumber.NumberU64())
-			err := core.RollbackPgDb(bHashes)
+			err := shyftDb.RollbackPgDb(bHashes)
 			if err != nil {
 				panic(err)
 			}
@@ -218,7 +222,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	}
 	eth.txPool = core.NewTxPool(config.TxPool, eth.chainConfig, eth.blockchain)
 
-	if eth.protocolManager, err = NewProtocolManager(eth.chainConfig, config.SyncMode, config.NetworkId, eth.eventMux, eth.txPool, eth.engine, eth.blockchain, chainDb); err != nil {
+	if eth.protocolManager, err = NewProtocolManager(eth.chainConfig, config.SyncMode, config.NetworkId, eth.eventMux, eth.txPool, eth.engine, eth.blockchain, chainDb, shyftDb); err != nil {
 		return nil, err
 	}
 	eth.miner = miner.New(eth, eth.chainConfig, eth.EventMux(), eth.engine)
@@ -264,6 +268,15 @@ func CreateDB(ctx *node.ServiceContext, config *Config, name string) (ethdb.Data
 	}
 	if db, ok := db.(*ethdb.LDBDatabase); ok {
 		db.Meter("eth/db/chaindata/")
+	}
+	return db, nil
+}
+
+// CreateDB creates the chain database.
+func CreateShyftDB(ctx *node.ServiceContext) (ethdb.SDatabase, error) {
+	db, err := ctx.OpenShyftDatabase()
+	if err != nil {
+		return nil, err
 	}
 	return db, nil
 }
@@ -428,6 +441,7 @@ func (s *Ethereum) TxPool() *core.TxPool               { return s.txPool }
 func (s *Ethereum) EventMux() *event.TypeMux           { return s.eventMux }
 func (s *Ethereum) Engine() consensus.Engine           { return s.engine }
 func (s *Ethereum) ChainDb() ethdb.Database            { return s.chainDb }
+func (s *Ethereum) ShyftDb() ethdb.SDatabase           { return s.shyftDb }
 func (s *Ethereum) IsListening() bool                  { return true } // Always listening
 func (s *Ethereum) EthVersion() int                    { return int(s.protocolManager.SubProtocols[0].Version) }
 func (s *Ethereum) NetVersion() uint64                 { return s.networkId }

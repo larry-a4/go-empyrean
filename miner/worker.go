@@ -110,7 +110,7 @@ type worker struct {
 	chain   *core.BlockChain
 	proc    core.Validator
 	chainDb ethdb.Database
-
+	shyftDb ethdb.SDatabase
 	coinbase common.Address
 	extra    []byte
 

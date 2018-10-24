@@ -1189,7 +1189,7 @@ func SetupNetwork(ctx *cli.Context) {
 }
 
 // MakeChainDatabase open an LevelDB using the flags passed to the client and will hard crash if it fails.
-func MakeChainDatabase(ctx *cli.Context, stack *node.Node) ethdb.Database {
+func MakeChainDatabase(ctx *cli.Context, stack *node.Node) (ethdb.Database, ethdb.SDatabase) {
 	var (
 		cache   = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheDatabaseFlag.Name) / 100
 		handles = makeDatabaseHandles()
@@ -1205,7 +1205,11 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node) ethdb.Database {
 	if err != nil {
 		Fatalf("Could not open database: %v", err)
 	}
-	return chainDb
+	shyftChainDb, err := stack.OpenShyftDatabase()
+	if err != nil {
+		Fatalf("Could not open database: %v", err)
+	}
+	return chainDb, shyftChainDb
 }
 
 func MakeGenesis(ctx *cli.Context) *core.Genesis {
@@ -1222,13 +1226,14 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 }
 
 // MakeChain creates a chain manager from set command line flags.
-func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chainDb ethdb.Database) {
+func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chainDb ethdb.Database, shyftDb ethdb.SDatabase) {
 	var err error
-	chainDb = MakeChainDatabase(ctx, stack)
+	var shyftChainDb ethdb.SDatabase
+	chainDb, shyftChainDb = MakeChainDatabase(ctx, stack)
 	if ctx.GlobalBool(PostgresFlag.Name) {
 		core.DisconnectPG()
 	}
-	config, _, err := core.SetupGenesisBlock(chainDb, MakeGenesis(ctx))
+	config, _, err := core.SetupGenesisBlock(chainDb, shyftChainDb, MakeGenesis(ctx))
 	if err != nil {
 		Fatalf("%v", err)
 	}
@@ -1260,11 +1265,11 @@ func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chai
 		cache.TrieNodeLimit = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheGCFlag.Name) / 100
 	}
 	vmcfg := vm.Config{EnablePreimageRecording: ctx.GlobalBool(VMEnableDebugFlag.Name)}
-	chain, err = core.NewBlockChain(chainDb,cache, config, engine, vmcfg)
+	chain, err = core.NewBlockChain(chainDb, shyftChainDb, cache, config, engine, vmcfg)
 	if err != nil {
 		Fatalf("Can't create BlockChain: %v", err)
 	}
-	return chain, chainDb
+	return chain, chainDb, shyftDb
 }
 
 // MakeConsolePreloads retrieves the absolute paths for the console JavaScript

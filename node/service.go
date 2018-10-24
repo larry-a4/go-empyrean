@@ -50,6 +50,14 @@ func (ctx *ServiceContext) OpenDatabase(name string, cache int, handles int) (et
 	return db, nil
 }
 
+func (ctx *ServiceContext) OpenShyftDatabase() (ethdb.SDatabase, error) {
+	db, err := ethdb.NewShyftDatabase()
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
 // ResolvePath resolves a user path into the data directory if that was relative
 // and if the user actually uses persistent storage. It will return an empty string
 // for emphemeral storage and the user's own input for absolute paths.

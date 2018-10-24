@@ -16,6 +16,11 @@
 
 package ethdb
 
+import (
+	"math/big"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
+)
+
 // Code using batches should try to add this much data to the batch.
 // The value was determined empirically.
 const IdealBatchSize = 100 * 1024
@@ -43,4 +48,16 @@ type Batch interface {
 	Write() error
 	// Reset resets the batch for reuse
 	Reset()
+}
+
+type SDatabase interface {
+	AccountExists(addr string) (string, string, error)
+	BlockExists(hash string) bool
+	IsContract(addr string) bool
+	CreateAccount(addr string, balance string, nonce string) error
+	UpdateMinerAccount(addr string, blockHash string, reward *big.Int) error
+	InsertBlock(blockData stypes.SBlock)
+	InsertTx(txData stypes.ShyftTxEntryPretty) error
+	InsertInternals(i stypes.InteralWrite) error
+	RollbackPgDb(blockheaders []string) error
 }

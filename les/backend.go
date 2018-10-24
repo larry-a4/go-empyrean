@@ -63,7 +63,7 @@ type LightEthereum struct {
 	retriever       *retrieveManager
 	// DB interfaces
 	chainDb ethdb.Database // Block chain database
-
+	shyftDb ethdb.SDatabase
 	bloomRequests                              chan chan *bloombits.Retrieval // Channel receiving bloom data retrieval requests
 	bloomIndexer, chtIndexer, bloomTrieIndexer *core.ChainIndexer
 
@@ -84,7 +84,11 @@ func New(ctx *node.ServiceContext, config *eth.Config) (*LightEthereum, error) {
 	if err != nil {
 		return nil, err
 	}
-	chainConfig, genesisHash, genesisErr := core.SetupGenesisBlock(chainDb, config.Genesis)
+	shyftDb, err := eth.CreateShyftDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+	chainConfig, genesisHash, genesisErr := core.SetupGenesisBlock(chainDb, shyftDb, config.Genesis)
 	if _, isCompat := genesisErr.(*params.ConfigCompatError); genesisErr != nil && !isCompat {
 		return nil, genesisErr
 	}
@@ -97,6 +101,7 @@ func New(ctx *node.ServiceContext, config *eth.Config) (*LightEthereum, error) {
 		config:           config,
 		chainConfig:      chainConfig,
 		chainDb:          chainDb,
+		shyftDb:		  shyftDb,
 		eventMux:         ctx.EventMux,
 		peers:            peers,
 		reqDist:          newRequestDistributor(peers, quitSync),
@@ -105,9 +110,9 @@ func New(ctx *node.ServiceContext, config *eth.Config) (*LightEthereum, error) {
 		shutdownChan:     make(chan bool),
 		networkId:        config.NetworkId,
 		bloomRequests:    make(chan chan *bloombits.Retrieval),
-		bloomIndexer:     eth.NewBloomIndexer(chainDb, light.BloomTrieFrequency),
-		chtIndexer:       light.NewChtIndexer(chainDb, true),
-		bloomTrieIndexer: light.NewBloomTrieIndexer(chainDb, true),
+		bloomIndexer:     eth.NewBloomIndexer(chainDb, nil, light.BloomTrieFrequency),
+		chtIndexer:       light.NewChtIndexer(chainDb, nil, true),
+		bloomTrieIndexer: light.NewBloomTrieIndexer(chainDb, nil, true),
 	}
 
 	leth.relay = NewLesTxRelay(peers, leth.reqDist)
@@ -126,7 +131,7 @@ func New(ctx *node.ServiceContext, config *eth.Config) (*LightEthereum, error) {
 	}
 
 	leth.txPool = light.NewTxPool(leth.chainConfig, leth.blockchain, leth.relay)
-	if leth.protocolManager, err = NewProtocolManager(leth.chainConfig, true, ClientProtocolVersions, config.NetworkId, leth.eventMux, leth.engine, leth.peers, leth.blockchain, nil, chainDb, leth.odr, leth.relay, quitSync, &leth.wg); err != nil {
+	if leth.protocolManager, err = NewProtocolManager(leth.chainConfig, true, ClientProtocolVersions, config.NetworkId, leth.eventMux, leth.engine, leth.peers, leth.blockchain, nil, chainDb, shyftDb, leth.odr, leth.relay, quitSync, &leth.wg); err != nil {
 		return nil, err
 	}
 	leth.ApiBackend = &LesApiBackend{leth, nil}
