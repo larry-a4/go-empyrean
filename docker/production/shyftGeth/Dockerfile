@@ -17,9 +17,8 @@ COPY --from=build-env /bin/geth /bin/
 COPY --from=build-env /bin/bootnode /bin/
 
 COPY ./shyft-cli/ ./shyft-cli/
-COPY ./unlockPasswords.txt ./
 COPY ./wait-for.sh ./
 COPY ./ShyftNetwork.json ./
 COPY ./config.toml ./
 
-CMD ["./shyft-cli/initShyftGeth.sh", "./shyft-cli/startShyftGeth.sh"]
+CMD ["sh","-c","./shyft-cli/initShyftGeth.sh && ./shyft-cli/startShyftGeth.sh"]
