@@ -1,1 +1,0 @@
-psql -U postgres -d shyftdbtest -f drop_tables_test.psql

@@ -571,3 +571,40 @@ func SGetInternalTransaction(txHash string) (string, error) {
 	}
 	return internaltx, nil
 }
+
+func SGetAllAccountBlocks() (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	var arr AccountBlockArray
+	var accountBlockJSON string
+	tx, _ := db.db.Begin()
+	rows, err := db.db.Query(`SELECT * FROM accountblocks`)
+	tx.Commit()
+	if err != nil {
+		fmt.Println("err")
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var acct, blockhash string
+		var delta, txCount int64
+
+		err = rows.Scan(
+			&acct, &blockhash, &delta, &txCount,
+		)
+
+		arr.AccountBlocks = append(arr.AccountBlocks, AccountBlock{
+			Acct: 		acct,
+			Blockhash:  blockhash,
+			Delta: 		delta,
+			TxCount: 	txCount,
+		})
+
+		accountBlocks, _ := json.Marshal(arr.AccountBlocks)
+		accountBlocksJSON := string(accountBlocks)
+		accountBlockJSON = accountBlocksJSON
+	}
+	return accountBlockJSON, nil
+}

@@ -1,4 +1,4 @@
-package shyftschema
+package ethdb
 
 import (
 	"fmt"
@@ -45,11 +45,11 @@ type Block struct {
 	Age        time.Time `db:"age"`
 	ParentHash string    `db:"parenthash"`
 	UncleHash  string    `db:"unclehash"`
-	Difficulty int64     `db:"difficulty"`
+	Difficulty string     `db:"difficulty"`
 	Size       string    `db:"size"`
 	Nonce      int64     `db:"nonce"`
-	Rewards    int64     `db:"rewards"`
-	Number     int64     `db:"number"`
+	Rewards    string     `db:"rewards"`
+	Number     string     `db:"number"`
 }
 
 // BlocksTable sql for Blocks
@@ -77,6 +77,10 @@ type AccountBlock struct {
 	Blockhash string `db:"blockhash"`
 	Delta     int64  `db:"delta"`
 	TxCount   int64  `db:"txcount"`
+}
+
+type AccountBlockArray struct {
+	AccountBlocks []AccountBlock
 }
 
 const accountBlocksTable = `

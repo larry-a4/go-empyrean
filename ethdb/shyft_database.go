@@ -2,7 +2,6 @@ package ethdb
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/ShyftNetwork/go-empyrean/shyft_schema"
 	"github.com/lib/pq"
 	"strings"
 	"database/sql"
@@ -87,7 +86,7 @@ func InitDB(flag bool) (*sqlx.DB, error) {
 	}
 	// connect to the designated db & create tables if necessary
 	blockExplorerDb = Connect(ShyftConnectStr())
-	blockExplorerDb.MustExec(shyftschema.MakeTableQuery())
+	blockExplorerDb.MustExec(MakeTableQuery())
 	return blockExplorerDb, nil
 }
 
@@ -203,7 +202,7 @@ func (db *SPGDatabase) CreateAccount(addr string, balance string, nonce string) 
 	addr = strings.ToLower(addr)
 	return db.Transact(func(tx *sqlx.Tx) error {
 
-		accountStmnt := shyftschema.FindOrCreateAcctStmnt
+		accountStmnt := FindOrCreateAcctStmnt
 
 		if _, err := tx.Exec(accountStmnt, addr, balance, nonce); err != nil {
 			return err
@@ -219,12 +218,12 @@ func (db *SPGDatabase) UpdateMinerAccount(addr string, blockHash string, reward 
 
 	return db.Transact(func(tx *sqlx.Tx) error {
 		// Updates and/or Creates Account for Miner if it doesnt exist
-		_, err := tx.Exec(shyftschema.UpdateBalanceNonce, addr, rewardInt)
+		_, err := tx.Exec(UpdateBalanceNonce, addr, rewardInt)
 		if err != nil {
 			panic(err)
 		}
 		if rewardInt != 0 {
-			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, addr, blockHash, rewardInt)
+			_, err = tx.Exec(FindOrCreateAcctBlockStmnt, addr, blockHash, rewardInt)
 			if err != nil {
 				panic(err)
 			}
@@ -260,7 +259,7 @@ func (db *SPGDatabase) InsertTx(txData stypes.ShyftTxEntryPretty) error {
 			var one = big.NewInt(-1)
 			fromAcctDebit := new(big.Int).Mul(toAcctCredit, one)
 			// Add Transaction Table entry
-			_, err = tx.Exec(shyftschema.CreateTxTableStmnt, txHash, strings.ToLower(txData.From),
+			_, err = tx.Exec(CreateTxTableStmnt, txHash, strings.ToLower(txData.From),
 				strings.ToLower(txData.To), strings.ToLower(txData.BlockHash), txData.BlockNumber, txData.Amount,
 				txData.GasPrice, txData.Gas, txData.GasLimit, txData.Cost, txData.Nonce, txData.IsContract,
 				txData.Status, txData.Age, txData.Data)
@@ -270,24 +269,24 @@ func (db *SPGDatabase) InsertTx(txData stypes.ShyftTxEntryPretty) error {
 			}
 			// Update account balances and account Nonces
 			// Updates/Creates Account for To
-			_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit.String())
+			_, err = tx.Exec(UpdateBalanceNonce, acctAddrs[0], toAcctCredit.String())
 			if err != nil {
 				fmt.Println("UPDATE BALANCE NONCE ISSUE")
 				panic(err)
 			}
 			//Update/Create TO accountblock
-			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], txData.BlockHash, toAcctCredit.String())
+			_, err = tx.Exec(FindOrCreateAcctBlockStmnt, acctAddrs[0], txData.BlockHash, toAcctCredit.String())
 			if err != nil {
 				panic(err)
 			}
 			if acctAddrs[1] != "genesis" {
 				// Updates/Creates Account for From
-				_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit.String())
+				_, err = tx.Exec(UpdateBalanceNonce, acctAddrs[1], fromAcctDebit.String())
 				if err != nil {
 					panic(err)
 				}
 				//Update/Create FROM accountblock
-				_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], txData.BlockHash, fromAcctDebit.String())
+				_, err = tx.Exec(FindOrCreateAcctBlockStmnt, acctAddrs[1], txData.BlockHash, fromAcctDebit.String())
 				if err != nil {
 					panic(err)
 				}
@@ -308,28 +307,28 @@ func (db *SPGDatabase) InsertInternals(i stypes.InteralWrite) error {
 		fromAcctDebit := -1 * toAcctCredit
 		// Update account balances and account Nonces
 		// Updates/Creates Account for To
-		_, err := tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
+		_, err := tx.Exec(UpdateBalanceNonce, acctAddrs[0], toAcctCredit)
 		if err != nil {
 			panic(err)
 		}
 		// Updates/Creates Account for From
-		_, err = tx.Exec(shyftschema.UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
+		_, err = tx.Exec(UpdateBalanceNonce, acctAddrs[1], fromAcctDebit)
 		if err != nil {
 			panic(err)
 		}
 		// // Add Internal Transaction Table entry
-		_, err = tx.Exec(shyftschema.CreateInternalTxTableStmnt, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.BlockHash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output)
+		_, err = tx.Exec(CreateInternalTxTableStmnt, i.Action, strings.ToLower(i.Hash), strings.ToLower(i.BlockHash), strings.ToLower(i.From), strings.ToLower(i.To), i.Value, i.Gas, i.GasUsed, i.Time, i.Input, i.Output)
 		if err != nil {
 			panic(err)
 		}
 		if i.Value != "0" {
 			//Update/Create TO accountblock
-			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
+			_, err = tx.Exec(FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
 			if err != nil {
 				panic(err)
 			}
 			//Update/Create FROM accountblock
-			_, err = tx.Exec(shyftschema.FindOrCreateAcctBlockStmnt, acctAddrs[1], i.BlockHash, fromAcctDebit)
+			_, err = tx.Exec(FindOrCreateAcctBlockStmnt, acctAddrs[1], i.BlockHash, fromAcctDebit)
 			if err != nil {
 				panic(err)
 			}
@@ -348,7 +347,7 @@ func (db *SPGDatabase) RollbackPgDb(blockheaders []string) error {
 
 	return db.Transact(func(tx *sqlx.Tx) error {
 		acctBlockStmnt := `SELECT * FROM accountblocks WHERE accountblocks.blockhash = ANY($1)`
-		accountBlocks := []shyftschema.AccountBlock{}
+		accountBlocks := []AccountBlock{}
 
 		// Get all accountblocks containing the blockhash
 		err := tx.Select(&accountBlocks, acctBlockStmnt, pq.Array(blockheaders))
@@ -358,7 +357,7 @@ func (db *SPGDatabase) RollbackPgDb(blockheaders []string) error {
 		// Rollback account balances
 		for _, acctBlock := range accountBlocks {
 			// Get delta and txCount from accountblocks and adjust account balance and account nonce accordingly
-			_, err = tx.Exec(shyftschema.AccountRollback, acctBlock.Acct, int(acctBlock.Delta), int(acctBlock.TxCount))
+			_, err = tx.Exec(AccountRollback, acctBlock.Acct, int(acctBlock.Delta), int(acctBlock.TxCount))
 			if err != nil {
 				panic(err)
 			}
@@ -370,18 +369,18 @@ func (db *SPGDatabase) RollbackPgDb(blockheaders []string) error {
 			panic(err)
 		}
 		// Delete all transactions containing the blockhash
-		_, err = tx.Exec(shyftschema.TransactionRollback, pq.Array(blockheaders))
+		_, err = tx.Exec(TransactionRollback, pq.Array(blockheaders))
 		if err != nil {
 			panic(err)
 		}
 		// Delete all internal transactions containing the blockhash
-		_, err = tx.Exec(shyftschema.InternalTransactionRollback, pq.Array(blockheaders))
+		_, err = tx.Exec(InternalTransactionRollback, pq.Array(blockheaders))
 		if err != nil {
 			panic(err)
 		}
 
 		// Delete all blocks whose hash is within the blockheader array
-		_, err = tx.Exec(shyftschema.BlockRollback, pq.Array(blockheaders))
+		_, err = tx.Exec(BlockRollback, pq.Array(blockheaders))
 		if err != nil {
 			panic(err)
 		}
@@ -428,8 +427,6 @@ func DbName() string {
 // CreatePgDb - Creates a DB
 func CreatePgDb(dbName string) {
 	conn := Connect(ConnectionStr())
-	fmt.Println("CONNECTION STRING", conn, "\n")
-	fmt.Println("DBNAME", dbName, "\n")
 	sqlCmd := fmt.Sprintf(`CREATE DATABASE %s;`, dbName)
 	_, err := conn.Exec(sqlCmd)
 	if err != nil {

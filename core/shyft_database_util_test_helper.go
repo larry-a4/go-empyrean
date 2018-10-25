@@ -55,7 +55,7 @@ func CreateTestReceipts() []*types.Receipt {
 func CreateTestBlocks() []*types.Block {
 	block1 := types.NewBlock(&types.Header{Number: big.NewInt(323)}, CreateTestTransactions(), nil, CreateTestReceipts())
 	block2 := types.NewBlock(&types.Header{Number: big.NewInt(322)}, CreateTestTransactions(), nil, CreateTestReceipts())
-	block3 := types.NewBlock(&types.Header{Number: big.NewInt(321)}, CreateTestTransactions(), nil, CreateTestReceipts())
+	block3 := types.NewBlock(&types.Header{Number: big.NewInt(321)}, CreateTestContractTransactions(), nil, CreateTestReceipts())
 	blocks := []*types.Block{block1, block2, block3}
 
 	return blocks
