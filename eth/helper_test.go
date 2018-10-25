@@ -65,10 +65,10 @@ func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func
 
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
 	chain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, blocks, generator)
+	shyftdb.TruncateTables()
 	if _, err := blockchain.InsertChain(chain); err != nil {
 		panic(err)
 	}
-
 	pm, err := NewProtocolManager(gspec.Config, mode, DefaultConfig.NetworkId, evmux, &testTxPool{added: newtx}, engine, blockchain, db, shyftdb)
 	if err != nil {
 		return nil, nil, nil, err

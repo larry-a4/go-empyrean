@@ -17,7 +17,6 @@ import (
 
 var blockExplorerDb *sqlx.DB
 var sDb *sqlx.DB
-//var ActiveTestDb string
 
 const (
 	defaultTestDb  = "shyftdbtest"
@@ -33,7 +32,7 @@ type SPGDatabase struct {
 	db *sqlx.DB   // PostgresDB instance
 }
 
-// NewLDBDatabase returns a LevelDB wrapped object.
+// NewLDBDatabase returns a PostgresDB wrapped object.
 func NewShyftDatabase() (*SPGDatabase, error) {
 	if blockExplorerDb == nil {
 		_, err := InitDB(false)
@@ -64,6 +63,76 @@ func NewTestInstanceShyftDatabase() (*SPGDatabase, error) {
 
 func ReturnShyftDatabase() (*SPGDatabase, error) {
 	return NewShyftDatabase()
+}
+
+// InitDB - initalizes a Postgresql Database for use by the Blockexplorer
+func InitDB(flag bool) (*sqlx.DB, error) {
+	// To set the environment you can run the program with an ENV variable DBENV.
+	// DBENV defaults to local for purposes of running the correct local
+	// database connection parameters but will use docker connection parameters if DBENV=docker
+	if flag {
+		DbTestName := AssignTestDbInstanceName()
+		DeletePgDb(DbTestName)
+		exist, _ := DbExists(DbTestName)
+		if !exist {
+			CreatePgDb(DbTestName)
+		}
+	} else {
+		// Check for existence of Database
+		exist, _ := DbExists(DbName())
+		if !exist {
+			// create the db
+			CreatePgDb(DbName())
+		}
+	}
+	// connect to the designated db & create tables if necessary
+	blockExplorerDb = Connect(ShyftConnectStr())
+	blockExplorerDb.MustExec(shyftschema.MakeTableQuery())
+	return blockExplorerDb, nil
+}
+
+func stripNumber(str string) int {
+	re := regexp.MustCompile(`\w*_([0-9]+)$`)
+	match := re.FindStringSubmatch(str)
+	d, err := strconv.Atoi(match[1])
+	if err != nil {
+		return -1
+	}
+	return d
+}
+
+func intInSlice(a int, list []int) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+// AssignTestDbInstanceName - returns a Db Name for testing
+func AssignTestDbInstanceName() string {
+	// returns name of current test db
+	dbNameAssigned := "_1"
+	TestDbInstances = append(TestDbInstances, dbNameAssigned)
+	var dbNumbersUsed []int
+	for _, x := range TestDbInstances {
+		dbNumbersUsed = append(dbNumbersUsed, stripNumber(x))
+		fmt.Println(dbNumbersUsed)
+	}
+
+	dbNum := false
+	dbInt := 1
+	for dbNum == false {
+		if intInSlice(dbInt, dbNumbersUsed) {
+			dbInt++
+		} else {
+			dbNum = true
+		}
+	}
+	dbNameAssigned = defaultTestDb + "_" + strconv.Itoa(dbInt)
+	TestDbInstances = append(TestDbInstances, dbNameAssigned)
+	return dbNameAssigned
 }
 
 func (db *SPGDatabase) AccountExists(addr string) (string, string, error) {
@@ -327,41 +396,6 @@ func (db *SPGDatabase) RollbackPgDb(blockheaders []string) error {
 	return nil
 }
 
-// DBConnection returns a connection to the PG BlockExporer DB
-//func DBConnection() (*sqlx.DB, error) {
-//	if blockExplorerDb == nil {
-//		_, err := InitDB()
-//		if err != nil {
-//			return nil, err
-//		}
-//	}
-//	conn := blockExplorerDb
-//	conn.Ping()
-//	return conn, nil
-//}
-
-// InitDB - initalizes a Postgresql Database for use by the Blockexplorer
-func InitDB(flag bool) (*sqlx.DB, error) {
-	// To set the environment you can run the program with an ENV variable DBENV.
-	// DBENV defaults to local for purposes of running the correct local
-	// database connection parameters but will use docker connection parameters if DBENV=docker
-	if flag {
-		DbName := AssignTestDbInstanceName()
-		CreatePgDb(DbName)
-	} else {
-		// Check for existence of Database
-		exist, _ := DbExists(DbName())
-		if !exist {
-			// create the db
-			CreatePgDb(DbName())
-		}
-	}
-	// connect to the designated db & create tables if necessary
-	blockExplorerDb = Connect(ShyftConnectStr())
-	blockExplorerDb.MustExec(shyftschema.MakeTableQuery())
-	return blockExplorerDb, nil
-}
-
 // ShyftConnectStr - Returns the Connection String With The appropriate database
 func ShyftConnectStr() string {
 	return fmt.Sprintf("%s%s%s", ConnectionStr(), " dbname=", DbName())
@@ -394,6 +428,8 @@ func DbName() string {
 // CreatePgDb - Creates a DB
 func CreatePgDb(dbName string) {
 	conn := Connect(ConnectionStr())
+	fmt.Println("CONNECTION STRING", conn, "\n")
+	fmt.Println("DBNAME", dbName, "\n")
 	sqlCmd := fmt.Sprintf(`CREATE DATABASE %s;`, dbName)
 	_, err := conn.Exec(sqlCmd)
 	if err != nil {
@@ -464,53 +500,5 @@ func (db *SPGDatabase) TruncateTables() {
 	}
 }
 
-func stripNumber(str string) int {
 
-	re := regexp.MustCompile(`\w*_([0-9]+)$`)
-	match := re.FindStringSubmatch(str)
-	d, err := strconv.Atoi(match[1])
-	if err != nil {
-		return -1
-	}
-	return d
-}
-
-func intInSlice(a int, list []int) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
-// AssignTestDbInstanceName - returns a Db Name for testing
-func AssignTestDbInstanceName() string {
-	// returns name of current test db
-	var dbNameAssigned string
-	if len(TestDbInstances) == 0 {
-		dbNameAssigned = defaultTestDb + "_1"
-		TestDbInstances = append(TestDbInstances, dbNameAssigned)
-		return dbNameAssigned
-	}
-
-	var dbNumbersUsed []int
-	for _, x := range TestDbInstances {
-		dbNumbersUsed = append(dbNumbersUsed, stripNumber(x))
-		fmt.Println(dbNumbersUsed)
-	}
-
-	dbNum := false
-	dbInt := 1
-	for dbNum == false {
-		if intInSlice(dbInt, dbNumbersUsed) {
-			dbInt++
-		} else {
-			dbNum = true
-		}
-	}
-	dbNameAssigned = defaultTestDb + "_" + strconv.Itoa(dbInt)
-	TestDbInstances = append(TestDbInstances, dbNameAssigned)
-	return dbNameAssigned
-}
 
