@@ -50,6 +50,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/gorilla/mux"
 	"net/http"
+	"flag"
 )
 
 var BlockchainObject *core.BlockChain
@@ -238,7 +239,9 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	DebugApi.eth = eth
 	DebugApi.config = chainConfig
 	//@NOTE Shyft Tracer
-	InitTracerEnv()
+	if flag.Lookup("test.v") == nil {
+		InitTracerEnv()
+	}
 
 	return eth, nil
 }

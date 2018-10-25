@@ -117,7 +117,6 @@ func AssignTestDbInstanceName() string {
 	var dbNumbersUsed []int
 	for _, x := range TestDbInstances {
 		dbNumbersUsed = append(dbNumbersUsed, stripNumber(x))
-		fmt.Println(dbNumbersUsed)
 	}
 
 	dbNum := false

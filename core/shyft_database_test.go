@@ -111,8 +111,9 @@ func TestInsertTx(t *testing.T) {
 			panic(err)
 		}
 		if len(accountSlice) != 2 {
-			t.Errorf("Got %v db transactions created -  Expected 2", len(accountSlice))
+			t.Errorf("Got %v db accounts created -  Expected 2", len(accountSlice))
 		}
+
 		toAcct := accountSlice[0]
 		fromAcct := accountSlice[1]
 		if toAcct.Addr != txData.To && toAcct.Balance != tx[0].Value().String() && toAcct.Nonce != 1 {
@@ -213,7 +214,7 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 		var accountSlice []ethdb.Account
 		var accountBlockSlice []ethdb.AccountBlock
 		var blockSlice []ethdb.Block
-		//var newDbAccounts shyftschema.Account
+		//var newDbAccounts ethdb.Account
 
 		_, blockHashes, db := insertBlocksTransactions()
 		db.RollbackPgDb(blockHashes[1:])
@@ -276,7 +277,7 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 		var accountSlice []ethdb.Account
 		var accountBlockSlice []ethdb.AccountBlock
 		var blockSlice []ethdb.Block
-		//var newDbAccounts shyftschema.Account
+		//var newDbAccounts ethdb.Account
 
 		_, blockHashes, db := insertBlocksTransactions()
 		// Rollback 2 blocks
