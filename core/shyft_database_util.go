@@ -79,9 +79,9 @@ func WriteShyftGen(db ethdb.SDatabase, gen *Genesis, block *types.Block) {
 // WriteShyftBlockZero writes block 0 to postgres db
 func WriteShyftBlockZero(db ethdb.SDatabase, block *types.Block, gen *Genesis) error {
 
-	i, error := strconv.ParseInt(block.Time().String(), 10, 64)
-	if error != nil {
-		panic(error)
+	i, err := strconv.ParseInt(block.Time().String(), 10, 64)
+	if err != nil {
+		panic(err)
 	}
 	age := time.Unix(i, 0)
 

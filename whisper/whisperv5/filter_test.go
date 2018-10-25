@@ -20,7 +20,6 @@ import (
 	"math/big"
 	mrand "math/rand"
 	"os"
-	"os/exec"
 	"testing"
 	"time"
 
@@ -31,9 +30,7 @@ import (
 var seed int64
 
 func TestMain(m *testing.M) {
-	exec.Command("/bin/sh", "../../shyft-cli/shyftTestDbClean.sh")
 	retCode := m.Run()
-	exec.Command("/bin/sh", "../../dao_shyft-cli/shyftTestDbClean.sh")
 	os.Exit(retCode)
 }
 
