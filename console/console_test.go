@@ -93,8 +93,6 @@ func TestMain(m *testing.M) {
 // Please ensure you call Close() on the returned tester to avoid leaks.
 func newTester(t *testing.T, confOverride func(*eth.Config)) *tester {
 	// Create a temporary storage for the node keys and initialize it
-	core.TruncateTables()
-
 	workspace, err := ioutil.TempDir("", "console-tester-")
 	if err != nil {
 		t.Fatalf("failed to create temporary keystore: %v", err)

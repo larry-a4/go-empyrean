@@ -28,6 +28,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
+	"flag"
 )
 
 // So we can deterministically seed different blockchains
@@ -257,6 +258,9 @@ func newCanonical(engine consensus.Engine, n int, full bool) (ethdb.Database, et
 	if full {
 		// Full block-chain requested
 		blocks := makeBlockChain(genesis, n, engine, db, shyftdb, canonicalSeed)
+		if flag.Lookup("test.v") != nil {
+			shyftdb.TruncateTables()
+		}
 		_, err := blockchain.InsertChain(blocks)
 		return db, shyftdb, blockchain, err
 	}

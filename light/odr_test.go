@@ -32,7 +32,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
-	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
@@ -244,32 +243,18 @@ func testChainGen(i int, block *core.BlockGen) {
 }
 
 func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
-	eth.NewShyftTestLDB()
-	shyftTracer := new(eth.ShyftTracer)
-	core.SetIShyftTracer(shyftTracer)
-
-	ethConf := &eth.Config{
-		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-		Etherbase: common.HexToAddress(testAddress),
-		Ethash: ethash.Config{
-			PowMode: ethash.ModeTest,
-		},
-	}
-
-	eth.SetGlobalConfig(ethConf)
-	eth.InitTracerEnv()
-
 	var (
 		sdb, _  = ethdb.NewMemDatabase()
 		ldb, _  = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewShyftDatabase()
 		gspec   = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
 		genesis = gspec.MustCommit(sdb)
 	)
 	gspec.MustCommit(ldb)
 	// Assemble the test environment
-	blockchain, _ := core.NewBlockChain(sdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{})
-	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), sdb, 4, testChainGen)
-	core.TruncateTables()
+	blockchain, _ := core.NewBlockChain(sdb, shyftdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{})
+	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), sdb, shyftdb, 4, testChainGen)
+	shyftdb.TruncateTables()
 	if _, err := blockchain.InsertChain(gchain); err != nil {
 		t.Fatal(err)
 	}

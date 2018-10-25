@@ -16,7 +16,7 @@ import (
 )
 
 var blockExplorerDb *sqlx.DB
-
+var sDb *sqlx.DB
 //var ActiveTestDb string
 
 const (
@@ -36,7 +36,21 @@ type SPGDatabase struct {
 // NewLDBDatabase returns a LevelDB wrapped object.
 func NewShyftDatabase() (*SPGDatabase, error) {
 	if blockExplorerDb == nil {
-		_, err := InitDB()
+		_, err := InitDB(false)
+		if err != nil {
+			return nil, err
+		}
+	}
+	conn := blockExplorerDb
+	conn.Ping()
+	return &SPGDatabase{
+		db:  conn,
+	}, nil
+}
+
+func NewTestInstanceShyftDatabase() (*SPGDatabase, error) {
+	if blockExplorerDb == nil {
+		_, err := InitDB(true)
 		if err != nil {
 			return nil, err
 		}
@@ -310,29 +324,33 @@ func (db *SPGDatabase) RollbackPgDb(blockheaders []string) error {
 }
 
 // DBConnection returns a connection to the PG BlockExporer DB
-func DBConnection() (*sqlx.DB, error) {
-	if blockExplorerDb == nil {
-		_, err := InitDB()
-		if err != nil {
-			return nil, err
-		}
-	}
-	conn := blockExplorerDb
-	conn.Ping()
-	return conn, nil
-}
+//func DBConnection() (*sqlx.DB, error) {
+//	if blockExplorerDb == nil {
+//		_, err := InitDB()
+//		if err != nil {
+//			return nil, err
+//		}
+//	}
+//	conn := blockExplorerDb
+//	conn.Ping()
+//	return conn, nil
+//}
 
 // InitDB - initalizes a Postgresql Database for use by the Blockexplorer
-func InitDB() (*sqlx.DB, error) {
+func InitDB(flag bool) (*sqlx.DB, error) {
 	// To set the environment you can run the program with an ENV variable DBENV.
 	// DBENV defaults to local for purposes of running the correct local
 	// database connection parameters but will use docker connection parameters if DBENV=docker
-
-	// Check for existence of Database
-	exist, _ := DbExists(DbName())
-	if !exist {
-		// create the db
-		CreatePgDb(DbName())
+	if flag {
+		DbName := AssignTestDbInstanceName()
+		CreatePgDb(DbName)
+	} else {
+		// Check for existence of Database
+		exist, _ := DbExists(DbName())
+		if !exist {
+			// create the db
+			CreatePgDb(DbName())
+		}
 	}
 	// connect to the designated db & create tables if necessary
 	blockExplorerDb = Connect(ShyftConnectStr())
@@ -364,8 +382,8 @@ func DbName() string {
 	if flag.Lookup("test.v") == nil {
 		return defaultDb
 	} else {
-		dbTestName := AssignTestDbInstanceName()
-		return dbTestName
+		//dbTestName := AssignTestDbInstanceName()
+		return defaultTestDb
 	}
 }
 
@@ -432,14 +450,10 @@ func DbExists(dbname string) (bool, error) {
 }
 
 // TruncateTables - Is primarily user to clear the pg database between unit tests
-func TruncateTables() {
-	sqldb, err := DBConnection()
-	if err != nil {
-		panic(err)
-	}
-	tx, _ := sqldb.Begin()
+func (db *SPGDatabase) TruncateTables() {
+	tx, _ := db.db.Begin()
 	sqlStatement := `TRUNCATE TABLE txs, accounts, blocks, internaltxs RESTART IDENTITY CASCADE;`
-	_, err = tx.Exec(sqlStatement)
+	_, err := tx.Exec(sqlStatement)
 	tx.Commit()
 	if err != nil {
 		panic(err)
@@ -478,6 +492,7 @@ func AssignTestDbInstanceName() string {
 	var dbNumbersUsed []int
 	for _, x := range TestDbInstances {
 		dbNumbersUsed = append(dbNumbersUsed, stripNumber(x))
+		fmt.Println(dbNumbersUsed)
 	}
 
 	dbNum := false

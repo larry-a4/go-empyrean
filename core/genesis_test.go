@@ -41,7 +41,6 @@ func TestDefaultGenesisBlock(t *testing.T) {
 }
 
 func TestSetupGenesis(t *testing.T) {
-	//TruncateTables()
 	var (
 		customghash = common.HexToHash("0x89c99d90b79719238d2645c7642f2c9295246e80775b38cfd162b696817fbd50")
 		customg     = Genesis{

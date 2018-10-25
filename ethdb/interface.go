@@ -60,4 +60,5 @@ type SDatabase interface {
 	InsertTx(txData stypes.ShyftTxEntryPretty) error
 	InsertInternals(i stypes.InteralWrite) error
 	RollbackPgDb(blockheaders []string) error
+	TruncateTables()
 }

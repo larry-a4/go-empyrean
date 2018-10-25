@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
-	"os/exec"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
@@ -33,13 +32,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
-
-func TestMain(m *testing.M) {
-	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
-	retCode := m.Run()
-	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
-	os.Exit(retCode)
-}
 
 func BenchmarkInsertChain_empty_memdb(b *testing.B) {
 	benchInsertChain(b, false, nil)
@@ -155,6 +147,7 @@ func genUncles(i int, gen *BlockGen) {
 func benchInsertChain(b *testing.B, disk bool, gen func(int, *BlockGen)) {
 	// Create the database in memory or in a temporary directory.
 	var db ethdb.Database
+	var shyftdb ethdb.SDatabase
 	if !disk {
 		db, _ = ethdb.NewMemDatabase()
 	} else {
@@ -177,11 +170,11 @@ func benchInsertChain(b *testing.B, disk bool, gen func(int, *BlockGen)) {
 		Alloc:  GenesisAlloc{benchRootAddr: {Balance: benchRootFunds}},
 	}
 	genesis := gspec.MustCommit(db)
-	chain, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, b.N, gen)
+	chain, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, b.N, gen)
 
 	// Time the insertion of the new chain.
 	// State and blocks are stored in the same DB.
-	chainman, _ := NewBlockChain(db, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	chainman, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
 	defer chainman.Stop()
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -291,7 +284,11 @@ func benchReadChain(b *testing.B, full bool, count uint64) {
 		if err != nil {
 			b.Fatalf("error opening database at %v: %v", dir, err)
 		}
-		chain, err := NewBlockChain(db, nil, params.TestChainConfig, ethash.NewFaker(), vm.Config{})
+		shyftdb, err := ethdb.NewShyftDatabase()
+		if err != nil {
+			b.Fatalf("error opening database: %v", err)
+		}
+		chain, err := NewBlockChain(db, shyftdb, nil, params.TestChainConfig, ethash.NewFaker(), vm.Config{})
 		if err != nil {
 			b.Fatalf("error creating chain: %v", err)
 		}

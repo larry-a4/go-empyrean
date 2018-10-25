@@ -56,7 +56,6 @@ func deploy(prvKey *ecdsa.PrivateKey, amount *big.Int, backend *backends.Simulat
 	if err != nil {
 		return common.Address{}, err
 	}
-	core.TruncateTables()
 	backend.Commit()
 	return addr, nil
 }
@@ -302,7 +301,6 @@ func TestDeposit(t *testing.T) {
 	}
 
 	time.Sleep(3 * interval)
-	core.InitDB()
 	backend.Commit()
 	if chbook.Balance().Cmp(balance) != 0 {
 		t.Fatalf("expected balance %v, got %v", balance, chbook.Balance())

@@ -56,7 +56,7 @@ func TestProtocolCompatibility(t *testing.T) {
 	for i, tt := range tests {
 		ProtocolVersions = []uint{tt.version}
 
-		pm, _, err := newTestProtocolManager(tt.mode, 0, nil, nil)
+		pm, _, _, err := newTestProtocolManager(tt.mode, 0, nil, nil)
 		if pm != nil {
 			defer pm.Stop()
 		}
@@ -71,8 +71,8 @@ func TestGetBlockHeaders62(t *testing.T) { testGetBlockHeaders(t, 62) }
 func TestGetBlockHeaders63(t *testing.T) { testGetBlockHeaders(t, 63) }
 
 func testGetBlockHeaders(t *testing.T, protocol int) {
-	core.InitDB()
-	pm, _ := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxHashFetch+15, nil, nil)
+	pm, _,shyftdb := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxHashFetch+15, nil, nil)
+	shyftdb.TruncateTables()
 	peer, _ := newTestPeer("peer", protocol, pm, true)
 	defer peer.close()
 
@@ -231,8 +231,7 @@ func TestGetBlockBodies62(t *testing.T) { testGetBlockBodies(t, 62) }
 func TestGetBlockBodies63(t *testing.T) { testGetBlockBodies(t, 63) }
 
 func testGetBlockBodies(t *testing.T, protocol int) {
-	core.DBConnection()
-	pm, _ := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxBlockFetch+15, nil, nil)
+	pm, _, _ := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxBlockFetch+15, nil, nil)
 	peer, _ := newTestPeer("peer", protocol, pm, true)
 	defer peer.close()
 
@@ -339,8 +338,7 @@ func testGetNodeData(t *testing.T, protocol int) {
 		}
 	}
 	// Assemble the test environment
-	core.TruncateTables()
-	pm, db := newTestProtocolManagerMust(t, downloader.FullSync, 4, generator, nil)
+	pm, db, _ := newTestProtocolManagerMust(t, downloader.FullSync, 4, generator, nil)
 	peer, _ := newTestPeer("peer", protocol, pm, true)
 	defer peer.close()
 
@@ -432,7 +430,7 @@ func testGetReceipt(t *testing.T, protocol int) {
 		}
 	}
 	// Assemble the test environment
-	pm, _ := newTestProtocolManagerMust(t, downloader.FullSync, 4, generator, nil)
+	pm, _, _ := newTestProtocolManagerMust(t, downloader.FullSync, 4, generator, nil)
 	peer, _ := newTestPeer("peer", protocol, pm, true)
 	defer peer.close()
 
@@ -462,7 +460,6 @@ func TestDAOChallengeNoVsTimeout(t *testing.T)  { testDAOChallenge(t, false, fal
 func TestDAOChallengeProVsTimeout(t *testing.T) { testDAOChallenge(t, true, true, true) }
 
 func testDAOChallenge(t *testing.T, localForked, remoteForked bool, timeout bool) {
-	core.InitDB()
 	// Reduce the DAO handshake challenge timeout
 	if timeout {
 		defer func(old time.Duration) { daoChallengeTimeout = old }(daoChallengeTimeout)
@@ -473,12 +470,13 @@ func testDAOChallenge(t *testing.T, localForked, remoteForked bool, timeout bool
 		evmux         = new(event.TypeMux)
 		pow           = ethash.NewFaker()
 		db, _         = ethdb.NewMemDatabase()
+		shyftdb, _    = ethdb.NewShyftDatabase()
 		config        = &params.ChainConfig{DAOForkBlock: big.NewInt(1), DAOForkSupport: localForked}
 		gspec         = &core.Genesis{Config: config}
 		genesis       = gspec.MustCommit(db)
-		blockchain, _ = core.NewBlockChain(db, nil, config, pow, vm.Config{})
+		blockchain, _ = core.NewBlockChain(db, shyftdb, nil, config, pow, vm.Config{})
 	)
-	pm, err := NewProtocolManager(config, downloader.FullSync, DefaultConfig.NetworkId, evmux, new(testTxPool), pow, blockchain, db)
+	pm, err := NewProtocolManager(config, downloader.FullSync, DefaultConfig.NetworkId, evmux, new(testTxPool), pow, blockchain, db, shyftdb)
 	if err != nil {
 		t.Fatalf("failed to start test protocol manager: %v", err)
 	}
@@ -500,7 +498,7 @@ func testDAOChallenge(t *testing.T, localForked, remoteForked bool, timeout bool
 	}
 	// Create a block to reply to the challenge if no timeout is simulated
 	if !timeout {
-		blocks, _ := core.GenerateChain(&params.ChainConfig{}, genesis, ethash.NewFaker(), db, 1, func(i int, block *core.BlockGen) {
+		blocks, _ := core.GenerateChain(&params.ChainConfig{}, genesis, ethash.NewFaker(), db, shyftdb, 1, func(i int, block *core.BlockGen) {
 			if remoteForked {
 				block.SetExtra(params.DAOForkBlockExtra)
 			}

@@ -142,6 +142,7 @@ func TestBlockSubscription(t *testing.T) {
 	var (
 		mux         = new(event.TypeMux)
 		db, _       = ethdb.NewMemDatabase()
+		shyftdb, _  = ethdb.NewShyftDatabase()
 		txFeed      = new(event.Feed)
 		rmLogsFeed  = new(event.Feed)
 		logsFeed    = new(event.Feed)
@@ -149,7 +150,7 @@ func TestBlockSubscription(t *testing.T) {
 		backend     = &testBackend{mux, db, 0, txFeed, rmLogsFeed, logsFeed, chainFeed}
 		api         = NewPublicFilterAPI(backend, false)
 		genesis     = new(core.Genesis).MustCommit(db)
-		chain, _    = core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), db, 10, func(i int, gen *core.BlockGen) {})
+		chain, _    = core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), db, shyftdb, 10, func(i int, gen *core.BlockGen) {})
 		chainEvents = []core.ChainEvent{}
 	)
 

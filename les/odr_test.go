@@ -162,11 +162,10 @@ func testOdr(t *testing.T, protocol int, expFail uint64, fn odrTestFn) {
 	rm := newRetrieveManager(peers, dist, nil)
 	db, _ := ethdb.NewMemDatabase()
 	ldb, _ := ethdb.NewMemDatabase()
-	odr := NewLesOdr(ldb, light.NewChtIndexer(db, true), light.NewBloomTrieIndexer(db, true), eth.NewBloomIndexer(db, light.BloomTrieFrequency), rm)
-	// @SHYFT NOTE: Clear pg DB
-	core.TruncateTables()
-	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db)
-	lpm := newTestProtocolManagerMust(t, true, 0, nil, peers, odr, ldb)
+	shyftdb, _ := ethdb.NewShyftDatabase()
+	odr := NewLesOdr(ldb, light.NewChtIndexer(db, shyftdb, true), light.NewBloomTrieIndexer(db, shyftdb, true), eth.NewBloomIndexer(db, shyftdb, light.BloomTrieFrequency), rm)
+	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db, shyftdb)
+	lpm := newTestProtocolManagerMust(t, true, 0, nil, peers, odr, ldb, shyftdb)
 	_, err1, lpeer, err2 := newTestPeerPair("peer", protocol, pm, lpm)
 	select {
 	case <-time.After(time.Millisecond * 100):

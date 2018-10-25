@@ -29,7 +29,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
 
@@ -232,7 +231,6 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 				if r, _ := tm.findSkip(name); r != "" {
 					t.Skip(r)
 				}
-				core.TruncateTables()
 				runTestFunc(runTest, t, name, m, key)
 			})
 		}

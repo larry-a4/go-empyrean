@@ -28,7 +28,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
-	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/light"
@@ -61,8 +60,9 @@ func TestGetBlockHeadersLes2(t *testing.T) {
 
 func testGetBlockHeaders(t *testing.T, protocol int) {
 	db, _ := ethdb.NewMemDatabase()
+	shyftdb, _ := ethdb.NewShyftDatabase()
 	// @SHYFT NOTE: clear pg db
-	pm := newTestProtocolManagerMust(t, false, downloader.MaxHashFetch+15, nil, nil, nil, db)
+	pm := newTestProtocolManagerMust(t, false, downloader.MaxHashFetch+15, nil, nil, nil, db, shyftdb)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
 	defer peer.close()
@@ -192,8 +192,8 @@ func TestGetBlockBodiesLes2(t *testing.T) { testGetBlockBodies(t, 2) }
 
 func testGetBlockBodies(t *testing.T, protocol int) {
 	db, _ := ethdb.NewMemDatabase()
-	core.TruncateTables()
-	pm := newTestProtocolManagerMust(t, false, downloader.MaxBlockFetch+15, nil, nil, nil, db)
+	shyftdb, _ := ethdb.NewShyftDatabase()
+	pm := newTestProtocolManagerMust(t, false, downloader.MaxBlockFetch+15, nil, nil, nil, db, shyftdb)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
 	defer peer.close()
@@ -271,25 +271,9 @@ func TestGetCodeLes2(t *testing.T) { testGetCode(t, 2) }
 func testGetCode(t *testing.T, protocol int) {
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
+	shyftdb, _ := ethdb.NewShyftDatabase()
 
-	//@SHYFT //SETS UP OUR TEST ENV
-	core.TruncateTables()
-	eth.NewShyftTestLDB()
-	shyftTracer := new(eth.ShyftTracer)
-	core.SetIShyftTracer(shyftTracer)
-
-	ethConf := &eth.Config{
-		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-		Etherbase: common.HexToAddress(testAddress),
-		Ethash: ethash.Config{
-			PowMode: ethash.ModeTest,
-		},
-	}
-
-	eth.SetGlobalConfig(ethConf)
-	eth.InitTracerEnv()
-
-	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db)
+	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db, shyftdb)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
 	defer peer.close()
@@ -323,8 +307,8 @@ func TestGetReceiptLes2(t *testing.T) { testGetReceipt(t, 2) }
 func testGetReceipt(t *testing.T, protocol int) {
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
-	core.TruncateTables()
-	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db)
+	shyftdb, _ := ethdb.NewShyftDatabase()
+	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db, shyftdb)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
 	defer peer.close()
@@ -352,8 +336,8 @@ func TestGetProofsLes2(t *testing.T) { testGetProofs(t, 2) }
 func testGetProofs(t *testing.T, protocol int) {
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
-	core.TruncateTables()
-	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db)
+	shyftdb, _ := ethdb.NewShyftDatabase()
+	pm := newTestProtocolManagerMust(t, false, 4, testChainGen, nil, nil, db, shyftdb)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
 	defer peer.close()
@@ -416,8 +400,8 @@ func testGetCHTProofs(t *testing.T, protocol int) {
 	}
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
-	core.TruncateTables()
-	pm := newTestProtocolManagerMust(t, false, int(frequency)+light.HelperTrieProcessConfirmations, testChainGen, nil, nil, db)
+	shyftdb, _ := ethdb.NewShyftDatabase()
+	pm := newTestProtocolManagerMust(t, false, int(frequency)+light.HelperTrieProcessConfirmations, testChainGen, nil, nil, db, shyftdb)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
 	defer peer.close()
@@ -485,8 +469,8 @@ func testGetCHTProofs(t *testing.T, protocol int) {
 func TestGetBloombitsProofs(t *testing.T) {
 	// Assemble the test environment
 	db, _ := ethdb.NewMemDatabase()
-	core.TruncateTables()
-	pm := newTestProtocolManagerMust(t, false, light.BloomTrieFrequency+256, testChainGen, nil, nil, db)
+	shyftdb, _ := ethdb.NewShyftDatabase()
+	pm := newTestProtocolManagerMust(t, false, light.BloomTrieFrequency+256, testChainGen, nil, nil, db, shyftdb)
 	bc := pm.blockchain.(*core.BlockChain)
 	peer, _ := newTestPeer(t, "peer", 2, pm, true)
 	defer peer.close()
@@ -525,8 +509,8 @@ func TestGetBloombitsProofs(t *testing.T) {
 
 func TestTransactionStatusLes2(t *testing.T) {
 	db, _ := ethdb.NewMemDatabase()
-	core.TruncateTables()
-	pm := newTestProtocolManagerMust(t, false, 0, nil, nil, nil, db)
+	shyftdb, _ := ethdb.NewShyftDatabase()
+	pm := newTestProtocolManagerMust(t, false, 0, nil, nil, nil, db, shyftdb)
 	chain := pm.blockchain.(*core.BlockChain)
 	config := core.DefaultTxPoolConfig
 	config.Journal = ""
@@ -571,7 +555,7 @@ func TestTransactionStatusLes2(t *testing.T) {
 	test(tx3, false, txStatus{Status: core.TxStatusPending})
 
 	// generate and add a block with tx1 and tx2 included
-	gchain, _ := core.GenerateChain(params.TestChainConfig, chain.GetBlockByNumber(0), ethash.NewFaker(), db, 1, func(i int, block *core.BlockGen) {
+	gchain, _ := core.GenerateChain(params.TestChainConfig, chain.GetBlockByNumber(0), ethash.NewFaker(), db, shyftdb, 1, func(i int, block *core.BlockGen) {
 		block.AddTx(tx1)
 		block.AddTx(tx2)
 	})
@@ -595,7 +579,7 @@ func TestTransactionStatusLes2(t *testing.T) {
 	test(tx2, false, txStatus{Status: core.TxStatusIncluded, Lookup: &core.TxLookupEntry{BlockHash: block1hash, BlockIndex: 1, Index: 1}})
 
 	// create a reorg that rolls them back
-	gchain, _ = core.GenerateChain(params.TestChainConfig, chain.GetBlockByNumber(0), ethash.NewFaker(), db, 2, func(i int, block *core.BlockGen) {})
+	gchain, _ = core.GenerateChain(params.TestChainConfig, chain.GetBlockByNumber(0), ethash.NewFaker(), db, shyftdb, 2, func(i int, block *core.BlockGen) {})
 	if _, err := chain.InsertChain(gchain); err != nil {
 		panic(err)
 	}

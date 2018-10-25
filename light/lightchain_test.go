@@ -45,8 +45,8 @@ func TestMain(m *testing.M) {
 }
 
 // makeHeaderChain creates a deterministic chain of headers rooted at parent.
-func makeHeaderChain(parent *types.Header, n int, db ethdb.Database, seed int) []*types.Header {
-	blocks, _ := core.GenerateChain(params.TestChainConfig, types.NewBlockWithHeader(parent), ethash.NewFaker(), db, n, func(i int, b *core.BlockGen) {
+func makeHeaderChain(parent *types.Header, n int, db ethdb.Database, shyftdb ethdb.SDatabase, seed int) []*types.Header {
+	blocks, _ := core.GenerateChain(params.TestChainConfig, types.NewBlockWithHeader(parent), ethash.NewFaker(), db, shyftdb, n, func(i int, b *core.BlockGen) {
 		b.SetCoinbase(common.Address{0: byte(seed), 19: byte(i)})
 	})
 	headers := make([]*types.Header, len(blocks))
@@ -59,20 +59,21 @@ func makeHeaderChain(parent *types.Header, n int, db ethdb.Database, seed int) [
 // newCanonical creates a chain database, and injects a deterministic canonical
 // chain. Depending on the full flag, if creates either a full block chain or a
 // header only chain.
-func newCanonical(n int) (ethdb.Database, *LightChain, error) {
+func newCanonical(n int) (ethdb.Database, ethdb.SDatabase, *LightChain, error) {
 	db, _ := ethdb.NewMemDatabase()
+	shyftdb, _ := ethdb.NewShyftDatabase()
 	gspec := core.Genesis{Config: params.TestChainConfig}
 	genesis := gspec.MustCommit(db)
 	blockchain, _ := NewLightChain(&dummyOdr{db: db}, gspec.Config, ethash.NewFaker())
 
 	// Create and inject the requested chain
 	if n == 0 {
-		return db, blockchain, nil
+		return db, shyftdb, blockchain, nil
 	}
 	// Header-only chain requested
-	headers := makeHeaderChain(genesis.Header(), n, db, canonicalSeed)
+	headers := makeHeaderChain(genesis.Header(), n, db, shyftdb, canonicalSeed)
 	_, err := blockchain.InsertHeaderChain(headers, 1)
-	return db, blockchain, err
+	return db, shyftdb, blockchain, err
 }
 
 // newTestLightChain creates a LightChain that doesn't validate anything.
@@ -93,7 +94,7 @@ func newTestLightChain() *LightChain {
 // Test fork of length N starting from block i
 func testFork(t *testing.T, LightChain *LightChain, i, n int, comparator func(td1, td2 *big.Int)) {
 	// Copy old chain up to #i into a new db
-	db, LightChain2, err := newCanonical(i)
+	db, shyftdb, LightChain2, err := newCanonical(i)
 	if err != nil {
 		t.Fatal("could not make new canonical in testFork", err)
 	}
@@ -105,7 +106,7 @@ func testFork(t *testing.T, LightChain *LightChain, i, n int, comparator func(td
 		t.Errorf("chain content mismatch at %d: have hash %v, want hash %v", i, hash2, hash1)
 	}
 	// Extend the newly created chain
-	headerChainB := makeHeaderChain(LightChain2.CurrentHeader(), n, db, forkSeed)
+	headerChainB := makeHeaderChain(LightChain2.CurrentHeader(), n, db, shyftdb, forkSeed)
 	if _, err := LightChain2.InsertHeaderChain(headerChainB, 1); err != nil {
 		t.Fatalf("failed to insert forking chain: %v", err)
 	}
@@ -144,7 +145,7 @@ func TestExtendCanonicalHeaders(t *testing.T) {
 	length := 5
 
 	// Make first chain starting from genesis
-	_, processor, err := newCanonical(length)
+	_, _, processor, err := newCanonical(length)
 	if err != nil {
 		t.Fatalf("failed to make new canonical chain: %v", err)
 	}
@@ -167,7 +168,7 @@ func TestShorterForkHeaders(t *testing.T) {
 	length := 10
 
 	// Make first chain starting from genesis
-	_, processor, err := newCanonical(length)
+	_, _, processor, err := newCanonical(length)
 	if err != nil {
 		t.Fatalf("failed to make new canonical chain: %v", err)
 	}
@@ -192,7 +193,7 @@ func TestLongerForkHeaders(t *testing.T) {
 	length := 10
 
 	// Make first chain starting from genesis
-	_, processor, err := newCanonical(length)
+	_, _, processor, err := newCanonical(length)
 	if err != nil {
 		t.Fatalf("failed to make new canonical chain: %v", err)
 	}
@@ -217,7 +218,7 @@ func TestEqualForkHeaders(t *testing.T) {
 	length := 10
 
 	// Make first chain starting from genesis
-	_, processor, err := newCanonical(length)
+	_, _, processor, err := newCanonical(length)
 	if err != nil {
 		t.Fatalf("failed to make new canonical chain: %v", err)
 	}
@@ -239,12 +240,12 @@ func TestEqualForkHeaders(t *testing.T) {
 // Tests that chains missing links do not get accepted by the processor.
 func TestBrokenHeaderChain(t *testing.T) {
 	// Make chain starting from genesis
-	db, LightChain, err := newCanonical(10)
+	db, shyftdb, LightChain, err := newCanonical(10)
 	if err != nil {
 		t.Fatalf("failed to make new canonical chain: %v", err)
 	}
 	// Create a forked chain, and try to insert with a missing link
-	chain := makeHeaderChain(LightChain.CurrentHeader(), 5, db, forkSeed)[1:]
+	chain := makeHeaderChain(LightChain.CurrentHeader(), 5, db, shyftdb, forkSeed)[1:]
 	if err := testHeaderChainImport(chain, LightChain); err == nil {
 		t.Errorf("broken header chain not reported")
 	}

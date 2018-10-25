@@ -49,43 +49,44 @@ var (
 // newTestProtocolManager creates a new protocol manager for testing purposes,
 // with the given number of blocks already known, and potential notification
 // channels for different events.
-func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, error) {
+func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, ethdb.SDatabase, error) {
 	var (
 		evmux  = new(event.TypeMux)
 		engine = ethash.NewFaker()
 		db, _  = ethdb.NewMemDatabase()
+		shyftdb,_ = ethdb.NewTestInstanceShyftDatabase()
 		gspec  = &core.Genesis{
 			Config: params.TestChainConfig,
 			Alloc:  core.GenesisAlloc{testBank: {Balance: big.NewInt(1000000)}},
 		}
 		genesis       = gspec.MustCommit(db)
-		blockchain, _ = core.NewBlockChain(db, nil, gspec.Config, engine, vm.Config{})
+		blockchain, _ = core.NewBlockChain(db, shyftdb, nil, gspec.Config, engine, vm.Config{})
 	)
+
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	chain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, blocks, generator)
-	core.TruncateTables()
+	chain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, blocks, generator)
 	if _, err := blockchain.InsertChain(chain); err != nil {
 		panic(err)
 	}
 
-	pm, err := NewProtocolManager(gspec.Config, mode, DefaultConfig.NetworkId, evmux, &testTxPool{added: newtx}, engine, blockchain, db)
+	pm, err := NewProtocolManager(gspec.Config, mode, DefaultConfig.NetworkId, evmux, &testTxPool{added: newtx}, engine, blockchain, db, shyftdb)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	pm.Start(1000)
-	return pm, db, nil
+	return pm, db, shyftdb, nil
 }
 
 // newTestProtocolManagerMust creates a new protocol manager for testing purposes,
 // with the given number of blocks already known, and potential notification
 // channels for different events. In case of an error, the constructor force-
 // fails the test.
-func newTestProtocolManagerMust(t *testing.T, mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase) {
-	pm, db, err := newTestProtocolManager(mode, blocks, generator, newtx)
+func newTestProtocolManagerMust(t *testing.T, mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, ethdb.SDatabase) {
+	pm, db, shyftdb, err := newTestProtocolManager(mode, blocks, generator, newtx)
 	if err != nil {
 		t.Fatalf("Failed to create protocol manager: %v", err)
 	}
-	return pm, db
+	return pm, db, shyftdb
 }
 
 // testTxPool is a fake, helper transaction pool for testing purposes

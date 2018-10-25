@@ -21,11 +21,9 @@ package les
 import (
 	"math/rand"
 	"os"
-	"os/exec"
 	"sync"
 	"testing"
 	"time"
-	"github.com/ShyftNetwork/go-empyrean/core"
 )
 
 type testDistReq struct {
@@ -34,10 +32,7 @@ type testDistReq struct {
 }
 
 func TestMain(m *testing.M) {
-	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
-	core.InitDB()
 	retCode := m.Run()
-	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
 	os.Exit(retCode)
 }
 

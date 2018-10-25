@@ -136,7 +136,7 @@ func testRCL() RequestCostList {
 // newTestProtocolManager creates a new protocol manager for testing purposes,
 // with the given number of blocks already known, and potential notification
 // channels for different events.
-func newTestProtocolManager(lightSync bool, blocks int, generator func(int, *core.BlockGen), peers *peerSet, odr *LesOdr, db ethdb.Database) (*ProtocolManager, error) {
+func newTestProtocolManager(lightSync bool, blocks int, generator func(int, *core.BlockGen), peers *peerSet, odr *LesOdr, db ethdb.Database, shyftdb ethdb.SDatabase) (*ProtocolManager, error) {
 	var (
 		evmux  = new(event.TypeMux)
 		engine = ethash.NewFaker()
@@ -154,19 +154,19 @@ func newTestProtocolManager(lightSync bool, blocks int, generator func(int, *cor
 	if lightSync {
 		chain, _ = light.NewLightChain(odr, gspec.Config, engine)
 	} else {
-		blockchain, _ := core.NewBlockChain(db, nil, gspec.Config, engine, vm.Config{})
+		blockchain, _ := core.NewBlockChain(db, shyftdb, nil, gspec.Config, engine, vm.Config{})
 
-		chtIndexer := light.NewChtIndexer(db, false)
+		chtIndexer := light.NewChtIndexer(db, shyftdb, false)
 		chtIndexer.Start(blockchain)
 
-		bbtIndexer := light.NewBloomTrieIndexer(db, false)
+		bbtIndexer := light.NewBloomTrieIndexer(db, shyftdb, false)
 
-		bloomIndexer := eth.NewBloomIndexer(db, params.BloomBitsBlocks)
+		bloomIndexer := eth.NewBloomIndexer(db, shyftdb, params.BloomBitsBlocks)
 		bloomIndexer.AddChildIndexer(bbtIndexer)
 		bloomIndexer.Start(blockchain)
 
-		gchain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, blocks, generator)
-		core.TruncateTables()
+		gchain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, blocks, generator)
+		shyftdb.TruncateTables()
 		if _, err := blockchain.InsertChain(gchain); err != nil {
 			panic(err)
 		}
@@ -179,7 +179,7 @@ func newTestProtocolManager(lightSync bool, blocks int, generator func(int, *cor
 	} else {
 		protocolVersions = ServerProtocolVersions
 	}
-	pm, err := NewProtocolManager(gspec.Config, lightSync, protocolVersions, NetworkId, evmux, engine, peers, chain, nil, db, odr, nil, make(chan struct{}), new(sync.WaitGroup))
+	pm, err := NewProtocolManager(gspec.Config, lightSync, protocolVersions, NetworkId, evmux, engine, peers, chain, nil, db, shyftdb, odr, nil, make(chan struct{}), new(sync.WaitGroup))
 	if err != nil {
 		return nil, err
 	}
@@ -203,8 +203,8 @@ func newTestProtocolManager(lightSync bool, blocks int, generator func(int, *cor
 // with the given number of blocks already known, and potential notification
 // channels for different events. In case of an error, the constructor force-
 // fails the test.
-func newTestProtocolManagerMust(t *testing.T, lightSync bool, blocks int, generator func(int, *core.BlockGen), peers *peerSet, odr *LesOdr, db ethdb.Database) *ProtocolManager {
-	pm, err := newTestProtocolManager(lightSync, blocks, generator, peers, odr, db)
+func newTestProtocolManagerMust(t *testing.T, lightSync bool, blocks int, generator func(int, *core.BlockGen), peers *peerSet, odr *LesOdr, db ethdb.Database, shyftdb ethdb.SDatabase) *ProtocolManager {
+	pm, err := newTestProtocolManager(lightSync, blocks, generator, peers, odr, db, shyftdb)
 	if err != nil {
 		t.Fatalf("Failed to create protocol manager: %v", err)
 	}

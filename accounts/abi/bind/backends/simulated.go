@@ -35,7 +35,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 
-	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/eth/filters"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/event"
@@ -58,6 +57,7 @@ const (
 // the background. Its main purpose is to allow easily testing contract bindings.
 type SimulatedBackend struct {
 	database   ethdb.Database   // In memory database to store our testing data
+	shyftDatabase ethdb.SDatabase
 	blockchain *core.BlockChain // Ethereum blockchain to handle the consensus
 
 	mu           sync.Mutex
@@ -75,27 +75,32 @@ var testDb string
 // for testing purposes.
 func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 	database, _ := ethdb.NewMemDatabase()
-	// core.TruncateTables()
+	shyftdb, err := ethdb.NewShyftDatabase()
+	shyftdb.TruncateTables()
+	if err != nil {
+		panic(err)
+	}
 	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, Alloc: alloc}
 	genesis.MustCommit(database)
-	blockchain, _ := core.NewBlockChain(database, nil, genesis.Config, ethash.NewFaker(), vm.Config{})
-	eth.NewShyftTestLDB()
-	shyftTracer := new(eth.ShyftTracer)
-	core.SetIShyftTracer(shyftTracer)
+	blockchain, _ := core.NewBlockChain(database, shyftdb, nil, genesis.Config, ethash.NewFaker(), vm.Config{})
+	//eth.NewShyftTestLDB()
+	//shyftTracer := new(eth.ShyftTracer)
+	//core.SetIShyftTracer(shyftTracer)
 	backend := &SimulatedBackend{
-		database:   database,
-		blockchain: blockchain,
-		config:     genesis.Config,
-		events:     filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, blockchain}, false),
+		database:   	database,
+		shyftDatabase:	shyftdb,
+		blockchain: 	blockchain,
+		config:     	genesis.Config,
+		events:     	filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, blockchain}, false),
 	}
-	traceConfig := &eth.Config{
-		Genesis:   &genesis,
-		Etherbase: common.HexToAddress(testAddress),
-		Ethash:    ethash.Config{PowMode: ethash.ModeTest},
-	}
-
-	eth.SetGlobalConfig(traceConfig)
-	eth.InitTracerEnv()
+	//traceConfig := &eth.Config{
+	//	Genesis:   &genesis,
+	//	Etherbase: common.HexToAddress(testAddress),
+	//	Ethash:    ethash.Config{PowMode: ethash.ModeTest},
+	//}
+	//
+	//eth.SetGlobalConfig(traceConfig)
+	//eth.InitTracerEnv()
 
 	backend.rollback()
 	return backend
@@ -122,7 +127,7 @@ func (b *SimulatedBackend) Rollback() {
 }
 
 func (b *SimulatedBackend) rollback() {
-	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, 1, func(int, *core.BlockGen) {})
+	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, b.shyftDatabase, 1, func(int, *core.BlockGen) {})
 	statedb, _ := b.blockchain.State()
 
 	b.pendingBlock = blocks[0]
@@ -326,7 +331,7 @@ func (b *SimulatedBackend) SendTransaction(ctx context.Context, tx *types.Transa
 		panic(fmt.Errorf("invalid transaction nonce: got %d, want %d", tx.Nonce(), nonce))
 	}
 
-	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, 1, func(number int, block *core.BlockGen) {
+	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, b.shyftDatabase, 1, func(number int, block *core.BlockGen) {
 		for _, tx := range b.pendingBlock.Transactions() {
 			block.AddTx(tx)
 		}
@@ -405,7 +410,7 @@ func (b *SimulatedBackend) SubscribeFilterLogs(ctx context.Context, query ethere
 func (b *SimulatedBackend) AdjustTime(adjustment time.Duration) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, 1, func(number int, block *core.BlockGen) {
+	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, b.shyftDatabase, 1, func(number int, block *core.BlockGen) {
 		for _, tx := range b.pendingBlock.Transactions() {
 			block.AddTx(tx)
 		}

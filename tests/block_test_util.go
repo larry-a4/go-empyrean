@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"os/exec"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
@@ -95,9 +94,7 @@ type btHeaderMarshaling struct {
 }
 
 func TestMain(m *testing.M) {
-	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
 	retCode := m.Run()
-	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
 	os.Exit(retCode)
 }
 
@@ -109,6 +106,7 @@ func (t *BlockTest) Run() error {
 
 	// import pre accounts & construct test genesis block & state root
 	db, _ := ethdb.NewMemDatabase()
+	shyftdb, _ := ethdb.NewShyftDatabase()
 	gblock, err := t.genesis(config).Commit(db)
 	if err != nil {
 		return err
@@ -120,7 +118,7 @@ func (t *BlockTest) Run() error {
 		return fmt.Errorf("genesis block state root does not match test: computed=%x, test=%x", gblock.Root().Bytes()[:6], t.json.Genesis.StateRoot[:6])
 	}
 
-	chain, err := core.NewBlockChain(db, nil, config, ethash.NewShared(), vm.Config{})
+	chain, err := core.NewBlockChain(db, shyftdb, nil, config, ethash.NewShared(), vm.Config{})
 	if err != nil {
 		return err
 	}
@@ -184,22 +182,6 @@ func (t *BlockTest) insertBlocks(blockchain *core.BlockChain) ([]btBlock, error)
 		}
 		// RLP decoding worked, try to insert into chain:
 		blocks := types.Blocks{cb}
-		// @SHYFT
-		// eth.NewShyftTestLDB()
-		// shyftTracer := new(eth.ShyftTracer)
-		// core.SetIShyftTracer(shyftTracer)
-
-		// ethConf := &eth.Config{
-		// 	Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-		// 	Etherbase: common.HexToAddress(testAddress),
-		// 	Ethash: ethash.Config{
-		// 		PowMode: ethash.ModeTest,
-		// 	},
-		// }
-
-		// eth.SetGlobalConfig(ethConf)
-		// eth.InitTracerEnv()
-		core.TruncateTables()
 		i, err := blockchain.InsertChain(blocks)
 		if err != nil {
 			if b.BlockHeader == nil {

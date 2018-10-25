@@ -18,13 +18,10 @@ package tests
 
 import (
 	"testing"
-
-	"github.com/ShyftNetwork/go-empyrean/core"
 )
 
 func TestBlockchain(t *testing.T) {
 	// t.Parallel()
-	core.TruncateTables()
 	bt := new(testMatcher)
 	// General state tests are 'exported' as blockchain tests, but we can run them natively.
 	bt.skipLoad(`^GeneralStateTests/`)

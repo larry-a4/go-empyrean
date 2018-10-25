@@ -23,8 +23,6 @@ import (
 	"time"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
-	"github.com/ShyftNetwork/go-empyrean/core"
-
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
@@ -43,8 +41,7 @@ func TestStatusMsgErrors62(t *testing.T) { testStatusMsgErrors(t, 62) }
 func TestStatusMsgErrors63(t *testing.T) { testStatusMsgErrors(t, 63) }
 
 func testStatusMsgErrors(t *testing.T, protocol int) {
-	core.InitDB()
-	pm, _ := newTestProtocolManagerMust(t, downloader.FullSync, 0, nil, nil)
+	pm, _, _ := newTestProtocolManagerMust(t, downloader.FullSync, 0, nil, nil)
 	var (
 		genesis = pm.blockchain.Genesis()
 		head    = pm.blockchain.CurrentHeader()
@@ -101,7 +98,7 @@ func TestRecvTransactions63(t *testing.T) { testRecvTransactions(t, 63) }
 
 func testRecvTransactions(t *testing.T, protocol int) {
 	txAdded := make(chan []*types.Transaction)
-	pm, _ := newTestProtocolManagerMust(t, downloader.FullSync, 0, nil, txAdded)
+	pm, _, _ := newTestProtocolManagerMust(t, downloader.FullSync, 0, nil, txAdded)
 	pm.acceptTxs = 1 // mark synced to accept transactions
 	p, _ := newTestPeer("peer", protocol, pm, true)
 	defer pm.Stop()
@@ -128,7 +125,7 @@ func TestSendTransactions62(t *testing.T) { testSendTransactions(t, 62) }
 func TestSendTransactions63(t *testing.T) { testSendTransactions(t, 63) }
 
 func testSendTransactions(t *testing.T, protocol int) {
-	pm, _ := newTestProtocolManagerMust(t, downloader.FullSync, 0, nil, nil)
+	pm, _, _ := newTestProtocolManagerMust(t, downloader.FullSync, 0, nil, nil)
 	defer pm.Stop()
 
 	// Fill the pool with big transactions.

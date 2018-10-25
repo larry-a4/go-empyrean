@@ -55,7 +55,7 @@ type downloadTester struct {
 	genesis *types.Block   // Genesis blocks used by the tester and peers
 	stateDb ethdb.Database // Database used by the tester for syncing from peers
 	peerDb  ethdb.Database // Database of the peers containing all data
-
+	shyftDb ethdb.SDatabase //Shyft postgres instance
 	ownHashes   []common.Hash                  // Hash chain belonging to the tester
 	ownHeaders  map[common.Hash]*types.Header  // Headers belonging to the tester
 	ownBlocks   map[common.Hash]*types.Block   // Blocks belonging to the tester
@@ -76,11 +76,13 @@ type downloadTester struct {
 // newTester creates a new downloader test mocker.
 func newTester() *downloadTester {
 	testdb, _ := ethdb.NewMemDatabase()
+	shyftTestDb, _ := ethdb.NewTestInstanceShyftDatabase()
 	genesis := core.GenesisBlockForTesting(testdb, testAddress, big.NewInt(1000000000))
 
 	tester := &downloadTester{
 		genesis:           genesis,
 		peerDb:            testdb,
+		shyftDb:		   shyftTestDb,
 		ownHashes:         []common.Hash{genesis.Hash()},
 		ownHeaders:        map[common.Hash]*types.Header{genesis.Hash(): genesis.Header()},
 		ownBlocks:         map[common.Hash]*types.Block{genesis.Hash(): genesis},
@@ -94,9 +96,10 @@ func newTester() *downloadTester {
 		peerMissingStates: make(map[string]map[common.Hash]bool),
 	}
 	tester.stateDb, _ = ethdb.NewMemDatabase()
+	shyftdb, _ := ethdb.NewShyftDatabase()
 	tester.stateDb.Put(genesis.Root().Bytes(), []byte{0x00})
 
-	tester.downloader = New(FullSync, tester.stateDb, new(event.TypeMux), tester, nil, tester.dropPeer)
+	tester.downloader = New(FullSync, tester.stateDb, shyftdb, new(event.TypeMux), tester, nil, tester.dropPeer)
 
 	return tester
 }
@@ -107,7 +110,7 @@ func newTester() *downloadTester {
 // reassembly.
 func (dl *downloadTester) makeChain(n int, seed byte, parent *types.Block, parentReceipts types.Receipts, heavy bool) ([]common.Hash, map[common.Hash]*types.Header, map[common.Hash]*types.Block, map[common.Hash]types.Receipts) {
 	// Generate the block chain
-	blocks, receipts := core.GenerateChain(params.TestChainConfig, parent, ethash.NewFaker(), dl.peerDb, n, func(i int, block *core.BlockGen) {
+	blocks, receipts := core.GenerateChain(params.TestChainConfig, parent, ethash.NewFaker(), dl.peerDb, dl.shyftDb, n, func(i int, block *core.BlockGen) {
 		block.SetCoinbase(common.Address{seed})
 
 		// If a heavy chain is requested, delay blocks to raise difficulty
