@@ -62,3 +62,17 @@ type SDatabase interface {
 	RollbackPgDb(blockheaders []string) error
 	TruncateTables()
 }
+
+type SGetters interface {
+	SGetAllBlocks() (string, error)
+	SGetBlock(blockNumber string) string
+	SGetRecentBlock() string
+	SGetAllTransactionsFromBlock(blockNumber string) string
+	SGetAllBlocksMinedByAddress(coinbase string) string
+	SGetAllTransactions() string
+	SGetTransaction(txHash string) string
+	SGetAllAccounts() string
+	SGetAccountTxs(address string) string
+	SGetAllInternalTransactions() string
+	SGetInternalTransaction(txHash string) string
+}

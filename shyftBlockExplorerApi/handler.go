@@ -12,218 +12,193 @@ import (
 	"io/ioutil"
 
 	"github.com/gorilla/mux"
+	"github.com/ShyftNetwork/go-empyrean/ethdb"
 )
 
 // GetTransaction gets txs
 func GetTransaction(w http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//txHash := vars["txHash"]
-	//sqldb, err := core.DBConnection()
-	//getTxResponse := core.SGetTransaction(sqldb, txHash)
-	//
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, getTxResponse)
+	vars := mux.Vars(r)
+	txHash := vars["txHash"]
+	getTxResponse, err := ethdb.SGetTransaction(txHash)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, getTxResponse)
 }
 
 // GetAllTransactions gets txs
 func GetAllTransactions(w http.ResponseWriter, r *http.Request) {
+	txs, err := ethdb.SGetAllTransactions()
 
-	//sqldb, err := core.DBConnection()
-	//
-	//txs := core.SGetAllTransactions(sqldb)
-	//
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, txs)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, txs)
 }
 
 // GetAllTransactions gets txs
 func GetAllTransactionsFromBlock(w http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//blockNumber := vars["blockNumber"]
-	//
-	//sqldb, err := core.DBConnection()
-	//
-	//txsFromBlock := core.SGetAllTransactionsFromBlock(sqldb, blockNumber)
-	//
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, txsFromBlock)
+	vars := mux.Vars(r)
+	blockNumber := vars["blockNumber"]
+	txsFromBlock, err := ethdb.SGetAllTransactionsFromBlock(blockNumber)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, txsFromBlock)
 }
 
 func GetAllBlocksMinedByAddress(w http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//coinbase := vars["coinbase"]
-	//
-	//sqldb, err := core.DBConnection()
-	//
-	//blocksMined := core.SGetAllBlocksMinedByAddress(sqldb, coinbase)
-	//
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, blocksMined)
+	vars := mux.Vars(r)
+	coinbase := vars["coinbase"]
+
+	blocksMined, err := ethdb.SGetAllBlocksMinedByAddress(coinbase)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, blocksMined)
 }
 
 // GetAccount gets balance
 func GetAccount(w http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//address := vars["address"]
-	//
-	//sqldb, err := core.DBConnection()
-	//
-	//getAccountBalance := core.SGetAccount(sqldb, address)
-	//
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, getAccountBalance)
+	vars := mux.Vars(r)
+	address := vars["address"]
+
+	getAccountBalance, err := ethdb.SGetAccount(address)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, getAccountBalance)
 }
 
 // GetAccount gets balance
 func GetAccountTxs(w http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//address := vars["address"]
-	//
-	//sqldb, err := core.DBConnection()
-	//
-	//getAccountTxs := core.SGetAccountTxs(sqldb, address)
-	//
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, getAccountTxs)
+	vars := mux.Vars(r)
+	address := vars["address"]
+
+	getAccountTxs, err := ethdb.SGetAccountTxs(address)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, getAccountTxs)
 }
 
 // GetAllAccounts gets balances
 func GetAllAccounts(w http.ResponseWriter, r *http.Request) {
+	allAccounts, err := ethdb.SGetAllAccounts()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
 
-	//sqldb, err := core.DBConnection()
-	//
-	//allAccounts := core.SGetAllAccounts(sqldb)
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, allAccounts)
+	fmt.Fprintln(w, allAccounts)
 }
 
 //GetBlock returns block json
 func GetBlock(w http.ResponseWriter, r *http.Request) {
-	//vars := mux.Vars(r)
-	//blockNumber := vars["blockNumber"]
-	//
-	//sqldb, err := core.DBConnection()
-	//getBlockResponse := core.SGetBlock(sqldb, blockNumber)
-	//
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, getBlockResponse)
+	vars := mux.Vars(r)
+	blockNumber := vars["blockNumber"]
+
+	getBlockResponse, err := ethdb.SGetBlock(blockNumber)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, getBlockResponse)
 }
 
 // GetAllBlocks response
 func GetAllBlocks(w http.ResponseWriter, r *http.Request) {
-	//sqldb, err := core.DBConnection()
-	//block3 := core.SGetAllBlocks(sqldb)
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//fmt.Fprintln(w, block3)
+	blocks, err := ethdb.SGetAllBlocks()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, blocks)
 }
 
 func GetRecentBlock(w http.ResponseWriter, r *http.Request) {
-
-	//sqldb, err := core.DBConnection()
-	//
-	//mostRecentBlock := core.SGetRecentBlock(sqldb)
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//fmt.Fprintln(w, mostRecentBlock)
+	mostRecentBlock, err := ethdb.SGetRecentBlock()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, mostRecentBlock)
 
 }
 
 //GetInternalTransactions gets internal txs
 func GetInternalTransactionsByHash(w http.ResponseWriter, r *http.Request) {
-	//sqldb, err := core.DBConnection()
-	//
-	//vars := mux.Vars(r)
-	//txHash := vars["txHash"]
-	//
-	//internalTxs := core.SGetInternalTransaction(sqldb, txHash)
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, internalTxs)
+	vars := mux.Vars(r)
+	txHash := vars["txHash"]
+
+	internalTxs, err := ethdb.SGetInternalTransaction(txHash)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, internalTxs)
 }
 
 //GetInternalTransactionsHash gets internal txs hash
 func GetInternalTransactions(w http.ResponseWriter, r *http.Request) {
-	//sqldb, err := core.DBConnection()
-	//
-	//internalTxs := core.SGetAllInternalTransactions(sqldb)
-	//if err != nil {
-	//	http.Error(w, err.Error(), 500)
-	//	return
-	//}
-	//w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	//w.WriteHeader(http.StatusOK)
-	//
-	//fmt.Fprintln(w, internalTxs)
+	internalTxs, err := ethdb.SGetAllInternalTransactions()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	fmt.Fprintln(w, internalTxs)
 }
 
 func BroadcastTx(w http.ResponseWriter, r *http.Request) {

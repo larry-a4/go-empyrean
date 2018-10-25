@@ -62,6 +62,10 @@ func NewTestInstanceShyftDatabase() (*SPGDatabase, error) {
 	}, nil
 }
 
+func ReturnShyftDatabase() (*SPGDatabase, error) {
+	return NewShyftDatabase()
+}
+
 func (db *SPGDatabase) AccountExists(addr string) (string, string, error) {
 	var addressBalance, accountNonce string
 	sqlExistsStatement := `SELECT balance, nonce from accounts WHERE addr = ($1)`
@@ -461,6 +465,7 @@ func (db *SPGDatabase) TruncateTables() {
 }
 
 func stripNumber(str string) int {
+
 	re := regexp.MustCompile(`\w*_([0-9]+)$`)
 	match := re.FindStringSubmatch(str)
 	d, err := strconv.Atoi(match[1])
@@ -508,3 +513,4 @@ func AssignTestDbInstanceName() string {
 	TestDbInstances = append(TestDbInstances, dbNameAssigned)
 	return dbNameAssigned
 }
+

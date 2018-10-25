@@ -1,25 +1,25 @@
-package core
+package ethdb
 
 import (
-	"database/sql"
-	"encoding/json"
 	"fmt"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"encoding/json"
 	"time"
-
-	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
-	"github.com/jmoiron/sqlx"
+	"database/sql"
 )
 
-///////////
-// Getters
-//////////
-func SGetAllBlocks(sqldb *sqlx.DB) string {
-	var arr stypes.BlockRes
-	var blockArr string
-
-	rows, err := sqldb.Queryx(`SELECT * FROM blocks ORDER BY number ASC`)
+func SGetAllBlocks() (string, error) {
+	db, err := ReturnShyftDatabase()
 	if err != nil {
 		fmt.Println("err")
+		return "", err
+	}
+	var arr stypes.BlockRes
+	var blockArr string
+	rows, err := db.db.Queryx(`SELECT * FROM blocks ORDER BY number ASC`)
+	if err != nil {
+		fmt.Println("err")
+		return "", err
 	}
 	defer rows.Close()
 
@@ -53,15 +53,20 @@ func SGetAllBlocks(sqldb *sqlx.DB) string {
 		blocksFmt := string(blocks)
 		blockArr = blocksFmt
 	}
-	return blockArr
+	return blockArr, nil
 }
 
 //GetBlock queries to send single block info
 //TODO provide blockHash arg passed from handler.go
-func SGetBlock(sqldb *sqlx.DB, blockNumber string) string {
+func SGetBlock(blockNumber string) (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 	sqlStatement := `SELECT * FROM blocks WHERE number=$1;`
-	tx, _ := sqldb.Begin()
-	row := sqldb.QueryRow(sqlStatement, blockNumber)
+	tx, _ := db.db.Begin()
+	row := db.db.QueryRow(sqlStatement, blockNumber)
 	tx.Commit()
 	var hash, coinbase, parentHash, uncleHash, difficulty, size, rewards, num string
 	var gasUsed, gasLimit, nonce uint64
@@ -88,13 +93,18 @@ func SGetBlock(sqldb *sqlx.DB, blockNumber string) string {
 		Number:     num,
 	}
 	json, _ := json.Marshal(block)
-	return string(json)
+	return string(json), nil
 }
 
-func SGetRecentBlock(sqldb *sqlx.DB) string {
+func SGetRecentBlock() (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 	sqlStatement := `SELECT * FROM blocks WHERE number=(SELECT MAX(number) FROM blocks);`
-	tx, _ := sqldb.Begin()
-	row := sqldb.QueryRow(sqlStatement)
+	tx, _ := db.db.Begin()
+	row := db.db.QueryRow(sqlStatement)
 	tx.Commit()
 	var hash, coinbase, parentHash, uncleHash, difficulty, size, rewards, num string
 	var gasUsed, gasLimit, nonce uint64
@@ -121,7 +131,7 @@ func SGetRecentBlock(sqldb *sqlx.DB) string {
 		Number:     num,
 	}
 	json, _ := json.Marshal(block)
-	return string(json)
+	return string(json), nil
 }
 
 //func SGetRecentBlockHash() string {
@@ -142,12 +152,17 @@ func SGetRecentBlock(sqldb *sqlx.DB) string {
 //	return string(json)
 //}
 
-func SGetAllTransactionsFromBlock(sqldb *sqlx.DB, blockNumber string) string {
+func SGetAllTransactionsFromBlock(blockNumber string) (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 	var arr stypes.TxRes
 	var txx string
 	sqlStatement := `SELECT * FROM txs WHERE blocknumber=$1`
-	tx, _ := sqldb.Begin()
-	rows, err := sqldb.Query(sqlStatement, blockNumber)
+	tx, _ := db.db.Begin()
+	rows, err := db.db.Query(sqlStatement, blockNumber)
 	tx.Commit()
 	if err != nil {
 		fmt.Println("err")
@@ -186,15 +201,20 @@ func SGetAllTransactionsFromBlock(sqldb *sqlx.DB, blockNumber string) string {
 		newtx := string(txData)
 		txx = newtx
 	}
-	return txx
+	return txx, nil
 }
 
-func SGetAllBlocksMinedByAddress(sqldb *sqlx.DB, coinbase string) string {
+func SGetAllBlocksMinedByAddress(coinbase string) (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", nil
+	}
 	var arr stypes.BlockRes
 	var blockArr string
 	sqlStatement := `SELECT * FROM blocks WHERE coinbase=$1`
-	tx, _ := sqldb.Begin()
-	rows, err := sqldb.Query(sqlStatement, coinbase)
+	tx, _ := db.db.Begin()
+	rows, err := db.db.Query(sqlStatement, coinbase)
 	tx.Commit()
 	if err != nil {
 		fmt.Println("err")
@@ -231,15 +251,20 @@ func SGetAllBlocksMinedByAddress(sqldb *sqlx.DB, coinbase string) string {
 		blocksFmt := string(blocks)
 		blockArr = blocksFmt
 	}
-	return blockArr
+	return blockArr, nil
 }
 
 //GetAllTransactions getter fn for API
-func SGetAllTransactions(sqldb *sqlx.DB) string {
+func SGetAllTransactions() (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 	var arr stypes.TxRes
 	var txx string
-	tx, _ := sqldb.Begin()
-	rows, err := sqldb.Query(`SELECT * FROM txs`)
+	tx, _ := db.db.Begin()
+	rows, err := db.db.Query(`SELECT * FROM txs`)
 	tx.Commit()
 	if err != nil {
 		fmt.Println("err")
@@ -278,14 +303,19 @@ func SGetAllTransactions(sqldb *sqlx.DB) string {
 		newtx := string(txData)
 		txx = newtx
 	}
-	return txx
+	return txx, nil
 }
 
 //GetTransaction fn returns single tx
-func SGetTransaction(sqldb *sqlx.DB, txHash string) string {
+func SGetTransaction(txHash string) (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 	sqlStatement := `SELECT * FROM txs WHERE txhash=$1;`
-	tx, _ := sqldb.Begin()
-	row := sqldb.QueryRow(sqlStatement, txHash)
+	tx, _ := db.db.Begin()
+	row := db.db.QueryRow(sqlStatement, txHash)
 	tx.Commit()
 	var txhash, to_addr, from_addr, txfee, blockhash, blocknumber, amount, status string
 	var gasprice, gas, gasLimit, nonce uint64
@@ -315,40 +345,20 @@ func SGetTransaction(sqldb *sqlx.DB, txHash string) string {
 	}
 	json, _ := json.Marshal(txData)
 
-	return string(json)
-}
-
-func InnerSGetAccount(sqldb *sqlx.DB, address string) (stypes.SAccounts, bool) {
-	sqlStatement := `SELECT * FROM accounts WHERE addr=$1;`
-	var addr, balance, nonce string
-	tx, _ := sqldb.Begin()
-	err := sqldb.QueryRow(sqlStatement, address).Scan(&addr, &balance, &nonce)
-	tx.Commit()
-	if err == sql.ErrNoRows {
-		return stypes.SAccounts{}, false
-	} else {
-		account := stypes.SAccounts{
-			Addr:         addr,
-			Balance:      balance,
-			AccountNonce: nonce,
-		}
-		return account, true
-	}
-}
-
-//GetAccount returns account balances
-func SGetAccount(sqldb *sqlx.DB, address string) string {
-	var account, _ = InnerSGetAccount(sqldb, address)
-	json, _ := json.Marshal(account)
-	return string(json)
+	return string(json), nil
 }
 
 //GetAllAccounts returns all accounts and balances
-func SGetAllAccounts(sqldb *sqlx.DB) string {
+func SGetAllAccounts() (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 	var array stypes.AccountRes
 	var accountsArr, nonce string
-	tx, _ := sqldb.Begin()
-	accs, err := sqldb.Query(`
+	tx, _ := db.db.Begin()
+	accs, err := db.db.Query(`
 		SELECT
 			addr,
 			balance,
@@ -377,16 +387,51 @@ func SGetAllAccounts(sqldb *sqlx.DB) string {
 		accountsFmt := string(accounts)
 		accountsArr = accountsFmt
 	}
-	return accountsArr
+	return accountsArr, nil
+}
+
+func InnerSGetAccount(db *SPGDatabase, address string) (stypes.SAccounts, bool) {
+	sqlStatement := `SELECT * FROM accounts WHERE addr=$1;`
+	var addr, balance, nonce string
+	tx, _ := db.db.Begin()
+	err := db.db.QueryRow(sqlStatement, address).Scan(&addr, &balance, &nonce)
+	tx.Commit()
+	if err == sql.ErrNoRows {
+		return stypes.SAccounts{}, false
+	} else {
+		account := stypes.SAccounts{
+			Addr:         addr,
+			Balance:      balance,
+			AccountNonce: nonce,
+		}
+		return account, true
+	}
 }
 
 //GetAccount returns account balances
-func SGetAccountTxs(sqldb *sqlx.DB, address string) string {
+func SGetAccount(address string) (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	var account, _ = InnerSGetAccount(db, address)
+	json, _ := json.Marshal(account)
+	return string(json), nil
+}
+
+//GetAccount returns account balances
+func SGetAccountTxs(address string) (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 	var arr stypes.TxRes
 	var txx string
 	sqlStatement := `SELECT * FROM txs WHERE to_addr=$1 OR from_addr=$1;`
-	tx, _ := sqldb.Begin()
-	rows, err := sqldb.Query(sqlStatement, address)
+	tx, _ := db.db.Begin()
+	rows, err := db.db.Query(sqlStatement, address)
 	tx.Commit()
 	if err != nil {
 		fmt.Println("err", err)
@@ -425,15 +470,20 @@ func SGetAccountTxs(sqldb *sqlx.DB, address string) string {
 		newtx := string(txData)
 		txx = newtx
 	}
-	return txx
+	return txx, nil
 }
 
 //GetAllInternalTransactions getter fn for API
-func SGetAllInternalTransactions(sqldb *sqlx.DB) string {
+func SGetAllInternalTransactions() (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
 	var arr stypes.InternalArray
 	var internaltx string
-	tx, _ := sqldb.Begin()
-	rows, err := sqldb.Query(`SELECT * FROM internaltxs`)
+	tx, _ := db.db.Begin()
+	rows, err := db.db.Query(`SELECT * FROM internaltxs`)
 	tx.Commit()
 	if err != nil {
 		fmt.Println("err")
@@ -468,17 +518,22 @@ func SGetAllInternalTransactions(sqldb *sqlx.DB) string {
 		newtx := string(txData)
 		internaltx = newtx
 	}
-	return internaltx
+	return internaltx, nil
 }
 
 //GetInternalTransaction fn returns single tx
-func SGetInternalTransaction(sqldb *sqlx.DB, txHash string) string {
+func SGetInternalTransaction(txHash string) (string, error) {
+	db, err := ReturnShyftDatabase()
+	if err != nil {
+		fmt.Println(err)
+		return "", nil
+	}
 	var arr stypes.InternalArray
 	var internaltx string
 
 	sqlStatement := `SELECT * FROM internaltxs WHERE txhash=$1;`
-	tx, _ := sqldb.Begin()
-	rows, err := sqldb.Query(sqlStatement, txHash)
+	tx, _ := db.db.Begin()
+	rows, err := db.db.Query(sqlStatement, txHash)
 	tx.Commit()
 	if err != nil {
 		fmt.Println("err")
@@ -514,5 +569,5 @@ func SGetInternalTransaction(sqldb *sqlx.DB, txHash string) string {
 		newtx := string(txData)
 		internaltx = newtx
 	}
-	return internaltx
+	return internaltx, nil
 }
