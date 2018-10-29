@@ -1,14 +1,17 @@
 package core
 
 import (
-	"testing"
+	"encoding/json"
+	"fmt"
+	"log"
 	"math/big"
 	"strconv"
-	"fmt"
-	"github.com/ShyftNetwork/go-empyrean/ethdb"
-	"encoding/json"
-	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"testing"
 	"time"
+
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/ethdb"
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -59,7 +62,7 @@ func TestInsertTx(t *testing.T) {
 	// Set up a  test transaction
 	tx := CreateTestTransactions()
 	db, _ := ethdb.NewShyftDatabase()
-	db.TruncateTables()
+	testDbName := ethdb.DbName()
 
 	blockHash := "0x656c34545f90a730a19008c0e7a7cd4fb3895064b48d6d69761bd5abad681056"
 	txData := stypes.ShyftTxEntryPretty{
@@ -80,21 +83,18 @@ func TestInsertTx(t *testing.T) {
 		IsContract:  false,
 	}
 	t.Run("InsertTx - No Account exists inserts a transaction to the database and updates/creates accounts accordingly", func(t *testing.T) {
+		db.TruncateTables()
 		var dbSliceTransaction []ethdb.PgTransaction
 		var accountSlice []ethdb.Account
 		var accountBlockSlice []ethdb.AccountBlock
 
 		db.InsertTx(txData)
-		transactionJSON, err := ethdb.SGetAllTransactions()
+		connectionStr := fmt.Sprintf("user=postgres password=docker database=%s sslmode=disable", testDbName)
+		testdb, err := sqlx.Connect("postgres", connectionStr)
 		if err != nil {
-			panic(err)
+			log.Fatalln(err)
 		}
-		transactionBYTE := []byte(transactionJSON)
-		err = json.Unmarshal(transactionBYTE, &dbSliceTransaction)
-		if err != nil {
-			panic(err)
-		}
-
+		testdb.Select(&dbSliceTransaction, "SELECT * FROM txs")
 		pgdb := dbSliceTransaction[0]
 		txInput := txData
 		if len(dbSliceTransaction) != 1 {
@@ -103,13 +103,7 @@ func TestInsertTx(t *testing.T) {
 		if pgdb.TxHash != txInput.TxHash && pgdb.Blockhash != txData.BlockHash && pgdb.To != txData.To && pgdb.From != txData.From && pgdb.Amount != txData.Amount {
 			t.Errorf("Got %+v \nExpected %+v", dbSliceTransaction[0], txData)
 		}
-
-		accountJSON, err := ethdb.SGetAllAccounts()
-		accountBYTE := []byte(accountJSON)
-		err = json.Unmarshal(accountBYTE, &accountSlice)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&accountSlice, "SELECT * FROM accounts;")
 		if len(accountSlice) != 2 {
 			t.Errorf("Got %v db accounts created -  Expected 2", len(accountSlice))
 		}
@@ -127,13 +121,7 @@ func TestInsertTx(t *testing.T) {
 			fromAcct.Nonce != 1 {
 			t.Errorf("Got %+v \nExpected %s %d %d", fromAcct, txData.From, fromBalInt, 1)
 		}
-
-		accountBlockJSON, err := ethdb.SGetAllAccountBlocks()
-		accountBlockBYTE := []byte(accountBlockJSON)
-		err = json.Unmarshal(accountBlockBYTE, &accountBlockSlice)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&accountBlockSlice, "SELECT * FROM accountblocks;")
 
 		if len(accountBlockSlice) != 2 {
 			t.Errorf("Got %d db accountblocks created -  Expected 2", len(accountBlockSlice))
@@ -151,62 +139,63 @@ func TestInsertTx(t *testing.T) {
 	})
 }
 
-func insertBlocksTransactions() (map[string][]ethdb.Account, []string, *ethdb.SPGDatabase) {
-	var accountSlice []ethdb.Account
+func insertBlocksTransactions() (map[string][]ethdb.Account, []string, *ethdb.SPGDatabase, *sqlx.DB) {
+	// ethdb.RemoveTestDbs("shyfttest")
 	db, _ := ethdb.NewShyftDatabase()
 	db.TruncateTables()
 
 	blockHashes := []string{}
 	blockAccounts := map[string][]ethdb.Account{}
+	testDbName := ethdb.DbName()
+	connectionStr := fmt.Sprintf("user=postgres password=docker database=%s sslmode=disable", testDbName)
+	testdb, err := sqlx.Connect("postgres", connectionStr)
+	if err != nil {
+		panic(err)
+	}
 	for _, bl := range CreateTestBlocks() {
+		var accountSlice []ethdb.Account
 		// Write and verify the block in the database
 		err := SWriteBlock(db, bl, CreateTestReceipts())
 		if err != nil {
 			panic(err)
 		}
-		accountJSON, err := ethdb.SGetAllAccounts()
-		accountBYTE := []byte(accountJSON)
-		err = json.Unmarshal(accountBYTE, &accountSlice)
-		if err != nil {
-			panic(err)
-		}
-		blockHashes = append(blockHashes, bl.Hash().Hex())
-		blockAccounts[bl.Hash().Hex()] = accountSlice
+		testdb.Select(&accountSlice, "SELECT * FROM accounts;")
+		blockHashes = append(blockHashes, bl.Hash().String())
+		blockAccounts[bl.Hash().String()] = accountSlice
 	}
-	return blockAccounts, blockHashes, db
+	return blockAccounts, blockHashes, db, testdb
 }
 
 func TestRollbackReconcilesAccounts(t *testing.T) {
-	t.Run("PgRollback - of all blocks reverses all account balances", func(t *testing.T) {
-		_, blockHashes, db := insertBlocksTransactions()
 
+	t.Run("PgRollback - of all blocks reverses all account balances", func(t *testing.T) {
+		_, blockHashes, db, testdb := insertBlocksTransactions()
 		// Rollback 1 blocks
 		db.RollbackPgDb(blockHashes[0:])
-		accountJSON, err := ethdb.SGetAllAccounts()
-		if len(accountJSON) > 1 {
-			t.Errorf("Rollback of the following blocks %+v expected %d accounts have %d\n", blockHashes[0:], 0, len(accountJSON))
-		}
-		accountBlockJSON, err := ethdb.SGetAllAccountBlocks()
-		if err != nil {
-			panic(err)
-		}
-		if len(accountBlockJSON) != 0 {
-			t.Errorf("Got %d db accountblocks on rollback -  Expected 2", len(accountBlockJSON))
-		}
-		blockJSON, err := ethdb.SGetAllBlocks()
-		if err != nil {
-			panic(err)
-		}
-		if len(blockJSON) != 0 {
-			t.Errorf("Got %d db blocks on rollback -  Expected 0", len(blockJSON))
+
+		var accountSlice []ethdb.Account
+		testdb.Select(&accountSlice, "SELECT * FROM accounts;")
+
+		if len(accountSlice) > 1 {
+			t.Errorf("Rollback of the following blocks %+v expected %d accounts have %d\n", blockHashes[0:], 0, len(accountSlice))
 		}
 
-		transactionJSON, err := ethdb.SGetAllTransactions()
-		if err != nil {
-			panic(err)
+		blockAccounts := []ethdb.Account{}
+		testdb.Select(&blockAccounts, "SELECT * FROM accountblocks;")
+		if len(blockAccounts) != 0 {
+			t.Errorf("Got %d db accountblocks on rollback -  Expected 2", len(blockAccounts))
 		}
-		if len(transactionJSON) != 0 {
-			t.Errorf("Got %d db transactions on rollback -  Expected 0", len(transactionJSON))
+
+		var blockSlice []ethdb.Block
+		testdb.Select(&blockSlice, "SELECT * FROM blocks;")
+		if len(blockSlice) != 0 {
+			t.Errorf("Got %d db blocks on rollback -  Expected 0", len(blockSlice))
+		}
+
+		var dbSliceTransaction []ethdb.PgTransaction
+		testdb.Select(&dbSliceTransaction, "SELECT * FROM txs;")
+		if len(dbSliceTransaction) != 0 {
+			t.Errorf("Got %d db transactions on rollback -  Expected 0", len(dbSliceTransaction))
 		}
 	})
 	t.Run("PgRollback - 2 Blocks- reverses all account balances accordingly", func(t *testing.T) {
@@ -216,61 +205,43 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 		var blockSlice []ethdb.Block
 		//var newDbAccounts ethdb.Account
 
-		_, blockHashes, db := insertBlocksTransactions()
+		blockDbAccts, blockHashes, db, testdb := insertBlocksTransactions()
 		db.RollbackPgDb(blockHashes[1:])
 
-		accountJSON, err := ethdb.SGetAllAccounts()
-		accountBYTE := []byte(accountJSON)
-		err = json.Unmarshal(accountBYTE, &accountSlice)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&accountSlice, "SELECT * FROM accounts;")
+
 		if len(accountSlice) != 6 {
 			t.Errorf("Rollback of the following blocks %+v expected %d accounts have %d\n", blockHashes[1:], 5, len(accountSlice))
 		}
-		accountBlockJSON, err := ethdb.SGetAllAccountBlocks()
-		accountBlockBYTE := []byte(accountBlockJSON)
-		err = json.Unmarshal(accountBlockBYTE, &accountBlockSlice)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&accountBlockSlice, "SELECT * FROM accountblocks;")
 		if len(accountBlockSlice) != 6 {
 			t.Errorf("Got %d db accountblocks on rollback -  Expected 5", len(accountBlockSlice))
 		}
 
-		blockJSON, err := ethdb.SGetAllBlocks()
-		blockBYTE := []byte(blockJSON)
-		err = json.Unmarshal(blockBYTE, &blockSlice)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&blockSlice, "SELECT * FROM blocks;")
 		if len(blockSlice) != 1 {
 			t.Errorf("Got %d db blocks on rollback -  Expected 1", len(blockSlice))
 		}
 
-		transactionJSON, err := ethdb.SGetAllTransactions()
-		if err != nil {
-			panic(err)
-		}
-		transactionBYTE := []byte(transactionJSON)
-		err = json.Unmarshal(transactionBYTE, &dbSliceTransaction)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&dbSliceTransaction, "SELECT * FROM txs;")
+
 		if len(dbSliceTransaction) != 3 {
 			t.Errorf("Got %d db transactions on rollback -  Expected 2", len(dbSliceTransaction))
 		}
-		//for _, acct := range blockAccounts[blockHashes[0]] {
-		//	accountJSON, err := ethdb.SGetAccount(acct.Addr)
-		//	accountBYTE := []byte(accountJSON)
-		//	err = json.Unmarshal(accountBYTE, &newDbAccounts)
-		//	if err != nil {
-		//		panic(err)
-		//	}
-		//	if newDbAccounts.Balance != acct.Balance || newDbAccounts.Nonce != acct.Nonce {
-		//		t.Errorf("Got Balance: %s Nonce: %d Expected Balance: %s Nonce: %d - Addr: %s\n", newDbAccounts.Balance, newDbAccounts.Nonce, acct.Balance, acct.Nonce, acct.Addr)
-		//	}
-		//}
+		for _, acct := range blockDbAccts[blockHashes[0]] {
+			log.Printf("Rollback 2 blocks acct -> %+v \n", acct)
+			fetchDbBalanceStmnt := `SELECT * FROM accounts WHERE addr = $1`
+			acctCheck := ethdb.Account{}
+			err := testdb.Get(&acctCheck, fetchDbBalanceStmnt, acct.Addr)
+			// log.Printf("ERR ACCOUNT %+v", acct.Addr)
+			if err != nil {
+				log.Printf("THIS IS THE ERROR")
+				panic(err)
+			}
+			if acctCheck.Balance != acct.Balance || acctCheck.Nonce != acct.Nonce {
+				t.Errorf("Got Balance: %s Nonce: %d Expected Balance: %s Nonce: %d - Addr: %s\n", acctCheck.Balance, acctCheck.Nonce, acct.Balance, acct.Nonce, acct.Addr)
+			}
+		}
 	})
 	t.Run("PgRollback - 1 Blocks- reverses all account balances accordingly", func(t *testing.T) {
 		var dbSliceTransaction []ethdb.PgTransaction
@@ -279,61 +250,42 @@ func TestRollbackReconcilesAccounts(t *testing.T) {
 		var blockSlice []ethdb.Block
 		//var newDbAccounts ethdb.Account
 
-		_, blockHashes, db := insertBlocksTransactions()
+		blockDbAccts, blockHashes, db, testdb := insertBlocksTransactions()
 		// Rollback 2 blocks
 		db.RollbackPgDb(blockHashes[2:])
-		accountJSON, err := ethdb.SGetAllAccounts()
-		accountBYTE := []byte(accountJSON)
-		err = json.Unmarshal(accountBYTE, &accountSlice)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&accountSlice, "SELECT * FROM accounts;")
 		if len(accountSlice) != 6 {
 			t.Errorf("Rollback of the following blocks %+v expected %d accounts have %d\n", blockHashes[1:], 5, len(accountSlice))
 		}
 
-		accountBlockJSON, err := ethdb.SGetAllAccountBlocks()
-		accountBlockBYTE := []byte(accountBlockJSON)
-		err = json.Unmarshal(accountBlockBYTE, &accountBlockSlice)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&accountBlockSlice, "SELECT * FROM accountblocks;")
 		if len(accountBlockSlice) != 8 {
 			t.Errorf("Got %d db accountblocks on rollback -  Expected 8", len(accountBlockSlice))
 		}
 
-		blockJSON, err := ethdb.SGetAllBlocks()
-		blockBYTE := []byte(blockJSON)
-		err = json.Unmarshal(blockBYTE, &blockSlice)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&blockSlice, "SELECT * FROM blocks;")
 		if len(blockSlice) != 2 {
 			t.Errorf("Got %d db blocks on rollback -  Expected 2", len(blockSlice))
 		}
 
-		transactionJSON, err := ethdb.SGetAllTransactions()
-		if err != nil {
-			panic(err)
-		}
-		transactionBYTE := []byte(transactionJSON)
-		err = json.Unmarshal(transactionBYTE, &dbSliceTransaction)
-		if err != nil {
-			panic(err)
-		}
+		testdb.Select(&dbSliceTransaction, "SELECT * FROM txs;")
+
 		if len(dbSliceTransaction) != 3 {
 			t.Errorf("Got %d db transactions on rollback -  Expected 3", len(dbSliceTransaction))
 		}
-		//for _, acct := range blockAccounts[blockHashes[1]] {
-		//	accountJSON, err := ethdb.SGetAccount(acct.Addr)
-		//	accountBYTE := []byte(accountJSON)
-		//	err = json.Unmarshal(accountBYTE, &newDbAccounts)
-		//	if err != nil {
-		//		panic(err)
-		//	}
-		//	if newDbAccounts.Balance != acct.Balance || newDbAccounts.Nonce != acct.Nonce {
-		//		t.Errorf("Got Balance: %s Nonce: %d Expected Balance: %s Nonce: %d - Addr: %s \n", newDbAccounts.Balance, newDbAccounts.Nonce, acct.Balance, acct.Nonce, acct.Addr)
-		//	}
-		//}
+		for _, acct := range blockDbAccts[blockHashes[1]] {
+			log.Printf("Rollback 1 blockacct -> %+v \n", acct)
+			fetchDbBalanceStmnt := `SELECT * FROM accounts WHERE addr = $1`
+			acctCheck := ethdb.Account{}
+			err := testdb.Get(&acctCheck, fetchDbBalanceStmnt, acct.Addr)
+			if err != nil {
+				log.Printf("THIS IS THE ERROR")
+				panic(err)
+			}
+			// log.Printf("ERR ACCOUNT %+v", acct.Addr)
+			if acctCheck.Balance != acct.Balance || acctCheck.Nonce != acct.Nonce {
+				t.Errorf("Got Balance: %s Nonce: %d Expected Balance: %s Nonce: %d - Addr: %s\n", acctCheck.Balance, acctCheck.Nonce, acct.Balance, acct.Nonce, acct.Addr)
+			}
+		}
 	})
 }
