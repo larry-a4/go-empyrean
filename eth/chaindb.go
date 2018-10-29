@@ -32,16 +32,20 @@ func chaindb(ctx *node.ServiceContext, config *Config) (ethdb.Database, error) {
 	return nil, err
 }
 
-func shyftdb(ctx *node.ServiceContext) (ethdb.SDatabase, error) {
-	if Shyftdb_global != nil {
-		return Shyftdb_global, nil
+func shyftdb(ctx *node.ServiceContext, cfg *Config) (ethdb.SDatabase, error) {
+	if cfg.Postgres == false {
+		return nil, nil
+	} else {
+		if Shyftdb_global != nil {
+			return Shyftdb_global, nil
+		}
+		shyftDb, err := CreateShyftDB(ctx)
+		if err == nil {
+			SetShyftChainDB(shyftDb)
+			return Shyftdb_global, nil
+		}
+		return nil, err
 	}
-	shyftDb, err := CreateShyftDB(ctx)
-	if err == nil {
-		SetShyftChainDB(shyftDb)
-		return Shyftdb_global, nil
-	}
-	return nil, err
 }
 
 // NewShyftTestLDB - returns a (*ethdb.LDBDatabase, func())

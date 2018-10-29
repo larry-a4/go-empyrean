@@ -542,9 +542,6 @@ var (
 // if none (or the empty string) is specified. If the node is starting a testnet,
 // the a subdirectory of the specified datadir will be used.
 func MakeDataDir(ctx *cli.Context) string {
-	if ctx.GlobalBool(PostgresFlag.Name) {
-		core.DisconnectPG()
-	}
 	if path := ctx.GlobalString(DataDirFlag.Name); path != "" {
 		if ctx.GlobalBool(TestnetFlag.Name) {
 			return filepath.Join(path, "testnet")
@@ -1047,6 +1044,10 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 	if ctx.GlobalIsSet(NetworkIdFlag.Name) {
 		cfg.NetworkId = ctx.GlobalUint64(NetworkIdFlag.Name)
 	}
+	if ctx.GlobalBool(PostgresFlag.Name) {
+		core.DisconnectPG()
+		cfg.Postgres = false
+	}
 
 	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheDatabaseFlag.Name) {
 		cfg.DatabaseCache = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheDatabaseFlag.Name) / 100
@@ -1193,21 +1194,25 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node) (ethdb.Database, ethd
 	var (
 		cache   = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheDatabaseFlag.Name) / 100
 		handles = makeDatabaseHandles()
+		shyftChainDb ethdb.SDatabase
 	)
 	name := "chaindata"
 	if ctx.GlobalBool(LightModeFlag.Name) {
 		name = "lightchaindata"
 	}
-	if ctx.GlobalBool(PostgresFlag.Name) {
-		core.DisconnectPG()
-	}
 	chainDb, err := stack.OpenDatabase(name, cache, handles)
 	if err != nil {
 		Fatalf("Could not open database: %v", err)
 	}
-	shyftChainDb, err := stack.OpenShyftDatabase()
-	if err != nil {
-		Fatalf("Could not open database: %v", err)
+	if ctx.GlobalBool(PostgresFlag.Name) {
+		core.DisconnectPG()
+		shyftChainDb = nil
+	} else {
+		var err error
+		shyftChainDb, err = stack.OpenShyftDatabase()
+		if err != nil {
+			Fatalf("Could not open database: %v", err)
+		}
 	}
 	return chainDb, shyftChainDb
 }
@@ -1227,12 +1232,7 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 
 // MakeChain creates a chain manager from set command line flags.
 func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chainDb ethdb.Database, shyftDb ethdb.SDatabase) {
-	var err error
-	var shyftChainDb ethdb.SDatabase
-	chainDb, shyftChainDb = MakeChainDatabase(ctx, stack)
-	if ctx.GlobalBool(PostgresFlag.Name) {
-		core.DisconnectPG()
-	}
+	chainDb, shyftChainDb := MakeChainDatabase(ctx, stack)
 	config, _, err := core.SetupGenesisBlock(chainDb, shyftChainDb, MakeGenesis(ctx))
 	if err != nil {
 		Fatalf("%v", err)

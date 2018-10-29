@@ -142,7 +142,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	if err != nil {
 		return nil, err
 	}
-	shyftDb, err := shyftdb(ctx)
+	shyftDb, err := shyftdb(ctx, config)
 	if err != nil {
 		return nil, err
 	}

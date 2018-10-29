@@ -163,17 +163,19 @@ func initGenesis(ctx *cli.Context) error {
 	}
 	// Open an initialise both full and light databases
 	stack := makeFullNode(ctx)
-	if ctx.GlobalBool(utils.PostgresFlag.Name) {
-		core.DisconnectPG()
-	}
 	for _, name := range []string{"chaindata", "lightchaindata"} {
+		var shyftdb ethdb.SDatabase
 		chaindb, err := stack.OpenDatabase(name, 0, 0)
 		if err != nil {
 			utils.Fatalf("Failed to open database: %v", err)
 		}
-		shyftdb, err := stack.OpenShyftDatabase()
-		if err != nil {
-			utils.Fatalf("Failed to open SHYFT database: %v", err)
+		if ctx.GlobalBool(utils.PostgresFlag.Name) {
+			shyftdb = nil
+		} else {
+			shyftdb, err = stack.OpenShyftDatabase()
+			if err != nil {
+				utils.Fatalf("Failed to open SHYFT database: %v", err)
+			}
 		}
 		_, hash, err := core.SetupGenesisBlock(chaindb, shyftdb, genesis)
 		if err != nil {
