@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/common/math"

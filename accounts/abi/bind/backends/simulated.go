@@ -34,7 +34,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
-
 	"github.com/ShyftNetwork/go-empyrean/eth/filters"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/event"
@@ -69,8 +68,6 @@ type SimulatedBackend struct {
 	config *params.ChainConfig
 }
 
-var testDb string
-
 // NewSimulatedBackend creates a new binding backend using a simulated blockchain
 // for testing purposes.
 func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
@@ -83,9 +80,6 @@ func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, Alloc: alloc}
 	genesis.MustCommit(database)
 	blockchain, _ := core.NewBlockChain(database, shyftdb, nil, genesis.Config, ethash.NewFaker(), vm.Config{})
-	//eth.NewShyftTestLDB()
-	//shyftTracer := new(eth.ShyftTracer)
-	//core.SetIShyftTracer(shyftTracer)
 	backend := &SimulatedBackend{
 		database:   	database,
 		shyftDatabase:	shyftdb,
@@ -93,15 +87,6 @@ func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 		config:     	genesis.Config,
 		events:     	filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, blockchain}, false),
 	}
-	//traceConfig := &eth.Config{
-	//	Genesis:   &genesis,
-	//	Etherbase: common.HexToAddress(testAddress),
-	//	Ethash:    ethash.Config{PowMode: ethash.ModeTest},
-	//}
-	//
-	//eth.SetGlobalConfig(traceConfig)
-	//eth.InitTracerEnv()
-
 	backend.rollback()
 	return backend
 }

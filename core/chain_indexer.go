@@ -130,6 +130,7 @@ func (c *ChainIndexer) AddKnownSectionHead(section uint64, shead common.Hash) {
 func (c *ChainIndexer) Start(chain ChainIndexerChain) {
 	events := make(chan ChainEvent, 10)
 	sub := chain.SubscribeChainEvent(events)
+
 	go c.eventLoop(chain.CurrentHeader(), events, sub)
 }
 

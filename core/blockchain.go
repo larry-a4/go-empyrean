@@ -90,7 +90,8 @@ type BlockChain struct {
 	cacheConfig *CacheConfig        // Cache configuration for pruning
 
 	db ethdb.Database // Low level persistent database to store final content in
-	shyftDb ethdb.SDatabase
+	shyftDb ethdb.SDatabase // Shyft Postgres instance
+
 	triegc *prque.Prque  // Priority queue mapping block numbers to tries to gc
 	gcproc time.Duration // Accumulates canonical block processing for trie dumping
 

@@ -85,5 +85,6 @@ func runGeth(t *testing.T, args ...string) *testgeth {
 	// Boot "geth". This actually runs the test binary but the TestMain
 	// function will prevent any tests from running.
 	tt.Run("geth-test", args...)
+
 	return tt
 }

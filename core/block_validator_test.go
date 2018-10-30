@@ -45,6 +45,7 @@ func TestHeaderVerification(t *testing.T) {
 	// Run the header checker for blocks one-by-one, checking for both valid and invalid nonces
 	chain, _ := NewBlockChain(testdb, shyftTestdb, nil, params.TestChainConfig, ethash.NewFaker(), vm.Config{})
 	defer chain.Stop()
+
 	for i := 0; i < len(blocks); i++ {
 		for j, valid := range []bool{true, false} {
 			var results <-chan error

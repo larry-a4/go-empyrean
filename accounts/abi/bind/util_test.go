@@ -30,13 +30,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 )
 
-// @SHYFT NOTE: test ShyftTracer
-const (
-	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
-)
-
-//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-
 var testKey, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 
 var waitDeployedTests = map[string]struct {

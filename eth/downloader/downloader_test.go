@@ -95,7 +95,6 @@ func newTester() *downloadTester {
 		peerMissingStates: make(map[string]map[common.Hash]bool),
 	}
 	tester.stateDb, _ = ethdb.NewMemDatabase()
-	//shyftdb, _ := ethdb.NewShyftDatabase()
 	tester.stateDb.Put(genesis.Root().Bytes(), []byte{0x00})
 
 	tester.downloader = New(FullSync, tester.stateDb, tester.shyftDb, new(event.TypeMux), tester, nil, tester.dropPeer)
@@ -336,6 +335,7 @@ func (dl *downloadTester) InsertHeaderChain(headers []*types.Header, checkFreq i
 func (dl *downloadTester) InsertChain(blocks types.Blocks) (int, error) {
 	dl.lock.Lock()
 	defer dl.lock.Unlock()
+
 	for i, block := range blocks {
 		if parent, ok := dl.ownBlocks[block.ParentHash()]; !ok {
 			return i, errors.New("unknown parent")

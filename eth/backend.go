@@ -24,6 +24,8 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
+	"net/http"
+	"flag"
 
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/common"
@@ -49,8 +51,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/rpc"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/gorilla/mux"
-	"net/http"
-	"flag"
 )
 
 var BlockchainObject *core.BlockChain
@@ -132,6 +132,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	shyft_tracer := new(ShyftTracer)
 	core.SetIShyftTracer(shyft_tracer)
 	SetGlobalConfig(config)
+
 	if config.SyncMode == downloader.LightSync {
 		return nil, errors.New("can't run eth.Ethereum in light sync mode, use les.LightEthereum")
 	}
@@ -146,6 +147,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	stopDbUpgrade := upgradeDeduplicateData(chainDb)
 	chainConfig, genesisHash, genesisErr := core.SetupGenesisBlock(chainDb, shyftDb, config.Genesis)
 	if _, ok := genesisErr.(*params.ConfigCompatError); genesisErr != nil && !ok {

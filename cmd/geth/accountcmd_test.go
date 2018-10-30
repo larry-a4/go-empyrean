@@ -217,6 +217,7 @@ func TestUnlockFlagPasswordFile(t *testing.T) {
 		"--password", "testdata/passwords.txt", "--unlock", "0,2",
 		"js", "testdata/empty.js")
 	geth.ExpectExit()
+
 	wantMessages := []string{
 		"Unlocked account",
 		"=0x7EF5A6135f1FD6a02593eEdC869c6D41D934aef8",
