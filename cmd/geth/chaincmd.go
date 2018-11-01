@@ -345,10 +345,11 @@ func importPreimages(ctx *cli.Context) error {
 		utils.Fatalf("This command requires an argument.")
 	}
 	stack := makeFullNode(ctx)
-	diskdb := utils.MakeChainDatabase(ctx, stack).(*ethdb.LDBDatabase)
+	diskdb, _ := utils.MakeChainDatabase(ctx, stack).(*ethdb.LDBDatabase)
+	shyftdb := utils.MakeChainShyftDatabase(ctx, stack).(*ethdb.SPGDatabase)
 
 	start := time.Now()
-	if err := utils.ImportPreimages(diskdb, ctx.Args().First()); err != nil {
+	if err := utils.ImportPreimages(diskdb, shyftdb, ctx.Args().First()); err != nil {
 		utils.Fatalf("Import error: %v\n", err)
 	}
 	fmt.Printf("Import done in %v\n", time.Since(start))
@@ -362,9 +363,10 @@ func exportPreimages(ctx *cli.Context) error {
 	}
 	stack := makeFullNode(ctx)
 	diskdb := utils.MakeChainDatabase(ctx, stack).(*ethdb.LDBDatabase)
+	shyftdb := utils.MakeChainShyftDatabase(ctx, stack).(*ethdb.SPGDatabase)
 
 	start := time.Now()
-	if err := utils.ExportPreimages(diskdb, ctx.Args().First()); err != nil {
+	if err := utils.ExportPreimages(diskdb, shyftdb, ctx.Args().First()); err != nil {
 		utils.Fatalf("Export error: %v\n", err)
 	}
 	fmt.Printf("Export done in %v\n", time.Since(start))

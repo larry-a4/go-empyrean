@@ -103,7 +103,7 @@ var (
 
 	// ShyftNetworkChainConfig contains the chain parameters to run a node on the Rinkeby test network.
 	ShyftNetworkChainConfig = &ChainConfig{
-		ChainId:             big.NewInt(2147483647),
+		ChainID:             big.NewInt(2147483647),
 		HomesteadBlock:      big.NewInt(1),
 		DAOForkBlock:        nil,
 		DAOForkSupport:      true,

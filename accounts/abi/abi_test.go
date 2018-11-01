@@ -63,6 +63,7 @@ func TestMain(m *testing.M) {
 	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
 	os.Exit(retCode)
 }
+
 func TestReader(t *testing.T) {
 	Uint256, _ := NewType("uint256")
 	exp := ABI{

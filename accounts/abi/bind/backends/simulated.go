@@ -48,11 +48,6 @@ var _ bind.ContractBackend = (*SimulatedBackend)(nil)
 var errBlockNumberUnsupported = errors.New("SimulatedBackend cannot access blocks other than the latest block")
 var errGasEstimationFailed = errors.New("gas required exceeds allowance or always failing transaction")
 
-// @SHYFT NOTE: test ShyftTracer
-const (
-	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
-)
-
 // SimulatedBackend implements bind.ContractBackend, simulating a blockchain in
 // the background. Its main purpose is to allow easily testing contract bindings.
 type SimulatedBackend struct {
@@ -71,22 +66,22 @@ type SimulatedBackend struct {
 
 // NewSimulatedBackend creates a new binding backend using a simulated blockchain
 // for testing purposes.
-func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
+func NewSimulatedBackend(alloc core.GenesisAlloc, gasLimit uint64) *SimulatedBackend {
 	database := ethdb.NewMemDatabase()
 	shyftdb, err := ethdb.NewShyftDatabase()
 	shyftdb.TruncateTables()
 	if err != nil {
 		panic(err)
 	}
-	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, Alloc: alloc}
+	genesis := core.Genesis{Config: params.AllEthashProtocolChanges,  GasLimit: gasLimit, Alloc: alloc}
 	genesis.MustCommit(database)
-	blockchain, _ := core.NewBlockChain(database, shyftdb, nil, genesis.Config, ethash.NewFaker(), vm.Config{})
+	blockchain, _ := core.NewBlockChain(database, shyftdb, nil, genesis.Config, ethash.NewFaker(), vm.Config{}, nil)
 	backend := &SimulatedBackend{
 		database:   	database,
 		shyftDatabase:	shyftdb,
 		blockchain: 	blockchain,
 		config:     	genesis.Config,
-		events:     	filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, blockchain}, false),
+		events:     	filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, shyftdb, blockchain}, false),
 	}
 	backend.rollback()
 	return backend
@@ -338,7 +333,7 @@ func (b *SimulatedBackend) FilterLogs(ctx context.Context, query ethereum.Filter
 	var filter *filters.Filter
 	if query.BlockHash != nil {
 		// Block filter requested, construct a single-shot filter
-		filter = filters.NewBlockFilter(&filterBackend{b.database, b.blockchain}, *query.BlockHash, query.Addresses, query.Topics)
+		filter = filters.NewBlockFilter(&filterBackend{b.database, b.shyftDatabase, b.blockchain}, *query.BlockHash, query.Addresses, query.Topics)
 	} else {
 		// Initialize unset filter boundaried to run from genesis to chain head
 		from := int64(0)
@@ -350,7 +345,7 @@ func (b *SimulatedBackend) FilterLogs(ctx context.Context, query ethereum.Filter
 			to = query.ToBlock.Int64()
 		}
 		// Construct the range filter
-		filter = filters.NewRangeFilter(&filterBackend{b.database, b.blockchain}, from, to, query.Addresses, query.Topics)
+		filter = filters.NewRangeFilter(&filterBackend{b.database, b.shyftDatabase, b.blockchain}, from, to, query.Addresses, query.Topics)
 	}
 	// Run the filter and return all the logs
 	logs, err := filter.Logs(ctx)
@@ -434,10 +429,12 @@ func (m callmsg) Data() []byte         { return m.CallMsg.Data }
 // taking bloom-bits acceleration structures into account.
 type filterBackend struct {
 	db ethdb.Database
+	shyftdb ethdb.SDatabase
 	bc *core.BlockChain
 }
 
 func (fb *filterBackend) ChainDb() ethdb.Database  { return fb.db }
+func (fb *filterBackend) ShyftDb() ethdb.SDatabase  { return fb.shyftdb }
 func (fb *filterBackend) EventMux() *event.TypeMux { panic("not supported") }
 
 func (fb *filterBackend) HeaderByNumber(ctx context.Context, block rpc.BlockNumber) (*types.Header, error) {

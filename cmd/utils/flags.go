@@ -1343,11 +1343,10 @@ func SetupMetrics(ctx *cli.Context) {
 }
 
 // MakeChainDatabase open an LevelDB using the flags passed to the client and will hard crash if it fails.
-func MakeChainDatabase(ctx *cli.Context, stack *node.Node) (ethdb.Database, ethdb.SDatabase) {
+func MakeChainDatabase(ctx *cli.Context, stack *node.Node) ethdb.Database {
 	var (
 		cache   = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheDatabaseFlag.Name) / 100
 		handles = makeDatabaseHandles()
-		shyftChainDb ethdb.SDatabase
 	)
 	name := "chaindata"
 	if ctx.GlobalString(SyncModeFlag.Name) == "light" {
@@ -1357,6 +1356,14 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node) (ethdb.Database, ethd
 	if err != nil {
 		Fatalf("Could not open database: %v", err)
 	}
+	return chainDb
+}
+
+// MakeChainDatabase open an LevelDB using the flags passed to the client and will hard crash if it fails.
+func MakeChainShyftDatabase(ctx *cli.Context, stack *node.Node) ethdb.SDatabase {
+	var (
+		shyftChainDb ethdb.SDatabase
+	)
 	if ctx.GlobalBool(PostgresFlag.Name) {
 		core.DisconnectPG()
 		shyftChainDb = nil
@@ -1367,7 +1374,7 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node) (ethdb.Database, ethd
 			Fatalf("Could not open database: %v", err)
 		}
 	}
-	return chainDb, shyftChainDb
+	return shyftChainDb
 }
 
 func MakeGenesis(ctx *cli.Context) *core.Genesis {
@@ -1385,7 +1392,8 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 
 // MakeChain creates a chain manager from set command line flags.
 func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chainDb ethdb.Database, shyftDb ethdb.SDatabase) {
-	chainDb, shyftChainDb := MakeChainDatabase(ctx, stack)
+	chainDb  = MakeChainDatabase(ctx, stack)
+	shyftChainDb := MakeChainShyftDatabase(ctx, stack)
 	config, _, err := core.SetupGenesisBlock(chainDb, shyftChainDb, MakeGenesis(ctx))
 	if err != nil {
 		Fatalf("%v", err)
@@ -1418,7 +1426,7 @@ func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chai
 		cache.TrieNodeLimit = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheGCFlag.Name) / 100
 	}
 	vmcfg := vm.Config{EnablePreimageRecording: ctx.GlobalBool(VMEnableDebugFlag.Name)}
-	chain, err = core.NewBlockChain(chainDb, shyftChainDb, cache, config, engine, vmcfg)
+	chain, err = core.NewBlockChain(chainDb, shyftChainDb, cache, config, engine, vmcfg, nil)
 	if err != nil {
 		Fatalf("Can't create BlockChain: %v", err)
 	}

@@ -517,7 +517,7 @@ func (bc *BlockChain) GetBlockHashesSinceLastValidBlockHash(validHash common.Has
 	//hash is the current Headers block hash
 	hash := bc.hc.CurrentHeader().Hash()
 	//Starting at block height bNumber loop until i <= hNumber
-	for i := hNumber; i > bNumber; i-- {
+	for i := hNumber; i > (*bNumber); i-- {
 		block := bc.GetBlock(hash, hNumber)
 		if block == nil {
 			break

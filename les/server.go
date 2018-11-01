@@ -65,7 +65,7 @@ func NewLesServer(eth *eth.Ethereum, config *eth.Config) (*LesServer, error) {
 		lesCommons: lesCommons{
 			config:           config,
 			chainDb:          eth.ChainDb(),
-			shyftdb:		  eth.ShyftDb(),
+			shyftDb:		  eth.ShyftDb(),
 			iConfig:          light.DefaultServerIndexerConfig,
 			chtIndexer:       light.NewChtIndexer(eth.ChainDb(), eth.ShyftDb(), nil, params.CHTFrequencyServer, params.HelperTrieProcessConfirmations),
 			bloomTrieIndexer: light.NewBloomTrieIndexer(eth.ChainDb(), eth.ShyftDb(), nil, params.BloomBitsBlocks, params.BloomTrieFrequency),

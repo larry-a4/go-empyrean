@@ -25,8 +25,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"net/http"
-	"flag"
-
 	"github.com/gorilla/mux"
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/common"
@@ -107,19 +105,17 @@ func (s *Ethereum) AddLesServer(ls LesServer) {
 }
 
 func SNew(config *Config) (*Ethereum, error) {
-	stopDbUpgrade := upgradeDeduplicateData(Chaindb_global)
-	chainConfig, _, _ := core.SetupGenesisBlock(Chaindb_global, Shyftdb_global, config.Genesis)
+	//chainConfig, _, _ := core.SetupGenesisBlock(Chaindb_global, Shyftdb_global, config.Genesis)
 	eth := &Ethereum{
 		config:        config,
 		chainDb:       Chaindb_global,
-		chainConfig:   chainConfig,
+		chainConfig:   nil,
 		shutdownChan:  make(chan bool),
-		stopDbUpgrade: stopDbUpgrade,
-		networkId:     config.NetworkId,
-		gasPrice:      config.GasPrice,
+		networkID:     config.NetworkId,
+		gasPrice:      config.MinerGasPrice,
 		etherbase:     config.Etherbase,
 		bloomRequests: make(chan chan *bloombits.Retrieval),
-		bloomIndexer:  NewBloomIndexer(Chaindb_global, Shyftdb_global, params.BloomBitsBlocks),
+		bloomIndexer:  NewBloomIndexer(Chaindb_global, Shyftdb_global, params.BloomBitsBlocks, params.BloomConfirms),
 	}
 	eth.blockchain = BlockchainObject
 
@@ -246,9 +242,9 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	DebugApi.eth = eth
 	DebugApi.config = chainConfig
 	//@NOTE Shyft Tracer
-	if flag.Lookup("test.v") == nil {
-		InitTracerEnv()
-	}
+	//if flag.Lookup("test.v") == nil {
+	//	InitTracerEnv()
+	//}
 
 	return eth, nil
 }
