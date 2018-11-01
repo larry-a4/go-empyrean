@@ -37,7 +37,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/event"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
-	"github.com/ShyftNetwork/go-empyrean/p2p/discover"
+	"github.com/ShyftNetwork/go-empyrean/p2p/enode"
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
 
@@ -53,7 +53,7 @@ func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func
 	var (
 		evmux  = new(event.TypeMux)
 		engine = ethash.NewFaker()
-		db, _  = ethdb.NewMemDatabase()
+		db = ethdb.NewMemDatabase()
 		shyftdb,_ = ethdb.NewTestInstanceShyftDatabase()
 		gspec  = &core.Genesis{
 			Config: params.TestChainConfig,
@@ -127,7 +127,7 @@ func (p *testTxPool) Pending() (map[common.Address]types.Transactions, error) {
 	return batches, nil
 }
 
-func (p *testTxPool) SubscribeTxPreEvent(ch chan<- core.TxPreEvent) event.Subscription {
+func (p *testTxPool) SubscribeNewTxsEvent(ch chan<- core.NewTxsEvent) event.Subscription {
 	return p.txFeed.Subscribe(ch)
 }
 
@@ -151,7 +151,7 @@ func newTestPeer(name string, version int, pm *ProtocolManager, shake bool) (*te
 	app, net := p2p.MsgPipe()
 
 	// Generate a random id and create the peer
-	var id discover.NodeID
+	var id enode.ID
 	rand.Read(id[:])
 
 	peer := pm.newPeer(version, p2p.NewPeer(id, name, nil), net)

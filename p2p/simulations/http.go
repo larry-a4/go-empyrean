@@ -31,7 +31,7 @@ import (
 
 	"github.com/ShyftNetwork/go-empyrean/event"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
-	"github.com/ShyftNetwork/go-empyrean/p2p/discover"
+	"github.com/ShyftNetwork/go-empyrean/p2p/enode"
 	"github.com/ShyftNetwork/go-empyrean/p2p/simulations/adapters"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
 	"github.com/julienschmidt/httprouter"
@@ -561,7 +561,8 @@ func (s *Server) LoadSnapshot(w http.ResponseWriter, req *http.Request) {
 
 // CreateNode creates a node in the network using the given configuration
 func (s *Server) CreateNode(w http.ResponseWriter, req *http.Request) {
-	config := adapters.RandomNodeConfig()
+	config := &adapters.NodeConfig{}
+
 	err := json.NewDecoder(req.Body).Decode(config)
 	if err != nil && err != io.EOF {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -708,8 +709,9 @@ func (s *Server) wrapHandler(handler http.HandlerFunc) httprouter.Handle {
 		ctx := context.Background()
 
 		if id := params.ByName("nodeid"); id != "" {
+			var nodeID enode.ID
 			var node *Node
-			if nodeID, err := discover.HexID(id); err == nil {
+			if nodeID.UnmarshalText([]byte(id)) == nil {
 				node = s.network.GetNode(nodeID)
 			} else {
 				node = s.network.GetNodeByName(id)
@@ -722,8 +724,9 @@ func (s *Server) wrapHandler(handler http.HandlerFunc) httprouter.Handle {
 		}
 
 		if id := params.ByName("peerid"); id != "" {
+			var peerID enode.ID
 			var peer *Node
-			if peerID, err := discover.HexID(id); err == nil {
+			if peerID.UnmarshalText([]byte(id)) == nil {
 				peer = s.network.GetNode(peerID)
 			} else {
 				peer = s.network.GetNodeByName(id)

@@ -63,7 +63,7 @@ $GOPATH/src/github.com/ShyftNetwork/
 
 Geth uses govendor to manage packages/dependencies: [Go Vendor](https://github.com/kardianos/govendor)
 
-This has some more information: [Ethereum Wiki](https://github.com/ethereum/go-ethereum/wiki/Developers'-Guide)
+This has some more information: [Ethereum Wiki](https://github.com/ShyftNetwork/go-empyrean/wiki/Developers'-Guide)
 
 To add a new dependency, run govendor fetch <import-path> , and commit the changes to git. Then the deps will be accessible on other machines that pull from git.
 

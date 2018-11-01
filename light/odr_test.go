@@ -28,6 +28,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/common/math"
 	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core"
+	"github.com/ShyftNetwork/go-empyrean/core/rawdb"
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
@@ -58,8 +59,9 @@ var (
 
 type testOdr struct {
 	OdrBackend
-	sdb, ldb ethdb.Database
-	disable  bool
+	indexerConfig *IndexerConfig
+	sdb, ldb      ethdb.Database
+	disable       bool
 }
 
 func (odr *testOdr) Database() ethdb.Database {
@@ -74,9 +76,15 @@ func (odr *testOdr) Retrieve(ctx context.Context, req OdrRequest) error {
 	}
 	switch req := req.(type) {
 	case *BlockRequest:
-		req.Rlp = core.GetBodyRLP(odr.sdb, req.Hash, core.GetBlockNumber(odr.sdb, req.Hash))
+		number := rawdb.ReadHeaderNumber(odr.sdb, req.Hash)
+		if number != nil {
+			req.Rlp = rawdb.ReadBodyRLP(odr.sdb, req.Hash, *number)
+		}
 	case *ReceiptsRequest:
-		req.Receipts = core.GetBlockReceipts(odr.sdb, req.Hash, core.GetBlockNumber(odr.sdb, req.Hash))
+		number := rawdb.ReadHeaderNumber(odr.sdb, req.Hash)
+		if number != nil {
+			req.Receipts = rawdb.ReadReceipts(odr.sdb, req.Hash, *number)
+		}
 	case *TrieRequest:
 		t, _ := trie.New(req.Id.Root, trie.NewDatabase(odr.sdb))
 		nodes := NewNodeSet()
@@ -87,6 +95,10 @@ func (odr *testOdr) Retrieve(ctx context.Context, req OdrRequest) error {
 	}
 	req.StoreResult(odr.ldb)
 	return nil
+}
+
+func (odr *testOdr) IndexerConfig() *IndexerConfig {
+	return odr.indexerConfig
 }
 
 type odrTestFn func(ctx context.Context, db ethdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error)
@@ -116,9 +128,15 @@ func TestOdrGetReceiptsLes1(t *testing.T) {
 func odrGetReceipts(ctx context.Context, db ethdb.Database, bc *core.BlockChain, lc *LightChain, bhash common.Hash) ([]byte, error) {
 	var receipts types.Receipts
 	if bc != nil {
-		receipts = core.GetBlockReceipts(db, bhash, core.GetBlockNumber(db, bhash))
+		number := rawdb.ReadHeaderNumber(db, bhash)
+		if number != nil {
+			receipts = rawdb.ReadReceipts(db, bhash, *number)
+		}
 	} else {
-		receipts, _ = GetBlockReceipts(ctx, lc.Odr(), bhash, core.GetBlockNumber(db, bhash))
+		number := rawdb.ReadHeaderNumber(db, bhash)
+		if number != nil {
+			receipts, _ = GetBlockReceipts(ctx, lc.Odr(), bhash, *number)
+		}
 	}
 	if receipts == nil {
 		return nil, nil
@@ -244,22 +262,22 @@ func testChainGen(i int, block *core.BlockGen) {
 
 func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 	var (
-		sdb, _  = ethdb.NewMemDatabase()
-		ldb, _  = ethdb.NewMemDatabase()
+		sdb  = ethdb.NewMemDatabase()
+		ldb  = ethdb.NewMemDatabase()
 		shyftdb, _ = ethdb.NewShyftDatabase()
 		gspec   = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
 		genesis = gspec.MustCommit(sdb)
 	)
 	gspec.MustCommit(ldb)
 	// Assemble the test environment
-	blockchain, _ := core.NewBlockChain(sdb, shyftdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{})
+	blockchain, _ := core.NewBlockChain(sdb, shyftdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{}, nil)
 	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), sdb, shyftdb, 4, testChainGen)
 	shyftdb.TruncateTables()
 	if _, err := blockchain.InsertChain(gchain); err != nil {
 		t.Fatal(err)
 	}
 
-	odr := &testOdr{sdb: sdb, ldb: ldb}
+	odr := &testOdr{sdb: sdb, ldb: ldb, indexerConfig: TestClientIndexerConfig}
 	lightchain, err := NewLightChain(odr, params.TestChainConfig, ethash.NewFullFaker())
 	if err != nil {
 		t.Fatal(err)
@@ -274,7 +292,7 @@ func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 
 	test := func(expFail int) {
 		for i := uint64(0); i <= blockchain.CurrentHeader().Number.Uint64(); i++ {
-			bhash := core.GetCanonicalHash(sdb, i)
+			bhash := rawdb.ReadCanonicalHash(sdb, i)
 			b1, err := fn(NoOdr, sdb, blockchain, nil, bhash)
 			if err != nil {
 				t.Fatalf("error in full-node test for block %d: %v", i, err)

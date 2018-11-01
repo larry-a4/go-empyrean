@@ -81,15 +81,15 @@ func TestTxPool(t *testing.T) {
 	}
 
 	var (
-		sdb, _  = ethdb.NewMemDatabase()
-		ldb, _  = ethdb.NewMemDatabase()
+		sdb  = ethdb.NewMemDatabase()
+		ldb  = ethdb.NewMemDatabase()
 		shyftdb, _ = ethdb.NewShyftDatabase()
 		gspec   = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
 		genesis = gspec.MustCommit(sdb)
 	)
 	gspec.MustCommit(ldb)
 	// Assemble the test environment
-	blockchain, _ := core.NewBlockChain(sdb, shyftdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{})
+	blockchain, _ := core.NewBlockChain(sdb, shyftdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{}, nil)
 	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), sdb, shyftdb, poolTestBlocks, txPoolTestChainGen)
 	// @SHYFT NOTE: Clear PG DB before test
 	shyftdb.TruncateTables()
@@ -97,7 +97,7 @@ func TestTxPool(t *testing.T) {
 		panic(err)
 	}
 
-	odr := &testOdr{sdb: sdb, ldb: ldb}
+	odr := &testOdr{sdb: sdb, ldb: ldb, indexerConfig: TestClientIndexerConfig}
 	relay := &testTxRelay{
 		send:    make(chan int, 1),
 		discard: make(chan int, 1),

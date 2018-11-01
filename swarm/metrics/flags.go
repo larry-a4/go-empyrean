@@ -20,9 +20,9 @@ import (
 	"time"
 
 	"github.com/ShyftNetwork/go-empyrean/cmd/utils"
-	"github.com/ShyftNetwork/go-empyrean/log"
 	gethmetrics "github.com/ShyftNetwork/go-empyrean/metrics"
 	"github.com/ShyftNetwork/go-empyrean/metrics/influxdb"
+	"github.com/ShyftNetwork/go-empyrean/swarm/log"
 	"gopkg.in/urfave/cli.v1"
 )
 
@@ -80,6 +80,9 @@ func Setup(ctx *cli.Context) {
 			password     = ctx.GlobalString(metricsInfluxDBPasswordFlag.Name)
 			hosttag      = ctx.GlobalString(metricsInfluxDBHostTagFlag.Name)
 		)
+
+		// Start system runtime metrics collection
+		go gethmetrics.CollectProcessMetrics(2 * time.Second)
 
 		if enableExport {
 			log.Info("Enabling swarm metrics export to InfluxDB")

@@ -26,12 +26,8 @@ func TestVM(t *testing.T) {
 	t.Parallel()
 	//@SHYFT //SETS UP OUR TEST ENV - Parallel tests creating issues so the below may not work with parallel
 	vmt := new(testMatcher)
+	vmt.slow("^vmPerformance")
 	vmt.fails("^vmSystemOperationsTest.json/createNameRegistrator$", "fails without parallel execution")
-
-	vmt.skipLoad(`^vmInputLimits(Light)?.json`) // log format broken
-
-	vmt.skipShortMode("^vmPerformanceTest.json")
-	vmt.skipShortMode("^vmInputLimits(Light)?.json")
 
 	vmt.walk(t, vmTestDir, func(t *testing.T, name string, test *VMTest) {
 		withTrace(t, test.json.Exec.GasLimit, func(vmconfig vm.Config) error {

@@ -32,7 +32,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/node"
 	"github.com/ShyftNetwork/go-empyrean/params"
-	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv5"
+	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 	"github.com/naoina/toml"
 )
 
@@ -168,6 +168,9 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 		}
 		if ctx.GlobalIsSet(utils.WhisperMinPOWFlag.Name) {
 			cfg.Shh.MinimumAcceptedPOW = ctx.Float64(utils.WhisperMinPOWFlag.Name)
+		}
+		if ctx.GlobalIsSet(utils.WhisperRestrictConnectionBetweenLightClientsFlag.Name) {
+			cfg.Shh.RestrictConnectionBetweenLightClients = true
 		}
 		utils.RegisterShhService(stack, &cfg.Shh)
 	}
