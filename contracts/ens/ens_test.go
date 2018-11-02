@@ -18,8 +18,6 @@ package ens
 
 import (
 	"math/big"
-	"os"
-	"os/exec"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
@@ -37,16 +35,6 @@ var (
 	addr     = crypto.PubkeyToAddress(key.PublicKey)
 	testAddr = common.HexToAddress("0x1234123412341234123412341234123412341234")
 )
-
-func TestMain(m *testing.M) {
-	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
-	if reexec.Init() {
-		return
-	}
-	retCode := m.Run()
-	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
-	os.Exit(retCode)
-}
 
 func TestENS(t *testing.T) {
 	contractBackend := backends.NewSimulatedBackend(core.GenesisAlloc{addr: {Balance: big.NewInt(1000000000)}}, 10000000)

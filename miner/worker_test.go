@@ -80,6 +80,7 @@ type testWorkerBackend struct {
 func newTestWorkerBackend(t *testing.T, chainConfig *params.ChainConfig, engine consensus.Engine, n int) *testWorkerBackend {
 	var (
 		db    = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewShyftDatabase()
 		gspec = core.Genesis{
 			Config: chainConfig,
 			Alloc:  core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}},
@@ -96,12 +97,12 @@ func newTestWorkerBackend(t *testing.T, chainConfig *params.ChainConfig, engine 
 	}
 	genesis := gspec.MustCommit(db)
 
-	chain, _ := core.NewBlockChain(db, nil, gspec.Config, engine, vm.Config{}, nil)
+	chain, _ := core.NewBlockChain(db, shyftdb, nil, gspec.Config, engine, vm.Config{}, nil)
 	txpool := core.NewTxPool(testTxPoolConfig, chainConfig, chain)
 
 	// Generate a small n-block chain and an uncle block for it
 	if n > 0 {
-		blocks, _ := core.GenerateChain(chainConfig, genesis, engine, db, n, func(i int, gen *core.BlockGen) {
+		blocks, _ := core.GenerateChain(chainConfig, genesis, engine, db, shyftdb, n, func(i int, gen *core.BlockGen) {
 			gen.SetCoinbase(testBankAddress)
 		})
 		if _, err := chain.InsertChain(blocks); err != nil {
@@ -112,7 +113,7 @@ func newTestWorkerBackend(t *testing.T, chainConfig *params.ChainConfig, engine 
 	if n > 0 {
 		parent = chain.GetBlockByHash(chain.CurrentBlock().ParentHash())
 	}
-	blocks, _ := core.GenerateChain(chainConfig, parent, engine, db, 1, func(i int, gen *core.BlockGen) {
+	blocks, _ := core.GenerateChain(chainConfig, parent, engine, db, shyftdb, 1, func(i int, gen *core.BlockGen) {
 		gen.SetCoinbase(testUserAddress)
 	})
 

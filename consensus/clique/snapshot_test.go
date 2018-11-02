@@ -401,6 +401,7 @@ func TestClique(t *testing.T) {
 		}
 		// Create a pristine blockchain with the genesis injected
 		db := ethdb.NewMemDatabase()
+		shyftdb, _ := ethdb.NewShyftDatabase()
 		genesis.Commit(db)
 
 		// Assemble a chain of headers from the cast votes
@@ -412,7 +413,7 @@ func TestClique(t *testing.T) {
 		engine := New(config.Clique, db)
 		engine.fakeDiff = true
 
-		blocks, _ := core.GenerateChain(&config, genesis.ToBlock(db), engine, db, len(tt.votes), func(j int, gen *core.BlockGen) {
+		blocks, _ := core.GenerateChain(&config, genesis.ToBlock(db), engine, db, shyftdb, len(tt.votes), func(j int, gen *core.BlockGen) {
 			// Cast the vote contained in this block
 			gen.SetCoinbase(accounts.address(tt.votes[j].voted))
 			if tt.votes[j].auth {
@@ -448,13 +449,14 @@ func TestClique(t *testing.T) {
 			batches[len(batches)-1] = append(batches[len(batches)-1], block)
 		}
 		// Pass all the headers through clique and ensure tallying succeeds
-		chain, err := core.NewBlockChain(db, nil, &config, engine, vm.Config{}, nil)
+		chain, err := core.NewBlockChain(db, shyftdb, nil, &config, engine, vm.Config{}, nil)
 		if err != nil {
 			t.Errorf("test %d: failed to create test chain: %v", i, err)
 			continue
 		}
 		failed := false
 		for j := 0; j < len(batches)-1; j++ {
+			shyftdb.TruncateTables()
 			if k, err := chain.InsertChain(batches[j]); err != nil {
 				t.Errorf("test %d: failed to import batch %d, block %d: %v", i, j, k, err)
 				failed = true
@@ -464,6 +466,7 @@ func TestClique(t *testing.T) {
 		if failed {
 			continue
 		}
+		shyftdb.TruncateTables()
 		if _, err = chain.InsertChain(batches[len(batches)-1]); err != tt.failure {
 			t.Errorf("test %d: failure mismatch: have %v, want %v", i, err, tt.failure)
 		}

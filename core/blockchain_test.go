@@ -46,28 +46,30 @@ var (
 // newCanonical creates a chain database, and injects a deterministic canonical
 // chain. Depending on the full flag, if creates either a full block chain or a
 // header only chain.
-func newCanonical(engine consensus.Engine, n int, full bool) (ethdb.Database, *BlockChain, error) {
+func newCanonical(engine consensus.Engine, n int, full bool) (ethdb.Database, ethdb.SDatabase, *BlockChain, error) {
 	var (
 		db      = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewShyftDatabase()
 		genesis = new(Genesis).MustCommit(db)
 	)
 
 	// Initialize a fresh chain with only a genesis block
-	blockchain, _ := NewBlockChain(db, nil, params.AllEthashProtocolChanges, engine, vm.Config{}, nil)
+	blockchain, _ := NewBlockChain(db, shyftdb, nil, params.AllEthashProtocolChanges, engine, vm.Config{}, nil)
 	// Create and inject the requested chain
 	if n == 0 {
-		return db, blockchain, nil
+		return db, shyftdb, blockchain, nil
 	}
 	if full {
 		// Full block-chain requested
-		blocks := makeBlockChain(genesis, n, engine, db, canonicalSeed)
+		blocks := makeBlockChain(genesis, n, engine, db, shyftdb, canonicalSeed)
+		shyftdb.TruncateTables()
 		_, err := blockchain.InsertChain(blocks)
-		return db, blockchain, err
+		return db, shyftdb, blockchain, err
 	}
 	// Header-only chain requested
-	headers := makeHeaderChain(genesis.Header(), n, engine, db, canonicalSeed)
+	headers := makeHeaderChain(genesis.Header(), n, engine, db, shyftdb, canonicalSeed)
 	_, err := blockchain.InsertHeaderChain(headers, 1)
-	return db, blockchain, err
+	return db, shyftdb, blockchain, err
 }
 
 // Test fork of length N starting from block i
@@ -77,7 +79,7 @@ func testFork(t *testing.T, blockchain *BlockChain, i, n int, full bool, compara
 		t.Fatal("could not make new canonical in testFork", err)
 	}
 	defer blockchain2.Stop()
-	shyftdb.TruncateTables()
+
 	// Assert the chains have the same header/block at #i
 	var hash1, hash2 common.Hash
 	if full {
@@ -97,11 +99,13 @@ func testFork(t *testing.T, blockchain *BlockChain, i, n int, full bool, compara
 	)
 	if full {
 		blockChainB = makeBlockChain(blockchain2.CurrentBlock(), n, ethash.NewFaker(), db, shyftdb, forkSeed)
+		shyftdb.TruncateTables()
 		if _, err := blockchain2.InsertChain(blockChainB); err != nil {
 			t.Fatalf("failed to insert forking chain: %v", err)
 		}
 	} else {
 		headerChainB = makeHeaderChain(blockchain2.CurrentHeader(), n, ethash.NewFaker(), db, shyftdb, forkSeed)
+		shyftdb.TruncateTables()
 		if _, err := blockchain2.InsertHeaderChain(headerChainB, 1); err != nil {
 			t.Fatalf("failed to insert forking chain: %v", err)
 		}
@@ -198,12 +202,12 @@ func insertChain(done chan bool, blockchain *BlockChain, chain types.Blocks, t *
 }
 
 func TestLastBlock(t *testing.T) {
-	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
 	_, _, blockchain, err := newCanonical(ethash.NewFaker(), 0, true)
 	if err != nil {
 		t.Fatalf("failed to create pristine chain: %v", err)
 	}
 	defer blockchain.Stop()
+
 	blockchain.shyftDb.TruncateTables()
 	blocks := makeBlockChain(blockchain.CurrentBlock(), 1, ethash.NewFullFaker(), blockchain.db, blockchain.shyftDb, 0)
 	if _, err := blockchain.InsertChain(blocks); err != nil {
@@ -216,16 +220,10 @@ func TestLastBlock(t *testing.T) {
 
 // Tests that given a starting canonical chain of a given size, it can be extended
 // with various length chains.
-func TestExtendCanonicalHeaders(t *testing.T) {
-	testExtendCanonical(t, false)
-}
-func TestExtendCanonicalBlocks(t *testing.T) {
-
-	testExtendCanonical(t, true)
-}
+func TestExtendCanonicalHeaders(t *testing.T) { testExtendCanonical(t, false) }
+func TestExtendCanonicalBlocks(t *testing.T) { testExtendCanonical(t, true) }
 
 func testExtendCanonical(t *testing.T, full bool) {
-	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
 	length := 5
 
 	// Make first chain starting from genesis
@@ -532,7 +530,7 @@ func testReorgBadHashes(t *testing.T, full bool) {
 	blockchain.Stop()
 
 	// Create a new BlockChain and check that it rolled back the state.
-	ncm, err := NewBlockChain(blockchain.db, blockchain.shyftDb, nil, blockchain.chainConfig, ethash.NewFaker(), vm.Config{})
+	ncm, err := NewBlockChain(blockchain.db, blockchain.shyftDb, nil, blockchain.chainConfig, ethash.NewFaker(), vm.Config{}, nil)
 	if err != nil {
 		t.Fatalf("failed to create new chain manager: %v", err)
 	}
@@ -613,7 +611,7 @@ func testInsertNonceError(t *testing.T, full bool) {
 func TestFastVsFullChains(t *testing.T) {
 	// Configure and generate a sample block chain
 	var (
-		gendb, _ = ethdb.NewMemDatabase()
+		gendb 	 = ethdb.NewMemDatabase()
 		shyftgendb, _ = ethdb.NewShyftDatabase()
 		key, _   = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 		address  = crypto.PubkeyToAddress(key.PublicKey)
@@ -625,8 +623,6 @@ func TestFastVsFullChains(t *testing.T) {
 		genesis = gspec.MustCommit(gendb)
 		signer  = types.NewEIP155Signer(gspec.Config.ChainID)
 	)
-	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	// TruncateTables()
 	blocks, receipts := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), gendb, shyftgendb, 1024, func(i int, block *BlockGen) {
 		block.SetCoinbase(common.Address{0x00})
 
@@ -648,7 +644,7 @@ func TestFastVsFullChains(t *testing.T) {
 	// Import the chain as an archive node for the comparison baseline
 	archiveDb := ethdb.NewMemDatabase()
 	gspec.MustCommit(archiveDb)
-	archive, _ := NewBlockChain(archiveDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	archive, _ := NewBlockChain(archiveDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	defer archive.Stop()
 	if n, err := archive.InsertChain(blocks); err != nil {
 		t.Fatalf("failed to process block %d: %v", n, err)
@@ -657,7 +653,7 @@ func TestFastVsFullChains(t *testing.T) {
 	fastDb := ethdb.NewMemDatabase()
 	gspec.MustCommit(fastDb)
 
-	fast, _ := NewBlockChain(fastDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	fast, _ := NewBlockChain(fastDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	defer fast.Stop()
 
 	headers := make([]*types.Header, len(blocks))
@@ -737,7 +733,7 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 	archiveDb := ethdb.NewMemDatabase()
 	gspec.MustCommit(archiveDb)
 
-	archive, _ := NewBlockChain(archiveDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	archive, _ := NewBlockChain(archiveDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	shyftgendb.TruncateTables()
 	if n, err := archive.InsertChain(blocks); err != nil {
 		t.Fatalf("failed to process block %d: %v", n, err)
@@ -752,7 +748,7 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 	fastDb := ethdb.NewMemDatabase()
 	gspec.MustCommit(fastDb)
 
-	fast, _ := NewBlockChain(fastDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	fast, _ := NewBlockChain(fastDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	defer fast.Stop()
 
 	headers := make([]*types.Header, len(blocks))
@@ -772,7 +768,7 @@ func TestLightVsFastVsFullChainHeads(t *testing.T) {
 	lightDb := ethdb.NewMemDatabase()
 	gspec.MustCommit(lightDb)
 
-	light, _ := NewBlockChain(lightDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	light, _ := NewBlockChain(lightDb, shyftgendb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	if n, err := light.InsertHeaderChain(headers, 1); err != nil {
 		t.Fatalf("failed to insert header %d: %v", n, err)
 	}
@@ -842,7 +838,7 @@ func TestChainTxReorgs(t *testing.T) {
 		}
 	})
 	// Import the chain. This runs all block validation rules.
-	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	if i, err := blockchain.InsertChain(chain); err != nil {
 		t.Fatalf("failed to insert original chain[%d]: %v", i, err)
 	}
@@ -914,7 +910,7 @@ func TestLogReorgs(t *testing.T) {
 		signer  = types.NewEIP155Signer(gspec.Config.ChainID)
 	)
 
-	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	defer blockchain.Stop()
 
 	rmLogsCh := make(chan RemovedLogsEvent)
@@ -962,7 +958,7 @@ func TestReorgSideEvent(t *testing.T) {
 		signer  = types.NewEIP155Signer(gspec.Config.ChainID)
 	)
 
-	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	defer blockchain.Stop()
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
 	chain, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, 3, func(i int, gen *BlockGen) {})
@@ -1093,7 +1089,7 @@ func TestEIP155Transition(t *testing.T) {
 		genesis = gspec.MustCommit(db)
 	)
 
-	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	defer blockchain.Stop()
 
 	blocks, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, 4, func(i int, block *BlockGen) {
@@ -1158,7 +1154,7 @@ func TestEIP155Transition(t *testing.T) {
 	}
 
 	// generate an invalid chain id transaction
-	config := &params.ChainConfig{ChainId: big.NewInt(2), EIP155Block: big.NewInt(2), HomesteadBlock: new(big.Int)}
+	config := &params.ChainConfig{ChainID: big.NewInt(2), EIP155Block: big.NewInt(2), HomesteadBlock: new(big.Int)}
 	blocks, _ = GenerateChain(config, blocks[len(blocks)-1], ethash.NewFaker(), db, shyftdb, 4, func(i int, block *BlockGen) {
 		var (
 			tx      *types.Transaction
@@ -1201,7 +1197,7 @@ func TestEIP161AccountRemoval(t *testing.T) {
 		}
 		genesis = gspec.MustCommit(db)
 	)
-	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{})
+	blockchain, _ := NewBlockChain(db, shyftdb, nil, gspec.Config, ethash.NewFaker(), vm.Config{}, nil)
 	defer blockchain.Stop()
 
 	blocks, _ := GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, 3, func(i int, block *BlockGen) {
@@ -1277,7 +1273,7 @@ func TestBlockchainHeaderchainReorgConsistency(t *testing.T) {
 	diskdb := ethdb.NewMemDatabase()
 	new(Genesis).MustCommit(diskdb)
 
-	chain, err := NewBlockChain(diskdb, shyftdb, nil, params.TestChainConfig, engine, vm.Config{})
+	chain, err := NewBlockChain(diskdb, shyftdb, nil, params.TestChainConfig, engine, vm.Config{}, nil)
 	if err != nil {
 		t.Fatalf("failed to create tester chain: %v", err)
 	}
@@ -1322,7 +1318,7 @@ func TestTrieForkGC(t *testing.T) {
 	diskdb := ethdb.NewMemDatabase()
 	new(Genesis).MustCommit(diskdb)
 
-	chain, err := NewBlockChain(diskdb, shyftdb, nil, params.TestChainConfig, engine, vm.Config{})
+	chain, err := NewBlockChain(diskdb, shyftdb, nil, params.TestChainConfig, engine, vm.Config{}, nil)
 	if err != nil {
 		t.Fatalf("failed to create tester chain: %v", err)
 	}
@@ -1363,7 +1359,7 @@ func TestLargeReorgTrieGC(t *testing.T) {
 	diskdb := ethdb.NewMemDatabase()
 	new(Genesis).MustCommit(diskdb)
 
-	chain, err := NewBlockChain(diskdb, shyftdb, nil, params.TestChainConfig, engine, vm.Config{})
+	chain, err := NewBlockChain(diskdb, shyftdb, nil, params.TestChainConfig, engine, vm.Config{}, nil)
 	if err != nil {
 		t.Fatalf("failed to create tester chain: %v", err)
 	}
@@ -1492,6 +1488,7 @@ func benchmarkLargeNumberOfValueToNonexisting(b *testing.B, numTxs, numBlocks in
 	// Generate the original common chain segment and the two competing forks
 	engine := ethash.NewFaker()
 	db := ethdb.NewMemDatabase()
+	shyftdb, _ := ethdb.NewShyftDatabase()
 	genesis := gspec.MustCommit(db)
 
 	blockGenerator := func(i int, block *BlockGen) {
@@ -1508,7 +1505,7 @@ func benchmarkLargeNumberOfValueToNonexisting(b *testing.B, numTxs, numBlocks in
 		}
 	}
 
-	shared, _ := GenerateChain(params.TestChainConfig, genesis, engine, db, numBlocks, blockGenerator)
+	shared, _ := GenerateChain(params.TestChainConfig, genesis, engine, db, shyftdb, numBlocks, blockGenerator)
 	b.StopTimer()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -1516,7 +1513,7 @@ func benchmarkLargeNumberOfValueToNonexisting(b *testing.B, numTxs, numBlocks in
 		diskdb := ethdb.NewMemDatabase()
 		gspec.MustCommit(diskdb)
 
-		chain, err := NewBlockChain(diskdb, nil, params.TestChainConfig, engine, vm.Config{}, nil)
+		chain, err := NewBlockChain(diskdb, shyftdb, nil, params.TestChainConfig, engine, vm.Config{}, nil)
 		if err != nil {
 			b.Fatalf("failed to create tester chain: %v", err)
 		}

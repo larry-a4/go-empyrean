@@ -553,15 +553,16 @@ func testBroadcastBlock(t *testing.T, totalPeers, broadcastExpected int) {
 		evmux   = new(event.TypeMux)
 		pow     = ethash.NewFaker()
 		db      = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewShyftDatabase()
 		config  = &params.ChainConfig{}
 		gspec   = &core.Genesis{Config: config}
 		genesis = gspec.MustCommit(db)
 	)
-	blockchain, err := core.NewBlockChain(db, nil, config, pow, vm.Config{}, nil)
+	blockchain, err := core.NewBlockChain(db, shyftdb, nil, config, pow, vm.Config{}, nil)
 	if err != nil {
 		t.Fatalf("failed to create new blockchain: %v", err)
 	}
-	pm, err := NewProtocolManager(config, downloader.FullSync, DefaultConfig.NetworkId, evmux, new(testTxPool), pow, blockchain, db)
+	pm, err := NewProtocolManager(config, downloader.FullSync, DefaultConfig.NetworkId, evmux, new(testTxPool), pow, blockchain, db, shyftdb)
 	if err != nil {
 		t.Fatalf("failed to start test protocol manager: %v", err)
 	}
@@ -573,7 +574,7 @@ func testBroadcastBlock(t *testing.T, totalPeers, broadcastExpected int) {
 		defer peer.close()
 		peers = append(peers, peer)
 	}
-	chain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, 1, func(i int, gen *core.BlockGen) {})
+	chain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, 1, func(i int, gen *core.BlockGen) {})
 	pm.BroadcastBlock(chain[0], true /*propagate*/)
 
 	errCh := make(chan error, totalPeers)

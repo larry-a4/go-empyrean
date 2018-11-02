@@ -125,10 +125,10 @@ func testChainGen(i int, block *core.BlockGen) {
 }
 
 // testIndexers creates a set of indexers with specified params for testing purpose.
-func testIndexers(db ethdb.Database, odr light.OdrBackend, iConfig *light.IndexerConfig) (*core.ChainIndexer, *core.ChainIndexer, *core.ChainIndexer) {
-	chtIndexer := light.NewChtIndexer(db, odr, iConfig.ChtSize, iConfig.ChtConfirms)
-	bloomIndexer := eth.NewBloomIndexer(db, iConfig.BloomSize, iConfig.BloomConfirms)
-	bloomTrieIndexer := light.NewBloomTrieIndexer(db, odr, iConfig.BloomSize, iConfig.BloomTrieSize)
+func testIndexers(db ethdb.Database, shyftdb ethdb.SDatabase, odr light.OdrBackend, iConfig *light.IndexerConfig) (*core.ChainIndexer, *core.ChainIndexer, *core.ChainIndexer) {
+	chtIndexer := light.NewChtIndexer(db, shyftdb, odr, iConfig.ChtSize, iConfig.ChtConfirms)
+	bloomIndexer := eth.NewBloomIndexer(db, shyftdb, iConfig.BloomSize, iConfig.BloomConfirms)
+	bloomTrieIndexer := light.NewBloomTrieIndexer(db, shyftdb, odr, iConfig.BloomSize, iConfig.BloomTrieSize)
 	bloomIndexer.AddChildIndexer(bloomTrieIndexer)
 	return chtIndexer, bloomIndexer, bloomTrieIndexer
 }
@@ -342,9 +342,10 @@ type TestEntity struct {
 // newServerEnv creates a server testing environment with a connected test peer for testing purpose.
 func newServerEnv(t *testing.T, blocks int, protocol int, waitIndexers func(*core.ChainIndexer, *core.ChainIndexer, *core.ChainIndexer)) (*TestEntity, func()) {
 	db := ethdb.NewMemDatabase()
-	cIndexer, bIndexer, btIndexer := testIndexers(db, nil, light.TestServerIndexerConfig)
+	shyftdb, _ := ethdb.NewShyftDatabase()
+	cIndexer, bIndexer, btIndexer := testIndexers(db, shyftdb, nil, light.TestServerIndexerConfig)
 
-	pm := newTestProtocolManagerMust(t, false, blocks, testChainGen, nil, nil, db)
+	pm := newTestProtocolManagerMust(t, false, blocks, testChainGen, nil, nil, db, shyftdb)
 	peer, _ := newTestPeer(t, "peer", protocol, pm, true)
 
 	cIndexer.Start(pm.blockchain.(*core.BlockChain))
@@ -374,18 +375,20 @@ func newServerEnv(t *testing.T, blocks int, protocol int, waitIndexers func(*cor
 // for testing purpose.
 func newClientServerEnv(t *testing.T, blocks int, protocol int, waitIndexers func(*core.ChainIndexer, *core.ChainIndexer, *core.ChainIndexer), newPeer bool) (*TestEntity, *TestEntity, func()) {
 	db, ldb := ethdb.NewMemDatabase(), ethdb.NewMemDatabase()
+	shyftdb, _ := ethdb.NewShyftDatabase()
+	shyftdatabase, _ := ethdb.NewTestInstanceShyftDatabase()
 	peers, lPeers := newPeerSet(), newPeerSet()
 
 	dist := newRequestDistributor(lPeers, make(chan struct{}))
 	rm := newRetrieveManager(lPeers, dist, nil)
 	odr := NewLesOdr(ldb, light.TestClientIndexerConfig, rm)
 
-	cIndexer, bIndexer, btIndexer := testIndexers(db, nil, light.TestServerIndexerConfig)
-	lcIndexer, lbIndexer, lbtIndexer := testIndexers(ldb, odr, light.TestClientIndexerConfig)
+	cIndexer, bIndexer, btIndexer := testIndexers(db, shyftdb, nil, light.TestServerIndexerConfig)
+	lcIndexer, lbIndexer, lbtIndexer := testIndexers(ldb, shyftdatabase, odr, light.TestClientIndexerConfig)
 	odr.SetIndexers(lcIndexer, lbtIndexer, lbIndexer)
 
-	pm := newTestProtocolManagerMust(t, false, blocks, testChainGen, nil, peers, db)
-	lpm := newTestProtocolManagerMust(t, true, 0, nil, odr, lPeers, ldb)
+	pm := newTestProtocolManagerMust(t, false, blocks, testChainGen, nil, peers, db, shyftdb)
+	lpm := newTestProtocolManagerMust(t, true, 0, nil, odr, lPeers, ldb, shyftdatabase)
 
 	startIndexers := func(clientMode bool, pm *ProtocolManager) {
 		if clientMode {

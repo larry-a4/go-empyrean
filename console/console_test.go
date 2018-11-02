@@ -89,6 +89,7 @@ func TestMain(m *testing.M) {
 // newTester creates a test environment based on which the console can operate.
 // Please ensure you call Close() on the returned tester to avoid leaks.
 func newTester(t *testing.T, confOverride func(*eth.Config)) *tester {
+	core.DisconnectPG()
 	// Create a temporary storage for the node keys and initialize it
 	workspace, err := ioutil.TempDir("", "console-tester-")
 	if err != nil {
@@ -164,7 +165,6 @@ func (env *tester) Close(t *testing.T) {
 // the instance name, coinbase account, block number, data directory and supported
 // console modules.
 func TestWelcome(t *testing.T) {
-	t.SkipNow()
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
@@ -190,7 +190,6 @@ func TestWelcome(t *testing.T) {
 
 // Tests that JavaScript statement evaluation works as intended.
 func TestEvaluate(t *testing.T) {
-	t.SkipNow()
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
@@ -202,7 +201,6 @@ func TestEvaluate(t *testing.T) {
 
 // Tests that the console can be used in interactive mode.
 func TestInteractive(t *testing.T) {
-	t.SkipNow()
 	// Create a tester and run an interactive console in the background
 	tester := newTester(t, nil)
 	defer tester.Close(t)
@@ -234,7 +232,6 @@ func TestInteractive(t *testing.T) {
 // Tests that preloaded JavaScript files have been executed before user is given
 // input.
 func TestPreload(t *testing.T) {
-	t.SkipNow()
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
@@ -246,7 +243,6 @@ func TestPreload(t *testing.T) {
 
 // Tests that JavaScript scripts can be executes from the configured asset path.
 func TestExecute(t *testing.T) {
-	t.SkipNow()
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
@@ -261,7 +257,6 @@ func TestExecute(t *testing.T) {
 // Tests that the JavaScript objects returned by statement executions are properly
 // pretty printed instead of just displaying "[object]".
 func TestPrettyPrint(t *testing.T) {
-	t.SkipNow()
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 
@@ -293,7 +288,6 @@ func TestPrettyPrint(t *testing.T) {
 
 // Tests that the JavaScript exceptions are properly formatted and colored.
 func TestPrettyError(t *testing.T) {
-	t.SkipNow()
 	tester := newTester(t, nil)
 	defer tester.Close(t)
 	tester.console.Evaluate("throw 'hello'")
@@ -306,7 +300,6 @@ func TestPrettyError(t *testing.T) {
 
 // Tests that tests if the number of indents for JS input is calculated correct.
 func TestIndenting(t *testing.T) {
-	t.SkipNow()
 	testCases := []struct {
 		input               string
 		expectedIndentCount int

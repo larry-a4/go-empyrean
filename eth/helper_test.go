@@ -60,7 +60,7 @@ func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func
 			Alloc:  core.GenesisAlloc{testBank: {Balance: big.NewInt(1000000)}},
 		}
 		genesis       = gspec.MustCommit(db)
-		blockchain, _ = core.NewBlockChain(db, shyftdb, nil, gspec.Config, engine, vm.Config{})
+		blockchain, _ = core.NewBlockChain(db, shyftdb, nil, gspec.Config, engine, vm.Config{}, nil)
 	)
 
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
