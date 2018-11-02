@@ -1,8 +1,8 @@
 language: go
-
+go_import_path: github.com/ShyftNetwork/go-empyrean
 go:
   - "1.10.4"
-  - "1.10.3"
+  - "1.11.x"
 
 services:
   - postgresql
@@ -28,4 +28,4 @@ before_script:
 
 script:
   - make geth
-  - go test ./... -parallel 2
+  - go test ./...
