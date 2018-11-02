@@ -132,6 +132,7 @@ func (t *BlockTest) Run() error {
 		return err
 	}
 	defer chain.Stop()
+	shyftdb.TruncateTables()
 	validBlocks, err := t.insertBlocks(chain)
 	if err != nil {
 		return err
