@@ -9,20 +9,19 @@ import (
 	Rewards "github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
-	"github.com/ShyftNetwork/go-empyrean/shyfttracerinterface"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/log"
+	"github.com/ShyftNetwork/go-empyrean/track"
 	"database/sql"
 	"strings"
 	"flag"
+	"fmt"
 )
 
-//IShyftTracer Used to initialize ShyftTracer
-var IShyftTracer shyfttracerinterface.IShyftTracer
-
-//SetIShyftTracer sets tracer type
-func SetIShyftTracer(st shyfttracerinterface.IShyftTracer) {
-	IShyftTracer = st
+var InternalTracker track.InternalTracker
+// Sets up shyft tracer struct type
+func SetInternalTracker(st track.InternalTracker) {
+	InternalTracker = st
 }
 
 func WriteShyftGen(db ethdb.SDatabase, gen *Genesis, block *types.Block) {
@@ -207,7 +206,10 @@ func swriteTransactions(db ethdb.SDatabase, tx *types.Transaction, blockHash com
 		db.InsertTx(txData)
 		//Runs necessary functions for tracing internal transactions through tracers.go
 		if flag.Lookup("test.v") == nil {
-			IShyftTracer.GetTracerToRun(tx.Hash(), blockHash)
+			_, err := InternalTracker.TraceTransaction(tx.Hash(), blockHash)
+			if err != nil {
+				fmt.Println(err)
+			}
 		}
 	} else {
 		//Inserts Tx into DB

@@ -15,7 +15,6 @@ import (
 )
 
 var blockExplorerDb *sqlx.DB
-var sDb *sqlx.DB
 
 const (
 	defaultTestDb  = "shyftdbtest"

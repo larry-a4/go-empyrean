@@ -104,30 +104,26 @@ func (s *Ethereum) AddLesServer(ls LesServer) {
 	ls.SetBloomBitsIndexer(s.bloomIndexer)
 }
 
-func SNew(config *Config) (*Ethereum, error) {
-	//chainConfig, _, _ := core.SetupGenesisBlock(Chaindb_global, Shyftdb_global, config.Genesis)
-	eth := &Ethereum{
-		config:        config,
-		chainDb:       Chaindb_global,
-		chainConfig:   nil,
-		shutdownChan:  make(chan bool),
-		networkID:     config.NetworkId,
-		gasPrice:      config.MinerGasPrice,
-		etherbase:     config.Etherbase,
-		bloomRequests: make(chan chan *bloombits.Retrieval),
-		bloomIndexer:  NewBloomIndexer(Chaindb_global, Shyftdb_global, params.BloomBitsBlocks, params.BloomConfirms),
+// InitTransaction sets up returns a set up ShyftTracer struct type
+func InitTransactionTracking(eth *Ethereum) (*ShyftTracer, error) {
+	jsTracer := "callTracer"
+	config := &TraceConfig{
+		LogConfig: nil,
+		Tracer:    &jsTracer,
+		Timeout:   nil,
+		Reexec:    nil,
 	}
-	eth.blockchain = BlockchainObject
 
-	return eth, nil
+	return &ShyftTracer{
+		ChainConfig: params.ShyftNetworkChainConfig,
+		TraceConfig: config,
+		Eth: eth,
+	}, nil
 }
 
 // New creates a new Ethereum object (including the
 // initialisation of the common Ethereum object)
 func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
-	shyft_tracer := new(ShyftTracer)
-	core.SetIShyftTracer(shyft_tracer)
-	SetGlobalConfig(config)
 	// Ensure configuration values are compatible and sane
 	if config.SyncMode == downloader.LightSync {
 		return nil, errors.New("can't run eth.Ethereum in light sync mode, use les.LightEthereum")
@@ -239,12 +235,12 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	}
 	eth.APIBackend.gpo = gasprice.NewOracle(eth.APIBackend, gpoParams)
 
-	DebugApi.eth = eth
-	DebugApi.config = chainConfig
-	//@NOTE Shyft Tracer
-	//if flag.Lookup("test.v") == nil {
-	//	InitTracerEnv()
-	//}
+	tracker, err := InitTransactionTracking(eth)
+	if err != nil {
+		fmt.Println(err)
+	}
+	core.SetInternalTracker(tracker)
+	SetGlobalConfig(config)
 
 	return eth, nil
 }

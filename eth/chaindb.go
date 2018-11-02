@@ -1,9 +1,6 @@
 package eth
 
 import (
-	"io/ioutil"
-	"os"
-
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/node"
 )
@@ -46,22 +43,4 @@ func shyftdb(ctx *node.ServiceContext, cfg *Config) (ethdb.SDatabase, error) {
 		}
 		return nil, err
 	}
-}
-
-// NewShyftTestLDB - returns a (*ethdb.LDBDatabase, func())
-func NewShyftTestLDB() (*ethdb.LDBDatabase, error) {
-	if Chaindb_global != nil {
-		Chaindb_global.Close()
-		os.RemoveAll("shyftdb_test_")
-	}
-	dirname, err := ioutil.TempDir(os.TempDir(), "shyftdb_test_")
-	if err != nil {
-		panic("failed to create test file: " + err.Error())
-	}
-	db, err := ethdb.NewLDBDatabase(dirname, 0, 0)
-	if err != nil {
-		panic("failed to create test database: " + err.Error())
-	}
-	Chaindb_global = db
-	return db, err
 }

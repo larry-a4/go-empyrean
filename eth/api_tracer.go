@@ -572,7 +572,7 @@ func (api *PrivateDebugAPI) TraceTransaction(ctx context.Context, hash common.Ha
 // TraceTransaction returns the structured logs created during the execution of EVM
 // and returns them as a JSON object.
 //@NOTE:SHYFT
-func (api *PrivateDebugAPI) STraceTransaction(ctx context.Context, hash common.Hash, config *TraceConfig, bHash common.Hash) (interface{}, error) {
+func (api *PrivateDebugAPI) STraceTransaction(ctx context.Context, hash common.Hash, bHash common.Hash, config *TraceConfig) (interface{}, error) {
 	// NOTE:SHYFT
 	tx, blockHash, _, index := core.GetTransaction(api.eth.ChainDb(), hash)
 	if tx == nil {
@@ -613,14 +613,6 @@ func (api *PrivateDebugAPI) StraceTx(ctx context.Context, message core.Message, 
 		if tracer, err = tracers.New(*config.Tracer); err != nil {
 			return nil, err
 		}
-		// @NOTE:SHYFT REMOVED CTX DEADLINE
-		// Handle timeouts and RPC cancellations
-		//deadlineCtx, cancel := context.WithTimeout(ctx, timeout)
-		//go func() {
-		//	<-deadlineCtx.Done()
-		//	tracer.(*tracers.Tracer).Stop(errors.New("execution timeout"))
-		//}()
-		//defer cancel()
 
 	case config == nil:
 		tracer = vm.NewStructLogger(nil)
