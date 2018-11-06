@@ -14,7 +14,7 @@ matrix:
     sudo: required
     cache:
       directories:
-        - $TRAVIS_BUILD_DIT/.git/modules
+        - $TRAVIS_BUILD_DIR/.git/modules
     services:
     - postgresql
 
@@ -52,20 +52,19 @@ matrix:
 
     cache:
       directories:
-      - $TRAVIS_BUILD_DIT/.git/modules
+      - $TRAVIS_BUILD_DIR/.git/modules
 
     install:
     - brew install postgresql@9.6
     - brew services start postgresql
+    - go get -t ./...
 
     before_script:
     - psql -c 'create database shyftdbtest;' -U postgres
     - psql -c 'create database shyftdbtest_2;' -U postgres
 
     script:
-    - unset -f cd # workaround for https://github.com/travis-ci/travis-ci/issues/8703
-    - go run build/ci.go install
-    - go run build/ci.go test -coverage $TEST_PACKAGES
+    - make geth && go test ./...
 
   # Lint
   - os: linux
