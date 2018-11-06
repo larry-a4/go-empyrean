@@ -62,7 +62,7 @@ matrix:
     - go get -t ./...
 
     before_script:
-    - createuser postgres
+    - createuser -s postgres
     - psql -c 'create database shyftdbtest;' -U postgres
     - psql -c 'create database shyftdbtest_2;' -U postgres
 
