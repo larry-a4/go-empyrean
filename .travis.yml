@@ -12,6 +12,9 @@ matrix:
     - ENV=linux
     dist: trusty
     sudo: required
+    cache:
+      directories:
+        - $TRAVIS_BUILD_DIT/.git/modules
     services:
     - postgresql
 
@@ -39,14 +42,21 @@ matrix:
 
   # OSX
   - os: osx
+
     go:
     - "1.10.x"
     - "1.11.x"
+
     env:
     - ENV=OSX
 
+    cache:
+      directories:
+      - $TRAVIS_BUILD_DIT/.git/modules
+
     install:
     - brew install postgresql@9.6
+    - brew services start postgresql
 
     before_script:
     - psql -c 'create database shyftdbtest;' -U postgres
