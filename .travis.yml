@@ -9,8 +9,9 @@ matrix:
     sudo: required
 
     go:
-    - "1.10.x"
-    - "1.11.x"
+    - 1.10.x
+    - 1.11.x
+
     env:
     - ENV=linux
 
@@ -18,6 +19,7 @@ matrix:
       timeout: 259200 # 72 hours
       directories:
       - $TRAVIS_BUILD_DIR/.git/modules
+
     services:
     - postgresql
 
@@ -47,8 +49,8 @@ matrix:
   - os: osx
 
     go:
-    - "1.10.x"
-    - "1.11.x"
+    - 1.10.x
+    - 1.11.x
 
     env:
     - ENV=OSX
@@ -80,7 +82,8 @@ matrix:
     - ENV=lint
 
     git:
-      submodules: false # avoid cloning ethereum/tests
+      submodules: false # avoid cloning shyft_tests
+
     script:
     - go run build/ci.go lint
 
