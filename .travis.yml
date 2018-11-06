@@ -5,16 +5,19 @@ matrix:
   include:
   # Linux
   - os: linux
+    dist: trusty
+    sudo: required
+
     go:
     - "1.10.x"
     - "1.11.x"
     env:
     - ENV=linux
-    dist: trusty
-    sudo: required
+
     cache:
+      timeout: 259200 # 72 hours
       directories:
-        - $TRAVIS_BUILD_DIR/.git/modules
+      - $TRAVIS_BUILD_DIR/.git/modules
     services:
     - postgresql
 
@@ -51,6 +54,7 @@ matrix:
     - ENV=OSX
 
     cache:
+      timeout: 259200 # 72 hours
       directories:
       - $TRAVIS_BUILD_DIR/.git/modules
 
@@ -60,6 +64,7 @@ matrix:
     - go get -t ./...
 
     before_script:
+    - createuser postgres
     - psql -c 'create database shyftdbtest;' -U postgres
     - psql -c 'create database shyftdbtest_2;' -U postgres
 
@@ -70,6 +75,9 @@ matrix:
   - os: linux
     dist: trusty
     go: 1.11.x
+
+    env:
+    - ENV=lint
 
     git:
       submodules: false # avoid cloning ethereum/tests
