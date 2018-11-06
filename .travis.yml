@@ -1,5 +1,8 @@
 language: go
 go_import_path: github.com/ShyftNetwork/go-empyrean
+go:
+- 1.10.x
+- 1.11.x
 
 matrix:
   include:
@@ -7,10 +10,6 @@ matrix:
   - os: linux
     dist: trusty
     sudo: required
-
-    go:
-    - 1.10.x
-    - 1.11.x
 
     env:
     - ENV=linux
@@ -47,10 +46,7 @@ matrix:
 
   # OSX
   - os: osx
-
-    go:
-    - 1.10.x
-    - 1.11.x
+    sudo: required
 
     env:
     - ENV=OSX
