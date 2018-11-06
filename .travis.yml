@@ -1,59 +1,75 @@
 language: go
 go_import_path: github.com/ShyftNetwork/go-empyrean
 go:
-  - "1.10.x"
-  - "1.11.x"
-
-git:
-  submodules: true
-
-
+- "1.10.x"
+- "1.11.x"
 
 matrix:
   include:
+    # Linux
+    - os: linux
+      dist: trusty
+      sudo: required
+      services:
+        - postgresql
 
-  - os: linux
-    dist: trusty
-    sudo: required
-    services:
-    - postgresql
+      addons:
+        postgresql: "9.6"
+        apt:
+          packages:
+          - postgresql-9.6
+          - postgresql-client-9.6
 
-    addons:
-      postgresql: "9.6"
-      apt:
-        packages:
-        - postgresql-9.6
-        - postgresql-client-9.6
+      before_install:
+      - sudo apt-get update
+      - sudo /etc/init.d/postgresql stop
+      - sudo /etc/init.d/postgresql start 9.6
 
-    install:
-    - go get -t ./...
+      install:
+      - go get -t ./...
 
-    before_install:
-    - sudo apt-get update
-    - sudo /etc/init.d/postgresql stop
-    - sudo /etc/init.d/postgresql start 9.6
+      before_script:
+      - psql -c 'create database shyftdbtest;' -U postgres
+      - psql -c 'create database shyftdbtest_2;' -U postgres
 
-    before_script:
-    - psql -c 'create database shyftdbtest;' -U postgres
-    - psql -c 'create database shyftdbtest_2;' -U postgres
+      script:
+      - make geth
+      - go test ./...
 
-    script:
-    - make geth
-    - go test ./...
+    # OSX
+    - os: osx
+      services:
+      - postgresql
 
-#  - os: osx
-#    script:
-#    - unset -f cd # workaround for https://github.com/travis-ci/travis-ci/issues/8703
-#    - go run build/ci.go install
-#    - go run build/ci.go test -coverage $TEST_PACKAGES
+      addons:
+        postgresql: "9.6"
 
-#  # Test without DB
-#  - os: linux
-#    dist: trusty
-#    go: 1.11.x
-#    env:
-#    - lint
-#    git:
-#      submodules: false # avoid cloning ethereum/tests
-#    script:
-#    - go run build/ci.go lint
+      before_script:
+      - psql -c 'create database shyftdbtest;' -U postgres
+      - psql -c 'create database shyftdbtest_2;' -U postgres
+
+      script:
+      - unset -f cd # workaround for https://github.com/travis-ci/travis-ci/issues/8703
+      - go run build/ci.go install
+      - go run build/ci.go test -coverage $TEST_PACKAGES
+
+    # Lint
+    - os: linux
+      dist: trusty
+      go: 1.11.x
+
+      git:
+        submodules: false # avoid cloning ethereum/tests
+      script:
+      - go run build/ci.go lint
+
+    # Test without DB
+#    - os: linux
+#      dist: trusty
+#      go: 1.11.x
+#      env:
+#      - lint
+#      git:
+#        submodules: false # avoid cloning ethereum/tests
+#      script:
+#      - go run build/ci.go lint
