@@ -8,6 +8,8 @@ matrix:
   include:
     # Linux
     - os: linux
+      env:
+        - ENV=linux
       dist: trusty
       sudo: required
       services:
@@ -33,13 +35,12 @@ matrix:
       - psql -c 'create database shyftdbtest_2;' -U postgres
 
       script:
-      - make geth
-      - go test ./...
+      - make geth && go test ./...
 
     # OSX
     - os: osx
-      services:
-      - postgresql
+      env:
+        - ENV=OSX
 
       addons:
         postgresql: "9.6"
