@@ -1,7 +1,6 @@
 language: go
 go_import_path: github.com/ShyftNetwork/go-empyrean
 
-
 matrix:
   include:
   - os: linux
