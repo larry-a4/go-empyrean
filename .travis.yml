@@ -1,10 +1,10 @@
 language: go
 go_import_path: github.com/ShyftNetwork/go-empyrean
 
-env:
-  matrix:
-    - TRAVIS_GO_VERSION = 1.10.x
-    - TRAVIS_GO_VERSION = 1.11.x
+go:
+  - 1.10.x
+  - 1.11.x
+
 
 os: linux
 dist: trusty
