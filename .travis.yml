@@ -10,86 +10,31 @@ matrix:
   - os: linux
     dist: trusty
     sudo: required
-
     env:
     - ENV=linux
-
     cache:
       timeout: 259200 # 72 hours
       directories:
       - $TRAVIS_BUILD_DIR/.git/modules
-
-    services:
-    - postgresql
-
-    addons:
-      postgresql: "9.6"
-      apt:
-        packages:
-        - postgresql-9.6
-        - postgresql-client-9.6
-
-    before_install:
-    - sudo apt-get update
-    - sudo /etc/init.d/postgresql stop
-    - sudo /etc/init.d/postgresql start 9.6
-
     install:
     - go get -t ./...
-
-    before_script:
-    - psql -c 'create database shyftdbtest;' -U postgres
-    - psql -c 'create database shyftdbtest_2;' -U postgres
-
     script:
     - make geth && go test ./...
 
   # OSX
   - os: osx
     sudo: required
-
     env:
     - ENV=OSX
-
     cache:
       timeout: 259200 # 72 hours
       directories:
       - $TRAVIS_BUILD_DIR/.git/modules
-
     install:
     - brew install postgresql@9.6
     - brew services start postgresql
     - go get -t ./...
-
     before_script:
     - createuser -s postgres
-    - psql -c 'create database shyftdbtest;' -U postgres
-    - psql -c 'create database shyftdbtest_2;' -U postgres
-
     script:
     - make geth && go test ./...
-
-  # Lint
-  - os: linux
-    dist: trusty
-    go: 1.11.x
-
-    env:
-    - ENV=lint
-
-    git:
-      submodules: false # avoid cloning shyft_tests
-
-    script:
-    - go run build/ci.go lint
-
-  # Test without DB
-#    - os: linux
-#      dist: trusty
-#      go: 1.11.x
-#      env:
-#      - lint
-#      git:
-#        submodules: false # avoid cloning ethereum/tests
-#      script:
-#      - go run build/ci.go lint
