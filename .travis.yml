@@ -5,15 +5,30 @@ go:
   - 1.10.x
   - 1.11.x
 
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      cache:
+        timeout: 259200 # 72 hours
+        directories:
+        - $TRAVIS_BUILD_DIR/.git/modules
+      install:
+      - go get -t ./...
+      script:
+      - make geth && go test ./...
+    - os: linux
+      dist: trusty
+      sudo: required
+      cache:
+        timeout: 259200 # 72 hours
+        directories:
+        - $TRAVIS_BUILD_DIR/.git/modules
+      install:
+      - go get -t ./...
+      script:
+      - echo "Dummy run" #make geth && go test ./...
 
-os: linux
-dist: trusty
-sudo: required
-cache:
-  timeout: 259200 # 72 hours
-  directories:
-  - $TRAVIS_BUILD_DIR/.git/modules
-install:
-- go get -t ./...
-script:
-- make geth && go test ./...
+
+
