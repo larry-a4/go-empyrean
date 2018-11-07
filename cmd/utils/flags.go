@@ -1392,7 +1392,7 @@ func MakeGenesis(ctx *cli.Context) *core.Genesis {
 
 // MakeChain creates a chain manager from set command line flags.
 func MakeChain(ctx *cli.Context, stack *node.Node) (chain *core.BlockChain, chainDb ethdb.Database, shyftDb ethdb.SDatabase) {
-	chainDb  = MakeChainDatabase(ctx, stack)
+	chainDb = MakeChainDatabase(ctx, stack)
 	shyftChainDb := MakeChainShyftDatabase(ctx, stack)
 	config, _, err := core.SetupGenesisBlock(chainDb, shyftChainDb, MakeGenesis(ctx))
 	if err != nil {

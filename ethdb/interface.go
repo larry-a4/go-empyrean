@@ -18,6 +18,7 @@ package ethdb
 
 import (
 	"math/big"
+
 	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 )
 

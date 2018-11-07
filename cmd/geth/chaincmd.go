@@ -481,5 +481,3 @@ func hashish(x string) bool {
 	_, err := strconv.Atoi(x)
 	return err != nil
 }
-
-

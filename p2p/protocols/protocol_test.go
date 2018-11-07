@@ -24,11 +24,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/p2p/enode"
 	"github.com/ShyftNetwork/go-empyrean/p2p/simulations/adapters"
 	p2ptest "github.com/ShyftNetwork/go-empyrean/p2p/testing"
+	"github.com/ShyftNetwork/go-empyrean/rlp"
 )
 
 // handshake message type

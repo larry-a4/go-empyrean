@@ -21,9 +21,9 @@ import (
 	"hash"
 	"sync/atomic"
 
+	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/math"
 	"github.com/ShyftNetwork/go-empyrean/params"
-	"github.com/ShyftNetwork/go-empyrean/common"
 )
 
 // Config are the configuration options for the Interpreter

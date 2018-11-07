@@ -5,6 +5,11 @@ import (
 	"strconv"
 	"time"
 
+	"database/sql"
+	"flag"
+	"fmt"
+	"strings"
+
 	"github.com/ShyftNetwork/go-empyrean/common"
 	Rewards "github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
@@ -12,13 +17,10 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"github.com/ShyftNetwork/go-empyrean/track"
-	"database/sql"
-	"strings"
-	"flag"
-	"fmt"
 )
 
 var InternalTracker track.InternalTracker
+
 // Sets up shyft tracer struct type
 func SetInternalTracker(st track.InternalTracker) {
 	InternalTracker = st

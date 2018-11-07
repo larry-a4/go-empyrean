@@ -3,12 +3,13 @@ package core
 import (
 	"testing"
 
-	"github.com/ShyftNetwork/go-empyrean/core/types"
-	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"encoding/json"
-	"strings"
-	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"fmt"
+	"strings"
+
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/core/types"
+	"github.com/ShyftNetwork/go-empyrean/ethdb"
 )
 
 func TestBlock(t *testing.T) {

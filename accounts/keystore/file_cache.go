@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/deckarep/golang-set"
+
 	"github.com/ShyftNetwork/go-empyrean/log"
 )
 

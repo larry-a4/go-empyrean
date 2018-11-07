@@ -21,11 +21,11 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net/http"
 	"runtime"
 	"sync"
 	"sync/atomic"
-	"net/http"
-	"github.com/gorilla/mux"
+
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
@@ -50,6 +50,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
+	"github.com/gorilla/mux"
 )
 
 var BlockchainObject *core.BlockChain
@@ -78,8 +79,8 @@ type Ethereum struct {
 	lesServer       LesServer
 
 	// DB interfaces
-	chainDb ethdb.Database // Block chain database
-	shyftDb ethdb.SDatabase // Shyft Postgres database
+	chainDb        ethdb.Database  // Block chain database
+	shyftDb        ethdb.SDatabase // Shyft Postgres database
 	eventMux       *event.TypeMux
 	engine         consensus.Engine
 	accountManager *accounts.Manager
@@ -117,7 +118,7 @@ func InitTransactionTracking(eth *Ethereum) (*ShyftTracer, error) {
 	return &ShyftTracer{
 		ChainConfig: params.ShyftNetworkChainConfig,
 		TraceConfig: config,
-		Eth: eth,
+		Eth:         eth,
 	}, nil
 }
 
@@ -152,7 +153,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	eth := &Ethereum{
 		config:         config,
 		chainDb:        chainDb,
-		shyftDb:   		shyftDb,
+		shyftDb:        shyftDb,
 		chainConfig:    chainConfig,
 		eventMux:       ctx.EventMux,
 		accountManager: ctx.AccountManager,
@@ -181,7 +182,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		}
 		cacheConfig = &core.CacheConfig{Disabled: config.NoPruning, TrieNodeLimit: config.TrieCache, TrieTimeLimit: config.TrieTimeout}
 	)
-	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig,  eth.shouldPreserve)
+	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig, eth.shouldPreserve)
 
 	BlockchainObject = eth.blockchain
 	go func() {

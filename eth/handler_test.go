@@ -17,11 +17,12 @@
 package eth
 
 import (
+	"testing"
+
 	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
-	"testing"
 	"time"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
@@ -72,7 +73,7 @@ func TestGetBlockHeaders62(t *testing.T) { testGetBlockHeaders(t, 62) }
 func TestGetBlockHeaders63(t *testing.T) { testGetBlockHeaders(t, 63) }
 
 func testGetBlockHeaders(t *testing.T, protocol int) {
-	pm, _,shyftdb := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxHashFetch+15, nil, nil)
+	pm, _, shyftdb := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxHashFetch+15, nil, nil)
 	shyftdb.TruncateTables()
 	peer, _ := newTestPeer("peer", protocol, pm, true)
 	defer peer.close()
@@ -468,13 +469,13 @@ func testDAOChallenge(t *testing.T, localForked, remoteForked bool, timeout bool
 	}
 	// Create a DAO aware protocol manager
 	var (
-		evmux   = new(event.TypeMux)
-		pow     = ethash.NewFaker()
-		db      = ethdb.NewMemDatabase()
-		shyftdb, _    = ethdb.NewShyftDatabase()
-		config  = &params.ChainConfig{DAOForkBlock: big.NewInt(1), DAOForkSupport: localForked}
-		gspec   = &core.Genesis{Config: config}
-		genesis = gspec.MustCommit(db)
+		evmux      = new(event.TypeMux)
+		pow        = ethash.NewFaker()
+		db         = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewShyftDatabase()
+		config     = &params.ChainConfig{DAOForkBlock: big.NewInt(1), DAOForkSupport: localForked}
+		gspec      = &core.Genesis{Config: config}
+		genesis    = gspec.MustCommit(db)
 	)
 	blockchain, err := core.NewBlockChain(db, shyftdb, nil, config, pow, vm.Config{}, nil)
 	if err != nil {
@@ -550,13 +551,13 @@ func TestBroadcastBlock(t *testing.T) {
 
 func testBroadcastBlock(t *testing.T, totalPeers, broadcastExpected int) {
 	var (
-		evmux   = new(event.TypeMux)
-		pow     = ethash.NewFaker()
-		db      = ethdb.NewMemDatabase()
+		evmux      = new(event.TypeMux)
+		pow        = ethash.NewFaker()
+		db         = ethdb.NewMemDatabase()
 		shyftdb, _ = ethdb.NewShyftDatabase()
-		config  = &params.ChainConfig{}
-		gspec   = &core.Genesis{Config: config}
-		genesis = gspec.MustCommit(db)
+		config     = &params.ChainConfig{}
+		gspec      = &core.Genesis{Config: config}
+		genesis    = gspec.MustCommit(db)
 	)
 	blockchain, err := core.NewBlockChain(db, shyftdb, nil, config, pow, vm.Config{}, nil)
 	if err != nil {

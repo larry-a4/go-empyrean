@@ -32,7 +32,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/pkg/reexec"
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/accounts/keystore"
 	"github.com/ShyftNetwork/go-empyrean/internal/cmdtest"
@@ -43,6 +42,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/swarm/api"
 	swarmhttp "github.com/ShyftNetwork/go-empyrean/swarm/api/http"
 	"github.com/ShyftNetwork/go-empyrean/swarm/testutil"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 var loglevel = flag.Int("loglevel", 3, "verbosity of logs")

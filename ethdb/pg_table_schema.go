@@ -45,11 +45,11 @@ type Block struct {
 	Age        time.Time `db:"age"`
 	ParentHash string    `db:"parenthash"`
 	UncleHash  string    `db:"unclehash"`
-	Difficulty string     `db:"difficulty"`
+	Difficulty string    `db:"difficulty"`
 	Size       string    `db:"size"`
 	Nonce      int64     `db:"nonce"`
-	Rewards    string     `db:"rewards"`
-	Number     string     `db:"number"`
+	Rewards    string    `db:"rewards"`
+	Number     string    `db:"number"`
 }
 
 // BlocksTable sql for Blocks

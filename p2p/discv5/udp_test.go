@@ -25,10 +25,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func init() {
