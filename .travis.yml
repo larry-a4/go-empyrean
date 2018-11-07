@@ -10,8 +10,6 @@ matrix:
   - os: linux
     dist: trusty
     sudo: required
-    env:
-    - ENV=linux
     cache:
       timeout: 259200 # 72 hours
       directories:
@@ -24,8 +22,6 @@ matrix:
   # OSX
   - os: osx
     sudo: required
-    env:
-    - ENV=OSX
     cache:
       timeout: 259200 # 72 hours
       directories:
