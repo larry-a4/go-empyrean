@@ -7,22 +7,28 @@ matrix:
     dist: trusty
     sudo: required
     go: 1.10.x
+
   - os: linux
     dist: trusty
     sudo: required
     go: 1.11.x
+
   - os: linux
     dist: trusty
     sudo: required
     go: 1.11.x
+    env:
+      - lint
     git:
       submodules: false
     before_install: ignore
     before_script: ignore
     script: go run build/ci.go lint
+
   - os: osx
     sudo: required
     go: 1.10.x
+
   - os: osx
     sudo: required
     go: 1.11.x
@@ -49,7 +55,8 @@ before_script:
   - psql -c 'create database shyftdbtest_2;' -U postgres
 
 script:
-  - make geth && go test ./...
+  - go run build/ci.go install
+  - go run build/ci.go test -coverage $TEST_PACKAGES
 
 
 
