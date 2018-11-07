@@ -12,6 +12,15 @@ matrix:
     dist: trusty
     sudo: required
     go: 1.11.x
+  - os: linux
+    dist: trusty
+    sudo: required
+    go: 1.11.x
+    git:
+      submodules: false
+    before_install: ignore
+    before_script: ignore
+    script: go run build/ci.go lint
   - os: osx
     sudo: required
     go: 1.10.x
