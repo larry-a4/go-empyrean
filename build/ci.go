@@ -288,7 +288,8 @@ func buildFlags(env build.Environment) (flags []string) {
 		flags = append(flags, "-ldflags", strings.Join(ld, " "))
 	}
 
-	if os.Getenv("disablepg") {
+	_, ok := os.LookupEnv("DISABLEPG")
+	if ok {
 		flags = append(flags, "-disablepg", strings.Join(ld, " "))
 	}
 	return flags

@@ -15,7 +15,7 @@ matrix:
     before_install: ignore
     before_script: ignore
     env:
-      - DISABLEPG=true
+      - DISABLEPG="disablepg"
 
   - os: linux
     dist: trusty
