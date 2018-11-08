@@ -287,11 +287,6 @@ func buildFlags(env build.Environment) (flags []string) {
 	if len(ld) > 0 {
 		flags = append(flags, "-ldflags", strings.Join(ld, " "))
 	}
-
-	_, ok := os.LookupEnv("DISABLEPG")
-	if ok {
-		flags = append(flags, "-disablepg", strings.Join(ld, " "))
-	}
 	return flags
 }
 
@@ -381,7 +376,7 @@ func doLint(cmdline []string) {
 
 	// Run slow linters one by one
 	for _, linter := range []string{"unconvert", "gosimple"} {
-		configs = []string{"--vendor", "--tests", "--deadline=10m", "--disable-all", "--enable=" + linter}
+		configs = []string{"--vendor", "--tests", "--deadline=10m", "--disable-all", "--exclude=ethdb/shyft_database.go", "--enable=" + linter}
 		build.MustRunCommand(filepath.Join(GOBIN, "gometalinter.v2"), append(configs, packages...)...)
 	}
 }

@@ -1150,11 +1150,14 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 	if ctx.GlobalIsSet(NetworkIdFlag.Name) {
 		cfg.NetworkId = ctx.GlobalUint64(NetworkIdFlag.Name)
 	}
-	if ctx.GlobalBool(PostgresFlag.Name) {
+	_, ok := os.LookupEnv("DISABLEPG")
+	if ok {
+		core.DisconnectPG()
+		cfg.Postgres = false
+	} else if ctx.GlobalBool(PostgresFlag.Name) {
 		core.DisconnectPG()
 		cfg.Postgres = false
 	}
-
 	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheDatabaseFlag.Name) {
 		cfg.DatabaseCache = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheDatabaseFlag.Name) / 100
 	}
@@ -1364,7 +1367,10 @@ func MakeChainShyftDatabase(ctx *cli.Context, stack *node.Node) ethdb.SDatabase 
 	var (
 		shyftChainDb ethdb.SDatabase
 	)
-	if ctx.GlobalBool(PostgresFlag.Name) {
+	_, ok := os.LookupEnv("DISABLEPG")
+	if ok {
+		shyftChainDb = nil
+	} else if ctx.GlobalBool(PostgresFlag.Name) {
 		core.DisconnectPG()
 		shyftChainDb = nil
 	} else {
