@@ -43,10 +43,6 @@ var (
 	difficultyTestDir  = filepath.Join(baseDir, "BasicTests")
 )
 
-const (
-	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
-)
-
 func readJSON(reader io.Reader, value interface{}) error {
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {

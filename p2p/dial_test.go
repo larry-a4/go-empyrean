@@ -25,10 +25,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/ShyftNetwork/go-empyrean/p2p/enode"
 	"github.com/ShyftNetwork/go-empyrean/p2p/enr"
 	"github.com/ShyftNetwork/go-empyrean/p2p/netutil"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestMain(m *testing.M) {

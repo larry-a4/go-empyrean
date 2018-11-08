@@ -44,9 +44,9 @@ func init() {
 type downloadTester struct {
 	downloader *Downloader
 
-	genesis *types.Block   // Genesis blocks used by the tester and peers
-	stateDb ethdb.Database // Database used by the tester for syncing from peers
-	peerDb  ethdb.Database // Database of the peers containing all data
+	genesis *types.Block    // Genesis blocks used by the tester and peers
+	stateDb ethdb.Database  // Database used by the tester for syncing from peers
+	peerDb  ethdb.Database  // Database of the peers containing all data
 	shyftDb ethdb.SDatabase //Shyft postgres instance
 	peers   map[string]*downloadTesterPeer
 
@@ -64,7 +64,7 @@ func newTester() *downloadTester {
 	tester := &downloadTester{
 		genesis:     testGenesis,
 		peerDb:      testDB,
-		shyftDb: 	 nil,
+		shyftDb:     nil,
 		peers:       make(map[string]*downloadTesterPeer),
 		ownHashes:   []common.Hash{testGenesis.Hash()},
 		ownHeaders:  map[common.Hash]*types.Header{testGenesis.Hash(): testGenesis.Header()},

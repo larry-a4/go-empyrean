@@ -47,7 +47,7 @@ var DefaultConfig = Config{
 	LightPeers:    100,
 	DatabaseCache: 768,
 	TrieCache:     256,
-	Postgres:	   true,
+	Postgres:      true,
 	TrieTimeout:   60 * time.Minute,
 	MinerGasFloor: 8000000,
 	MinerGasCeil:  8000000,
@@ -97,7 +97,7 @@ type Config struct {
 	DatabaseCache      int
 	TrieCache          int
 	TrieTimeout        time.Duration
-	Postgres		   bool
+	Postgres           bool
 	// Mining-related options
 	Etherbase      common.Address `toml:",omitempty"`
 	MinerNotify    []string       `toml:",omitempty"`

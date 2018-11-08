@@ -25,13 +25,13 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/ShyftNetwork/go-empyrean/swarm/storage/feed/lookup"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"github.com/ShyftNetwork/go-empyrean/swarm/api"
 	swarmhttp "github.com/ShyftNetwork/go-empyrean/swarm/api/http"
 	"github.com/ShyftNetwork/go-empyrean/swarm/multihash"
 	"github.com/ShyftNetwork/go-empyrean/swarm/storage/feed"
+	"github.com/ShyftNetwork/go-empyrean/swarm/storage/feed/lookup"
 	"github.com/ShyftNetwork/go-empyrean/swarm/testutil"
 )
 

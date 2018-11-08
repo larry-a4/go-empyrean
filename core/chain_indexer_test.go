@@ -49,7 +49,7 @@ func TestChainIndexerWithChildren(t *testing.T) {
 // multiple backends. The section size and required confirmation count parameters
 // are randomized.
 func testChainIndexer(t *testing.T, count int) {
-	db  := ethdb.NewMemDatabase()
+	db := ethdb.NewMemDatabase()
 	shyftdb, _ := ethdb.NewShyftDatabase()
 
 	defer db.Close()

@@ -222,7 +222,7 @@ func doInstall(cmdline []string) {
 
 		if minor < 9 {
 			log.Println("You have Go version", runtime.Version())
-			log.Println("go-ethereum requires at least Go version 1.9 and cannot")
+			log.Println("go-empyrean requires at least Go version 1.9 and cannot")
 			log.Println("be compiled with an earlier version. Please upgrade your Go installation.")
 			os.Exit(1)
 		}
@@ -362,6 +362,9 @@ func doLint(cmdline []string) {
 		"--deadline=2m",
 		"--disable-all",
 		"--enable=goimports",
+		"--exclude=core/genesis.go",
+		"--exclude=eth/handler_test.go",
+		"--exclude=eth/downloader/api.go",
 		"--enable=varcheck",
 		"--enable=vet",
 		"--enable=gofmt",
@@ -373,7 +376,7 @@ func doLint(cmdline []string) {
 
 	// Run slow linters one by one
 	for _, linter := range []string{"unconvert", "gosimple"} {
-		configs = []string{"--vendor", "--tests", "--deadline=10m", "--disable-all", "--enable=" + linter}
+		configs = []string{"--vendor", "--tests", "--deadline=10m", "--disable-all", "--exclude=ethdb/shyft_database.go", "--enable=" + linter}
 		build.MustRunCommand(filepath.Join(GOBIN, "gometalinter.v2"), append(configs, packages...)...)
 	}
 }

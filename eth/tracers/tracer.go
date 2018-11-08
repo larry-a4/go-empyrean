@@ -32,9 +32,9 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"gopkg.in/olebedev/go-duktape.v3"
-	"github.com/ShyftNetwork/go-empyrean/ethdb"
 )
 
 // bigIntegerJS is the minified version of https://github.com/peterolson/BigInteger.js.
@@ -592,7 +592,7 @@ type Internals struct {
 	Output  string
 	Time    string
 	Calls   []*Internals
-	Db 		*ethdb.SDatabase
+	Db      *ethdb.SDatabase
 }
 
 //@NOTE:SHYFT
@@ -604,17 +604,17 @@ func (i *Internals) SWriteInteralTxs(hash common.Hash, bHash common.Hash) {
 	amount := strconv.FormatUint(value, 10)
 
 	iTx := stypes.InteralWrite{
-		Hash:    	hash.Hex(),
-		BlockHash:  bHash.Hex(),
-		Action:  	i.Type,
-		From:    	i.From,
-		To:      	i.To,
-		Value:   	amount,
-		Gas:     	gas,
-		GasUsed: 	gasUsed,
-		Input:   	i.Input,
-		Output:  	i.Output,
-		Time:    	i.Time,
+		Hash:      hash.Hex(),
+		BlockHash: bHash.Hex(),
+		Action:    i.Type,
+		From:      i.From,
+		To:        i.To,
+		Value:     amount,
+		Gas:       gas,
+		GasUsed:   gasUsed,
+		Input:     i.Input,
+		Output:    i.Output,
+		Time:      i.Time,
 	}
 	db.InsertInternals(iTx)
 	//@TODO WRITE OVER TRANSACTION STRUCT

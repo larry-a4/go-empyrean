@@ -20,11 +20,11 @@ import (
 	"fmt"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
+	mapset "github.com/deckarep/golang-set"
 )
 
 // Peer represents a whisper protocol peer connection.

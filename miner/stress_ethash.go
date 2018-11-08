@@ -41,7 +41,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/node"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/p2p/enode"
-	"github.com/ShyftNetwork/go-empyrean/p2p/discover"
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
 

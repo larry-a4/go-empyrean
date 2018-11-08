@@ -79,9 +79,9 @@ type testWorkerBackend struct {
 
 func newTestWorkerBackend(t *testing.T, chainConfig *params.ChainConfig, engine consensus.Engine, n int) *testWorkerBackend {
 	var (
-		db    = ethdb.NewMemDatabase()
+		db         = ethdb.NewMemDatabase()
 		shyftdb, _ = ethdb.NewShyftDatabase()
-		gspec = core.Genesis{
+		gspec      = core.Genesis{
 			Config: chainConfig,
 			Alloc:  core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}},
 		}

@@ -23,11 +23,11 @@ import (
 	"sync"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
+	mapset "github.com/deckarep/golang-set"
 )
 
 var (

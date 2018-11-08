@@ -3,17 +3,17 @@ package eth
 import (
 	"context"
 
-	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/params"
 )
 
 var Global_config *Config
 
 // ShyftTracer sets up params required to tracer transaction through debugAPI
-type ShyftTracer struct{
+type ShyftTracer struct {
 	ChainConfig *params.ChainConfig
 	TraceConfig *TraceConfig
-	Eth			*Ethereum
+	Eth         *Ethereum
 }
 
 // SetGlobalConfig gives access to eth.Config

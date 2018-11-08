@@ -25,10 +25,10 @@ import (
 
 // Genesis hashes to enforce below configs on.
 var (
-	MainnetGenesisHash = common.HexToHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3") // Mainnet genesis hash to enforce below configs on
-	TestnetGenesisHash = common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d") // Testnet genesis hash to enforce below configs on
+	MainnetGenesisHash  = common.HexToHash("0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3") // Mainnet genesis hash to enforce below configs on
+	TestnetGenesisHash  = common.HexToHash("0x41941023680923e0fe4d74a34bdac8141f2540e3ae90623718e47d66d1ca4a2d") // Testnet genesis hash to enforce below configs on
 	ShyftnetGenesisHash = common.HexToHash("0xa234ce68da0e2567074a1bf3a5be108d71d871da72b4a497e77c970c8f812fbe")
-	RinkebyGenesisHash = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
+	RinkebyGenesisHash  = common.HexToHash("0x6341fd3daf94b748c72ced5a5b26028f2474f5f00d824504e4fa37a75767e177")
 )
 
 var (
@@ -113,7 +113,7 @@ var (
 		EIP158Block:         big.NewInt(3),
 		ByzantiumBlock:      big.NewInt(1035301),
 		ConstantinopleBlock: nil,
-		ShyftNetworkBlock: big.NewInt(1),
+		ShyftNetworkBlock:   big.NewInt(1),
 		Ethash:              new(EthashConfig),
 	}
 	// RinkebyTrustedCheckpoint contains the light client trusted checkpoint for the Rinkeby test network.
@@ -177,7 +177,7 @@ type ChainConfig struct {
 
 	ByzantiumBlock      *big.Int `json:"byzantiumBlock,omitempty"`      // Byzantium switch block (nil = no fork, 0 = already on byzantium)
 	ConstantinopleBlock *big.Int `json:"constantinopleBlock,omitempty"` // Constantinople switch block (nil = no fork, 0 = already activated)
-	ShyftNetworkBlock *big.Int `json:"shyftNetworkBlock,omitempty"` // Constantinople switch block (nil = no fork, 0 = already activated)
+	ShyftNetworkBlock   *big.Int `json:"shyftNetworkBlock,omitempty"`   // Constantinople switch block (nil = no fork, 0 = already activated)
 	EWASMBlock          *big.Int `json:"ewasmBlock,omitempty"`          // EWASM switch block (nil = no fork, 0 = already activated)
 
 	// Various consensus engines
@@ -269,10 +269,12 @@ func (c *ChainConfig) IsConstantinople(num *big.Int) bool {
 func (c *ChainConfig) IsShyftNetwork(num *big.Int) bool {
 	return isForked(c.ShyftNetworkBlock, num)
 }
+
 // IsEWASM returns whether num represents a block number after the EWASM fork
 func (c *ChainConfig) IsEWASM(num *big.Int) bool {
 	return isForked(c.EWASMBlock, num)
 }
+
 // GasTable returns the gas table corresponding to the current phase (homestead or homestead reprice).
 //
 // The returned GasTable's fields shouldn't, under any circumstances, be changed.
@@ -410,7 +412,7 @@ func (err *ConfigCompatError) Error() string {
 type Rules struct {
 	ChainID                                   *big.Int
 	IsHomestead, IsEIP150, IsEIP155, IsEIP158 bool
-	IsShyftNetwork							  bool
+	IsShyftNetwork                            bool
 	IsByzantium, IsConstantinople             bool
 }
 

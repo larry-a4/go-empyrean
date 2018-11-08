@@ -24,7 +24,6 @@ import (
 	"runtime"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/math"
 	"github.com/ShyftNetwork/go-empyrean/consensus"
@@ -34,6 +33,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/crypto/sha3"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
+	mapset "github.com/deckarep/golang-set"
 )
 
 // Ethash proof-of-work protocol constants.
@@ -47,9 +47,9 @@ var (
 	// ShyftNetworkBlockReward    = Block reward for the shyft conduit contract.
 	// ShyftMinerBlockReward      = Block reward for the miner.
 	// ShyftNetworkConduitAddress = Shyft conduit contract
-	ShyftNetworkBlockReward	   *big.Int = big.NewInt(2.5e+18) // Block reward in wei for successfully mining a block, for the Shyft Network
-	ShyftMinerBlockReward  *big.Int = big.NewInt(2.5e+18) // Block reward in wei for successfully mining a block, for the Shyft Network
-	ShyftNetworkConduitAddress = common.HexToAddress("9db76b4bbaea76dfda4552b7b9d4e9d43abc55fd")
+	ShyftNetworkBlockReward    *big.Int = big.NewInt(2.5e+18) // Block reward in wei for successfully mining a block, for the Shyft Network
+	ShyftMinerBlockReward      *big.Int = big.NewInt(2.5e+18) // Block reward in wei for successfully mining a block, for the Shyft Network
+	ShyftNetworkConduitAddress          = common.HexToAddress("9db76b4bbaea76dfda4552b7b9d4e9d43abc55fd")
 	// calcDifficultyConstantinople is the difficulty adjustment algorithm for Constantinople.
 	// It returns the difficulty that a new block should have when created at time given the
 	// parent block's time and difficulty. The calculation uses the Byzantium rules, but with
@@ -617,7 +617,7 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 	if config.IsByzantium(header.Number) {
 		blockReward = ByzantiumBlockReward
 	}
-	if (config.IsShyftNetwork(header.Number)) {
+	if config.IsShyftNetwork(header.Number) {
 		blockReward = ShyftMinerBlockReward
 	}
 	if config.IsConstantinople(header.Number) {
@@ -632,13 +632,13 @@ func accumulateRewards(config *params.ChainConfig, state *state.StateDB, header 
 		r.Mul(r, blockReward)
 		r.Div(r, big8)
 		state.AddBalance(uncle.Coinbase, r)
-		
+
 		r.Div(blockReward, big32)
 		reward.Add(reward, r)
 	}
 	state.AddBalance(header.Coinbase, reward)
 
-	if (config.IsShyftNetwork(header.Number)) {
+	if config.IsShyftNetwork(header.Number) {
 		state.AddBalance(ShyftNetworkConduitAddress, ShyftNetworkBlockReward)
 	}
 }

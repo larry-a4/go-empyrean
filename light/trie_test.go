@@ -34,8 +34,8 @@ import (
 
 func TestNodeIterator(t *testing.T) {
 	var (
-		fulldb  = ethdb.NewMemDatabase()
-		lightdb = ethdb.NewMemDatabase()
+		fulldb     = ethdb.NewMemDatabase()
+		lightdb    = ethdb.NewMemDatabase()
 		shyftdb, _ = ethdb.NewShyftDatabase()
 		gspec      = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
 		genesis    = gspec.MustCommit(fulldb)

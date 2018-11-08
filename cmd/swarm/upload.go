@@ -29,9 +29,9 @@ import (
 	"strconv"
 	"strings"
 
-	swarm "github.com/ShyftNetwork/go-empyrean/swarm/api/client"
 	"github.com/ShyftNetwork/go-empyrean/cmd/utils"
 	"github.com/ShyftNetwork/go-empyrean/log"
+	swarm "github.com/ShyftNetwork/go-empyrean/swarm/api/client"
 	"gopkg.in/urfave/cli.v1"
 )
 

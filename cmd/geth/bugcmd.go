@@ -40,6 +40,7 @@ var bugCommand = cli.Command{
 	ArgsUsage: " ",
 	Category:  "MISCELLANEOUS COMMANDS",
 }
+
 const issueURL = "https://github.com/ShyftNetwork/go-empyrean/issues/new"
 
 // reportBug reports a bug by opening a new URL to the go-ethereum GH issue

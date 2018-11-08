@@ -32,11 +32,11 @@ import (
 func TestHeaderVerification(t *testing.T) {
 	// Create a simple chain to verify
 	var (
-		testdb = ethdb.NewMemDatabase()
+		testdb         = ethdb.NewMemDatabase()
 		shyftTestdb, _ = ethdb.NewShyftDatabase()
-		gspec     = &Genesis{Config: params.TestChainConfig}
-		genesis   = gspec.MustCommit(testdb)
-		blocks, _ = GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), testdb, shyftTestdb, 8, nil)
+		gspec          = &Genesis{Config: params.TestChainConfig}
+		genesis        = gspec.MustCommit(testdb)
+		blocks, _      = GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), testdb, shyftTestdb, 8, nil)
 	)
 	headers := make([]*types.Header, len(blocks))
 	for i, block := range blocks {
@@ -85,11 +85,11 @@ func TestHeaderConcurrentVerification32(t *testing.T) { testHeaderConcurrentVeri
 func testHeaderConcurrentVerification(t *testing.T, threads int) {
 	// Create a simple chain to verify
 	var (
-		testdb = ethdb.NewMemDatabase()
+		testdb         = ethdb.NewMemDatabase()
 		shyftTestdb, _ = ethdb.NewShyftDatabase()
-		gspec     = &Genesis{Config: params.TestChainConfig}
-		genesis   = gspec.MustCommit(testdb)
-		blocks, _ = GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), testdb, shyftTestdb, 8, nil)
+		gspec          = &Genesis{Config: params.TestChainConfig}
+		genesis        = gspec.MustCommit(testdb)
+		blocks, _      = GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), testdb, shyftTestdb, 8, nil)
 	)
 	headers := make([]*types.Header, len(blocks))
 	seals := make([]bool, len(blocks))
@@ -158,11 +158,11 @@ func TestHeaderConcurrentAbortion32(t *testing.T) { testHeaderConcurrentAbortion
 func testHeaderConcurrentAbortion(t *testing.T, threads int) {
 	// Create a simple chain to verify
 	var (
-		testdb = ethdb.NewMemDatabase()
+		testdb         = ethdb.NewMemDatabase()
 		shyftTestdb, _ = ethdb.NewShyftDatabase()
-		gspec     = &Genesis{Config: params.TestChainConfig}
-		genesis   = gspec.MustCommit(testdb)
-		blocks, _ = GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), testdb, shyftTestdb, 1024, nil)
+		gspec          = &Genesis{Config: params.TestChainConfig}
+		genesis        = gspec.MustCommit(testdb)
+		blocks, _      = GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), testdb, shyftTestdb, 1024, nil)
 	)
 	headers := make([]*types.Header, len(blocks))
 	seals := make([]bool, len(blocks))

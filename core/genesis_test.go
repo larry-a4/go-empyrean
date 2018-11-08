@@ -21,13 +21,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core/rawdb"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/params"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestDefaultGenesisBlock(t *testing.T) {
@@ -55,7 +55,7 @@ func TestSetupGenesis(t *testing.T) {
 	oldcustomg.Config = &params.ChainConfig{HomesteadBlock: big.NewInt(2)}
 	tests := []struct {
 		name       string
-		fn         func(ethdb.Database ,ethdb.SDatabase) (*params.ChainConfig, common.Hash, error)
+		fn         func(ethdb.Database, ethdb.SDatabase) (*params.ChainConfig, common.Hash, error)
 		wantConfig *params.ChainConfig
 		wantHash   common.Hash
 		wantErr    error
@@ -89,7 +89,7 @@ func TestSetupGenesis(t *testing.T) {
 			name: "custom block in DB, genesis == nil",
 			fn: func(db ethdb.Database, shyftdb ethdb.SDatabase) (*params.ChainConfig, common.Hash, error) {
 				customg.MustCommit(db)
-				return SetupGenesisBlock(db,shyftdb, nil)
+				return SetupGenesisBlock(db, shyftdb, nil)
 			},
 			wantHash:   customghash,
 			wantConfig: customg.Config,
@@ -142,7 +142,7 @@ func TestSetupGenesis(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		db  := ethdb.NewMemDatabase()
+		db := ethdb.NewMemDatabase()
 		shyftdb, _ := ethdb.NewShyftDatabase()
 		config, hash, err := test.fn(db, shyftdb)
 

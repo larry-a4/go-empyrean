@@ -22,8 +22,8 @@ import (
 	"testing"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	"github.com/ShyftNetwork/go-empyrean/common"
+	mapset "github.com/deckarep/golang-set"
 )
 
 func TestMultipleTopicCopyInNewMessageFilter(t *testing.T) {

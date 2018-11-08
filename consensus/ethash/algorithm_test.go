@@ -32,13 +32,13 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 )
 
-
 func TestMain(m *testing.M) {
 	exec.Command("/bin/sh", "../../shyft-cli/shyftTestDbClean.sh")
 	retCode := m.Run()
 	exec.Command("/bin/sh", "../../shyft-cli/shyftTestDbClean.sh")
 	os.Exit(retCode)
 }
+
 // prepare converts an ethash cache or dataset from a byte stream into the internal
 // int representation. All ethash methods work with ints to avoid constant byte to
 // int conversions as well as to handle both little and big endian systems.

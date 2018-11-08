@@ -27,10 +27,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ShyftNetwork/go-empyrean/swarm/storage/feed"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/swarm/log"
 	"github.com/ShyftNetwork/go-empyrean/swarm/storage"
+	"github.com/ShyftNetwork/go-empyrean/swarm/storage/feed"
 )
 
 const (

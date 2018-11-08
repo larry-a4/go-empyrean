@@ -99,10 +99,10 @@ type Downloader struct {
 	mode SyncMode       // Synchronisation mode defining the strategy used (per sync cycle)
 	mux  *event.TypeMux // Event multiplexer to announce sync operation events
 
-	queue   *queue   // Scheduler for selecting the hashes to download
-	peers   *peerSet // Set of active peers from which download can proceed
-	stateDB ethdb.Database
-	shyftDb ethdb.SDatabase
+	queue         *queue   // Scheduler for selecting the hashes to download
+	peers         *peerSet // Set of active peers from which download can proceed
+	stateDB       ethdb.Database
+	shyftDb       ethdb.SDatabase
 	rttEstimate   uint64 // Round trip time to target for download requests
 	rttConfidence uint64 // Confidence in the estimated RTT (unit: millionths to allow atomic ops)
 
@@ -209,7 +209,7 @@ func New(mode SyncMode, stateDb ethdb.Database, shyftDb ethdb.SDatabase, mux *ev
 	dl := &Downloader{
 		mode:           mode,
 		stateDB:        stateDb,
-		shyftDb:		shyftDb,
+		shyftDb:        shyftDb,
 		mux:            mux,
 		queue:          newQueue(),
 		peers:          newPeerSet(),

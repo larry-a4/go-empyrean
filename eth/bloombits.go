@@ -88,8 +88,8 @@ const (
 // BloomIndexer implements a core.ChainIndexer, building up a rotated bloom bits index
 // for the Ethereum header bloom filters, permitting blazing fast filtering.
 type BloomIndexer struct {
-	size    uint64               // section size to generate bloombits for
-	db      ethdb.Database       // database instance to write index data and metadata into
+	size    uint64         // section size to generate bloombits for
+	db      ethdb.Database // database instance to write index data and metadata into
 	shyftdb ethdb.SDatabase
 	gen     *bloombits.Generator // generator to rotate the bloom bits crating the bloom index
 	section uint64               // Section is the section number being processed currently
@@ -100,9 +100,9 @@ type BloomIndexer struct {
 // canonical chain for fast logs filtering.
 func NewBloomIndexer(db ethdb.Database, shyftdb ethdb.SDatabase, size, confirms uint64) *core.ChainIndexer {
 	backend := &BloomIndexer{
-		db:     	db,
-		shyftdb:	shyftdb,
-		size: 		size,
+		db:      db,
+		shyftdb: shyftdb,
+		size:    size,
 	}
 	table := ethdb.NewTable(db, string(rawdb.BloomBitsIndexPrefix))
 
