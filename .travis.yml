@@ -15,14 +15,14 @@ matrix:
     before_install: ignore
     before_script: ignore
     env:
-      - disablepg
+      - DISABLEPG=true
 
   - os: linux
     dist: trusty
     sudo: required
     go: 1.11.x
     env:
-      - lint
+      - LINT
     git:
       submodules: false
     before_install: ignore
