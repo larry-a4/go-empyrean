@@ -12,6 +12,10 @@ matrix:
     dist: trusty
     sudo: required
     go: 1.11.x
+    before_install: ignore
+    before_script: ignore
+    env:
+      - disablepg
 
   - os: linux
     dist: trusty
@@ -47,7 +51,6 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install postgresql@9.6          ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start postgresql          ; fi
   - go get -t ./...
-
 
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres          ; fi
