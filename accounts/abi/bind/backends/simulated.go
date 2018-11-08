@@ -51,9 +51,9 @@ var errGasEstimationFailed = errors.New("gas required exceeds allowance or alway
 // SimulatedBackend implements bind.ContractBackend, simulating a blockchain in
 // the background. Its main purpose is to allow easily testing contract bindings.
 type SimulatedBackend struct {
-	database   ethdb.Database   // In memory database to store our testing data
+	database      ethdb.Database // In memory database to store our testing data
 	shyftDatabase ethdb.SDatabase
-	blockchain *core.BlockChain // Ethereum blockchain to handle the consensus
+	blockchain    *core.BlockChain // Ethereum blockchain to handle the consensus
 
 	mu           sync.Mutex
 	pendingBlock *types.Block   // Currently pending block that will be imported on request
@@ -73,15 +73,15 @@ func NewSimulatedBackend(alloc core.GenesisAlloc, gasLimit uint64) *SimulatedBac
 	if err != nil {
 		panic(err)
 	}
-	genesis := core.Genesis{Config: params.AllEthashProtocolChanges,  GasLimit: gasLimit, Alloc: alloc}
+	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, GasLimit: gasLimit, Alloc: alloc}
 	genesis.MustCommit(database)
 	blockchain, _ := core.NewBlockChain(database, shyftdb, nil, genesis.Config, ethash.NewFaker(), vm.Config{}, nil)
 	backend := &SimulatedBackend{
-		database:   	database,
-		shyftDatabase:	shyftdb,
-		blockchain: 	blockchain,
-		config:     	genesis.Config,
-		events:     	filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, shyftdb, blockchain}, false),
+		database:      database,
+		shyftDatabase: shyftdb,
+		blockchain:    blockchain,
+		config:        genesis.Config,
+		events:        filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, shyftdb, blockchain}, false),
 	}
 	backend.rollback()
 	return backend
@@ -428,13 +428,13 @@ func (m callmsg) Data() []byte         { return m.CallMsg.Data }
 // filterBackend implements filters.Backend to support filtering for logs without
 // taking bloom-bits acceleration structures into account.
 type filterBackend struct {
-	db ethdb.Database
+	db      ethdb.Database
 	shyftdb ethdb.SDatabase
-	bc *core.BlockChain
+	bc      *core.BlockChain
 }
 
 func (fb *filterBackend) ChainDb() ethdb.Database  { return fb.db }
-func (fb *filterBackend) ShyftDb() ethdb.SDatabase  { return fb.shyftdb }
+func (fb *filterBackend) ShyftDb() ethdb.SDatabase { return fb.shyftdb }
 func (fb *filterBackend) EventMux() *event.TypeMux { panic("not supported") }
 
 func (fb *filterBackend) HeaderByNumber(ctx context.Context, block rpc.BlockNumber) (*types.Header, error) {

@@ -35,7 +35,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
-	_ "github.com/lib/pq"
 )
 
 //go:generate gencodec -type Genesis -field-override genesisSpecMarshaling -out gen_genesis.go
@@ -333,12 +332,12 @@ func DefaultGenesisBlockForEthereum() *Genesis {
 // DefaultShyftGenesisBlock returns Shyft network genesis block.
 func DefaultGenesisBlock() *Genesis {
 	return &Genesis{
-		Config: 	params.ShyftNetworkChainConfig,
-		Nonce:		66,
+		Config:     params.ShyftNetworkChainConfig,
+		Nonce:      66,
 		ExtraData:  hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000"),
 		GasLimit:   24011655,
 		Difficulty: big.NewInt(1048576),
-		Alloc: decodePrealloc(shyftNetworkAllocData),
+		Alloc:      decodePrealloc(shyftNetworkAllocData),
 	}
 }
 

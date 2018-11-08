@@ -32,7 +32,7 @@ func TestDAOForkRangeExtradata(t *testing.T) {
 	forkBlock := big.NewInt(32)
 
 	// Generate a common prefix for both pro-forkers and non-forkers
-	db  := ethdb.NewMemDatabase()
+	db := ethdb.NewMemDatabase()
 	shyftdb, _ := ethdb.NewShyftDatabase()
 	gspec := new(Genesis)
 	genesis := gspec.MustCommit(db)

@@ -81,11 +81,11 @@ func TestTxPool(t *testing.T) {
 	}
 
 	var (
-		sdb  = ethdb.NewMemDatabase()
-		ldb  = ethdb.NewMemDatabase()
+		sdb        = ethdb.NewMemDatabase()
+		ldb        = ethdb.NewMemDatabase()
 		shyftdb, _ = ethdb.NewShyftDatabase()
-		gspec   = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
-		genesis = gspec.MustCommit(sdb)
+		gspec      = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
+		genesis    = gspec.MustCommit(sdb)
 	)
 	gspec.MustCommit(ldb)
 	// Assemble the test environment

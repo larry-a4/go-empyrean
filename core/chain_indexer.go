@@ -67,9 +67,9 @@ type ChainIndexerChain interface {
 // after an entire section has been finished or in case of rollbacks that might
 // affect already finished sections.
 type ChainIndexer struct {
-	chainDb  ethdb.Database      // Chain database to index the data from
-	indexDb  ethdb.Database      // Prefixed table-view of the db to write index metadata into
-	shyftDb	 ethdb.SDatabase
+	chainDb  ethdb.Database // Chain database to index the data from
+	indexDb  ethdb.Database // Prefixed table-view of the db to write index metadata into
+	shyftDb  ethdb.SDatabase
 	backend  ChainIndexerBackend // Background processor generating the index data content
 	children []*ChainIndexer     // Child indexers to cascade chain updates to
 
@@ -102,7 +102,7 @@ func NewChainIndexer(chainDb, indexDb ethdb.Database, shyftdb ethdb.SDatabase, b
 	c := &ChainIndexer{
 		chainDb:     chainDb,
 		indexDb:     indexDb,
-		shyftDb:	 shyftdb,
+		shyftDb:     shyftdb,
 		backend:     backend,
 		update:      make(chan struct{}, 1),
 		quit:        make(chan chan error),

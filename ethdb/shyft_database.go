@@ -1,17 +1,18 @@
 package ethdb
 
 import (
-	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
-	"strings"
 	"database/sql"
-	"math/big"
-	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
-	"fmt"
-	"strconv"
 	"flag"
+	"fmt"
+	"math/big"
 	"os"
 	"regexp"
+	"strconv"
+	"strings"
+
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 var blockExplorerDb *sqlx.DB
@@ -27,7 +28,7 @@ const (
 var TestDbInstances []string
 
 type SPGDatabase struct {
-	db *sqlx.DB   // PostgresDB instance
+	db *sqlx.DB // PostgresDB instance
 }
 
 // NewLDBDatabase returns a PostgresDB wrapped object.
@@ -41,7 +42,7 @@ func NewShyftDatabase() (*SPGDatabase, error) {
 	conn := blockExplorerDb
 	conn.Ping()
 	return &SPGDatabase{
-		db:  conn,
+		db: conn,
 	}, nil
 }
 
@@ -55,7 +56,7 @@ func NewTestInstanceShyftDatabase() (*SPGDatabase, error) {
 	conn := blockExplorerDb
 	conn.Ping()
 	return &SPGDatabase{
-		db:  conn,
+		db: conn,
 	}, nil
 }
 
@@ -63,7 +64,7 @@ func ReturnShyftDatabase() (*SPGDatabase, error) {
 	return NewShyftDatabase()
 }
 
-// InitDB - initalizes a Postgresql Database for use by the Blockexplorer
+// InitDB - initializes a Postgresql Database for use by the Blockexplorer
 func InitDB(flag bool) (*sqlx.DB, error) {
 	// To set the environment you can run the program with an ENV variable DBENV.
 	// DBENV defaults to local for purposes of running the correct local
@@ -120,7 +121,7 @@ func AssignTestDbInstanceName() string {
 
 	dbNum := false
 	dbInt := 1
-	for dbNum == false {
+	for !dbNum {
 		if intInSlice(dbInt, dbNumbersUsed) {
 			dbInt++
 		} else {
@@ -494,6 +495,3 @@ func (db *SPGDatabase) TruncateTables() {
 		panic(err)
 	}
 }
-
-
-

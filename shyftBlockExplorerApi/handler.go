@@ -11,8 +11,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/gorilla/mux"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
+	"github.com/gorilla/mux"
 )
 
 // GetTransaction gets txs

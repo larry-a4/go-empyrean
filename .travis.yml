@@ -1,34 +1,73 @@
 language: go
 go_import_path: github.com/ShyftNetwork/go-empyrean
-go:
-  - "1.10.4"
-  - "1.11.x"
 
-git:
-  submodules: true
+matrix:
+  include:
+  - os: linux
+    dist: trusty
+    sudo: required
+    go: 1.10.x
 
-services:
-  - postgresql
+  - os: linux
+    dist: trusty
+    sudo: required
+    go: 1.11.x
 
-addons:
-  postgresql: "9.6"
-  apt:
-    packages:
-    - postgresql-9.6
-    - postgresql-client-9.6
+  - os: osx
+    sudo: required
+    go: 1.10.x
 
-install:
-  - go get -t ./...
+  - os: osx
+    sudo: required
+    go: 1.11.x
+
+  - os: linux
+    dist: trusty
+    sudo: required
+    go: 1.11.x
+    env:
+    - LINT
+    git:
+      submodules: false
+    before_install: ignore
+    before_script: ignore
+    script: go run build/ci.go lint
+
+  - os: linux
+    dist: trusty
+    sudo: required
+    go: 1.11.x
+    before_install: ignore
+    before_script: ignore
+    env:
+    - DISABLEPG="disablepg"
+    git:
+      submodules: false
+    script: go run build/ci.go install
+
+cache:
+  timeout: 259200 # 72 hours
+  directories:
+  - $TRAVIS_BUILD_DIR/.git/modules
 
 before_install:
-  - sudo apt-get update
-  - sudo /etc/init.d/postgresql stop
-  - sudo /etc/init.d/postgresql start 9.6
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update                       ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo /etc/init.d/postgresql stop          ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo /etc/init.d/postgresql start 9.6     ; fi
+
+install:
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install postgresql@9.6          ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start postgresql          ; fi
+- go get -t ./...
 
 before_script:
-  - psql -c 'create database shyftdbtest;' -U postgres
-  - psql -c 'create database shyftdbtest_2;' -U postgres
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres          ; fi
+- psql -c 'create database shyftdbtest;' -U postgres
+- psql -c 'create database shyftdbtest_2;' -U postgres
 
 script:
-  - make geth
-  - go test ./...
+- go run build/ci.go install
+- go run build/ci.go test -coverage $TEST_PACKAGES
+
+
+

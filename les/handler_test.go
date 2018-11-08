@@ -17,11 +17,13 @@
 package les
 
 import (
+	"testing"
+
 	"encoding/binary"
 	"math/big"
 	"math/rand"
-	"testing"
 	"time"
+
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core"
@@ -35,11 +37,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/trie"
-)
-
-//@SHYFT NOTE: Side effects from PG database therefore need to reset before running
-const (
-	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 )
 
 func expectResponse(r p2p.MsgReader, msgcode, reqID, bv uint64, data interface{}) error {

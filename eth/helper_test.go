@@ -51,11 +51,11 @@ var (
 // channels for different events.
 func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, ethdb.SDatabase, error) {
 	var (
-		evmux  = new(event.TypeMux)
-		engine = ethash.NewFaker()
-		db = ethdb.NewMemDatabase()
-		shyftdb,_ = ethdb.NewTestInstanceShyftDatabase()
-		gspec  = &core.Genesis{
+		evmux      = new(event.TypeMux)
+		engine     = ethash.NewFaker()
+		db         = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewTestInstanceShyftDatabase()
+		gspec      = &core.Genesis{
 			Config: params.TestChainConfig,
 			Alloc:  core.GenesisAlloc{testBank: {Balance: big.NewInt(1000000)}},
 		}

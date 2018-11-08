@@ -24,7 +24,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	mapset "github.com/deckarep/golang-set"
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/consensus"
 	"github.com/ShyftNetwork/go-empyrean/consensus/misc"
@@ -35,6 +34,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/event"
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"github.com/ShyftNetwork/go-empyrean/params"
+	mapset "github.com/deckarep/golang-set"
 )
 
 const (
@@ -140,19 +140,19 @@ type worker struct {
 	chainSideCh  chan core.ChainSideEvent
 	chainSideSub event.Subscription
 
-// @SHYFT NOTE unsure of the consequences
-//<<<<<<< HEAD
-//	wg           sync.WaitGroup
-//
-//	agents map[Agent]struct{}
-//	recv   chan *Result
-//
-//	eth     Backend
-//	chain   *core.BlockChain
-//	proc    core.Validator
-//	chainDb ethdb.Database
-//	shyftDb ethdb.SDatabase
-//=======
+	// @SHYFT NOTE unsure of the consequences
+	//<<<<<<< HEAD
+	//	wg           sync.WaitGroup
+	//
+	//	agents map[Agent]struct{}
+	//	recv   chan *Result
+	//
+	//	eth     Backend
+	//	chain   *core.BlockChain
+	//	proc    core.Validator
+	//	chainDb ethdb.Database
+	//	shyftDb ethdb.SDatabase
+	//=======
 
 	// Channels
 	newWorkCh          chan *newWorkReq
@@ -560,12 +560,12 @@ func (w *worker) resultLoop() {
 			if block == nil {
 				continue
 			}
-//<<<<<<< HEAD UNSURE OF CONSEQUENCES
-//			// NOTE:SHYFT Added eth to writeBlockWithState
-//			stat, err := self.chain.WriteBlockWithState(block, work.receipts, work.state)
-//			if err != nil {
-//				log.Error("Failed writing block to chain", "err", err)
-//=======
+			//<<<<<<< HEAD UNSURE OF CONSEQUENCES
+			//			// NOTE:SHYFT Added eth to writeBlockWithState
+			//			stat, err := self.chain.WriteBlockWithState(block, work.receipts, work.state)
+			//			if err != nil {
+			//				log.Error("Failed writing block to chain", "err", err)
+			//=======
 			// Short circuit when receiving duplicate result caused by resubmitting.
 			if w.chain.HasBlock(block.Hash(), block.NumberU64()) {
 				continue

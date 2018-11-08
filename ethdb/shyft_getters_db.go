@@ -1,11 +1,12 @@
 package ethdb
 
 import (
-	"fmt"
-	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
-	"encoding/json"
-	"time"
 	"database/sql"
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 )
 
 func SGetAllBlocks() (string, error) {
@@ -500,18 +501,18 @@ func SGetAllInternalTransactions() (string, error) {
 		)
 
 		arr.InternalEntry = append(arr.InternalEntry, stypes.InteralWrite{
-			ID:      id,
-			Hash:    txhash,
+			ID:        id,
+			Hash:      txhash,
 			BlockHash: blockhash,
-			Action:  action,
-			To:      to_addr,
-			From:    from_addr,
-			Value:   amount,
-			Gas:     gas,
-			GasUsed: gasUsed,
-			Time:    age,
-			Input:   input,
-			Output:  output,
+			Action:    action,
+			To:        to_addr,
+			From:      from_addr,
+			Value:     amount,
+			Gas:       gas,
+			GasUsed:   gasUsed,
+			Time:      age,
+			Input:     input,
+			Output:    output,
 		})
 
 		txData, _ := json.Marshal(arr.InternalEntry)
@@ -551,18 +552,18 @@ func SGetInternalTransaction(txHash string) (string, error) {
 		)
 
 		arr.InternalEntry = append(arr.InternalEntry, stypes.InteralWrite{
-			ID:      id,
-			Hash:    txhash,
+			ID:        id,
+			Hash:      txhash,
 			BlockHash: blockhash,
-			Action:  action,
-			To:      to_addr,
-			From:    from_addr,
-			Value:   amount,
-			Gas:     gas,
-			GasUsed: gasUsed,
-			Time:    age,
-			Input:   input,
-			Output:  output,
+			Action:    action,
+			To:        to_addr,
+			From:      from_addr,
+			Value:     amount,
+			Gas:       gas,
+			GasUsed:   gasUsed,
+			Time:      age,
+			Input:     input,
+			Output:    output,
 		})
 
 		txData, _ := json.Marshal(arr.InternalEntry)
@@ -596,10 +597,10 @@ func SGetAllAccountBlocks() (string, error) {
 		)
 
 		arr.AccountBlocks = append(arr.AccountBlocks, AccountBlock{
-			Acct: 		acct,
-			Blockhash:  blockhash,
-			Delta: 		delta,
-			TxCount: 	txCount,
+			Acct:      acct,
+			Blockhash: blockhash,
+			Delta:     delta,
+			TxCount:   txCount,
 		})
 
 		accountBlocks, _ := json.Marshal(arr.AccountBlocks)

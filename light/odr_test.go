@@ -39,10 +39,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/trie"
 )
 
-const (
-	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
-)
-
 var (
 	testBankKey, _  = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
 	testBankAddress = crypto.PubkeyToAddress(testBankKey.PublicKey)
@@ -262,11 +258,11 @@ func testChainGen(i int, block *core.BlockGen) {
 
 func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
 	var (
-		sdb  = ethdb.NewMemDatabase()
-		ldb  = ethdb.NewMemDatabase()
+		sdb        = ethdb.NewMemDatabase()
+		ldb        = ethdb.NewMemDatabase()
 		shyftdb, _ = ethdb.NewShyftDatabase()
-		gspec   = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
-		genesis = gspec.MustCommit(sdb)
+		gspec      = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
+		genesis    = gspec.MustCommit(sdb)
 	)
 	gspec.MustCommit(ldb)
 	// Assemble the test environment

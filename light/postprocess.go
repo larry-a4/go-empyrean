@@ -145,7 +145,7 @@ func StoreChtRoot(db ethdb.Database, sectionIdx uint64, sectionHead, root common
 // ChtIndexerBackend implements core.ChainIndexerBackend.
 type ChtIndexerBackend struct {
 	diskdb, trieTable    ethdb.Database
-	shyftdb				 ethdb.SDatabase
+	shyftdb              ethdb.SDatabase
 	odr                  OdrBackend
 	triedb               *trie.Database
 	section, sectionSize uint64
@@ -154,12 +154,12 @@ type ChtIndexerBackend struct {
 }
 
 // NewChtIndexer creates a Cht chain indexer
-func NewChtIndexer(db ethdb.Database,  shyftdb ethdb.SDatabase, odr OdrBackend, size, confirms uint64) *core.ChainIndexer {
+func NewChtIndexer(db ethdb.Database, shyftdb ethdb.SDatabase, odr OdrBackend, size, confirms uint64) *core.ChainIndexer {
 	trieTable := ethdb.NewTable(db, ChtTablePrefix)
 
 	backend := &ChtIndexerBackend{
 		diskdb:      db,
-		shyftdb:	 shyftdb,
+		shyftdb:     shyftdb,
 		odr:         odr,
 		trieTable:   trieTable,
 		triedb:      trie.NewDatabase(trieTable),
@@ -267,7 +267,7 @@ func StoreBloomTrieRoot(db ethdb.Database, sectionIdx uint64, sectionHead, root 
 // BloomTrieIndexerBackend implements core.ChainIndexerBackend
 type BloomTrieIndexerBackend struct {
 	diskdb, trieTable ethdb.Database
-	shyftdb		      ethdb.SDatabase
+	shyftdb           ethdb.SDatabase
 	triedb            *trie.Database
 	odr               OdrBackend
 	section           uint64
@@ -283,7 +283,7 @@ func NewBloomTrieIndexer(db ethdb.Database, shyftdb ethdb.SDatabase, odr OdrBack
 	trieTable := ethdb.NewTable(db, BloomTrieTablePrefix)
 	backend := &BloomTrieIndexerBackend{
 		diskdb:     db,
-		shyftdb:	shyftdb,
+		shyftdb:    shyftdb,
 		odr:        odr,
 		trieTable:  trieTable,
 		triedb:     trie.NewDatabase(trieTable),

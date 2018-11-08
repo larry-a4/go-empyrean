@@ -1,12 +1,13 @@
 package core
 
 import (
-	"github.com/ShyftNetwork/go-empyrean/common"
-	"github.com/ShyftNetwork/go-empyrean/crypto"
 	"math/big"
-	"github.com/ShyftNetwork/go-empyrean/core/types"
-	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"time"
+
+	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/core/types"
+	"github.com/ShyftNetwork/go-empyrean/crypto"
 )
 
 func CreateTestTransactions() []*types.Transaction {
@@ -65,18 +66,18 @@ func CreateTestBlocks() []*types.Block {
 
 func SNewBlock(header *types.Header, txs []*types.Transaction, uncles []*types.Header, receipts []*types.Receipt) *stypes.SBlock {
 	b := &stypes.SBlock{
-		Hash: types.CopyHeader(header).TxHash.Hex(),
-		Coinbase: types.CopyHeader(header).Coinbase.Hex(),
-		Age: time.Now(),
+		Hash:       types.CopyHeader(header).TxHash.Hex(),
+		Coinbase:   types.CopyHeader(header).Coinbase.Hex(),
+		Age:        time.Now(),
 		ParentHash: types.CopyHeader(header).ParentHash.Hex(),
-		UncleHash: types.CopyHeader(header).UncleHash.Hex(),
+		UncleHash:  types.CopyHeader(header).UncleHash.Hex(),
 		Difficulty: types.CopyHeader(header).Difficulty.String(),
-		Size: types.CopyHeader(header).Size().String(),
-		Rewards: "10",
-		Number: types.CopyHeader(header).Number.String(),
-		GasUsed: types.CopyHeader(header).GasUsed,
-		GasLimit: types.CopyHeader(header).GasLimit,
-		Nonce: types.CopyHeader(header).Nonce.Uint64(),
+		Size:       types.CopyHeader(header).Size().String(),
+		Rewards:    "10",
+		Number:     types.CopyHeader(header).Number.String(),
+		GasUsed:    types.CopyHeader(header).GasUsed,
+		GasLimit:   types.CopyHeader(header).GasLimit,
+		Nonce:      types.CopyHeader(header).Nonce.Uint64(),
 		UncleCount: 0,
 	}
 	// TODO: panic if len(txs) != len(receipts)

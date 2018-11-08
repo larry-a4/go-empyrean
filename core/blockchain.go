@@ -91,7 +91,7 @@ type BlockChain struct {
 	chainConfig *params.ChainConfig // Chain & network configuration
 	cacheConfig *CacheConfig        // Cache configuration for pruning
 
-	db ethdb.Database // Low level persistent database to store final content in
+	db      ethdb.Database  // Low level persistent database to store final content in
 	shyftDb ethdb.SDatabase // Shyft Postgres instance
 
 	triegc *prque.Prque  // Priority queue mapping block numbers to tries to gc
@@ -157,7 +157,7 @@ func NewBlockChain(db ethdb.Database, shyftDb ethdb.SDatabase, cacheConfig *Cach
 		chainConfig:    chainConfig,
 		cacheConfig:    cacheConfig,
 		db:             db,
-		shyftDb:      shyftDb,
+		shyftDb:        shyftDb,
 		triegc:         prque.New(nil),
 		stateCache:     state.NewDatabase(db),
 		quit:           make(chan struct{}),
@@ -945,14 +945,14 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 	if err := bc.hc.WriteTd(block.Hash(), block.NumberU64(), externTd); err != nil {
 		return NonStatTy, err
 	}
-//@SHYFT NOTE UNSURE THE CONSEQUENCES OF USING RAWDB
-//<<<<<<< HEAD
-//	// Write other block data using a batch.
-//	batch := bc.db.NewBatch()
-//	if err := WriteBlock(batch, block); err != nil {
-//		return NonStatTy, err
-//	}
-//=======
+	//@SHYFT NOTE UNSURE THE CONSEQUENCES OF USING RAWDB
+	//<<<<<<< HEAD
+	//	// Write other block data using a batch.
+	//	batch := bc.db.NewBatch()
+	//	if err := WriteBlock(batch, block); err != nil {
+	//		return NonStatTy, err
+	//	}
+	//=======
 	rawdb.WriteBlock(bc.db, block)
 	root, err := state.Commit(bc.chainConfig.IsEIP158(block.Number()))
 

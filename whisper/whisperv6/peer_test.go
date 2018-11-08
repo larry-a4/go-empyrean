@@ -21,11 +21,11 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	mrand "math/rand"
+	"net"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
-	"net"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"

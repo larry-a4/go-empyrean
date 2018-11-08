@@ -17,12 +17,12 @@
 package swarm
 
 import (
-	"os/exec"
 	"context"
 	"encoding/hex"
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"os/exec"
 	"path"
 	"runtime"
 	"strings"

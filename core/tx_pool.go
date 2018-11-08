@@ -373,7 +373,7 @@ func (pool *TxPool) reset(oldHead, newHead *types.Header) {
 				add = pool.chain.GetBlock(newHead.Hash(), newHead.Number.Uint64())
 			)
 
-			if(rem == nil || add == nil) {
+			if rem == nil || add == nil {
 				return
 			}
 

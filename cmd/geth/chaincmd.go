@@ -196,7 +196,10 @@ func initGenesis(ctx *cli.Context) error {
 		if err != nil {
 			utils.Fatalf("Failed to open database: %v", err)
 		}
-		if ctx.GlobalBool(utils.PostgresFlag.Name) {
+		_, ok := os.LookupEnv("DISABLEPG")
+		if ok {
+			shyftdb = nil
+		} else if ctx.GlobalBool(utils.PostgresFlag.Name) {
 			shyftdb = nil
 		} else {
 			shyftdb, err = stack.OpenShyftDatabase()
@@ -481,5 +484,3 @@ func hashish(x string) bool {
 	_, err := strconv.Atoi(x)
 	return err != nil
 }
-
-
