@@ -361,7 +361,6 @@ func doLint(cmdline []string) {
 		"--tests",
 		"--deadline=2m",
 		"--disable-all",
-		"--enable=goimports",
 		"--enable=varcheck",
 		"--enable=vet",
 		"--enable=gofmt",
