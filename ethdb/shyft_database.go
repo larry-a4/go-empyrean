@@ -121,7 +121,7 @@ func AssignTestDbInstanceName() string {
 
 	dbNum := false
 	dbInt := 1
-	for dbNum == false {
+	for !dbNum {
 		if intInSlice(dbInt, dbNumbersUsed) {
 			dbInt++
 		} else {

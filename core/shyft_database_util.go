@@ -204,7 +204,7 @@ func swriteTransactions(db ethdb.SDatabase, tx *types.Transaction, blockHash com
 		IsContract:  isContract,
 	}
 	isContractCheck := db.IsContract(txData.To)
-	if isContractCheck == true {
+	if isContractCheck {
 		db.InsertTx(txData)
 		//Runs necessary functions for tracing internal transactions through tracers.go
 		if flag.Lookup("test.v") == nil {

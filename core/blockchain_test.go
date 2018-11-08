@@ -1444,8 +1444,7 @@ func TestGetBlockHashesSinceLastValidBlockHash(t *testing.T) {
 	invalidBlockHashes, invalidStringBlockHashes := archive.GetBlockHashesSinceLastValidBlockHash(blockHeaderToTest.Hash())
 	shyftdb.RollbackPgDb(invalidStringBlockHashes)
 	archive.ShyftRollback(invalidBlockHashes)
-	var archiveHeight uint64
-	archiveHeight = 5
+	var archiveHeight uint64 = 5
 	assert(t, "archive", archive, archiveHeight, archiveHeight)
 
 	//res := SGetRecentBlockHash()

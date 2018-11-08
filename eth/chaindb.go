@@ -30,7 +30,7 @@ func chaindb(ctx *node.ServiceContext, config *Config) (ethdb.Database, error) {
 }
 
 func shyftdb(ctx *node.ServiceContext, cfg *Config) (ethdb.SDatabase, error) {
-	if cfg.Postgres == false {
+	if !cfg.Postgres {
 		return nil, nil
 	} else {
 		if Shyftdb_global != nil {
