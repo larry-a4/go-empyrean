@@ -414,19 +414,10 @@
 			"revisionTime": "2017-08-14T17:01:13Z"
 		},
 		{
-<<<<<<< HEAD
-			"checksumSHA1": "CnvImYwD5jNLT4zMkOTN0ivaGA8=",
-			"path": "github.com/rjeczalik/notify",
-			"revision": "69d839f37b13a8cb7a78366f7633a4071cb43be7",
-			"revisionTime": "2018-09-27T01:59:48Z",
-			"version": "=v0.9.2",
-			"versionExact": "v0.9.2"
-=======
 			"checksumSHA1": "lU41NL1TEDtsrr0yUdp3SMB4Y9o=",
 			"path": "github.com/rjeczalik/notify",
 			"revision": "0f065fa99b48b842c3fd3e2c8b194c6f2b69f6b8",
 			"revisionTime": "2018-08-27T19:31:19Z"
->>>>>>> upstream/master
 		},
 		{
 			"checksumSHA1": "5uqO4ITTDMklKi3uNaE/D9LQ5nM=",
