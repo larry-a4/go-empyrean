@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/ShyftNetwork/go-empyrean/internal/build"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 // androidTestClass is a Java class to do some lightweight tests against the Android
@@ -146,6 +147,16 @@ public class AndroidTest extends InstrumentationTestCase {
 	}
 }
 `
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 // TestAndroid runs the Android java test class specified above.
 //

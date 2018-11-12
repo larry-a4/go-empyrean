@@ -29,10 +29,10 @@ import (
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
-	"github.com/ShyftNetwork/go-empyrean/core"
-	stypes "github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"gopkg.in/olebedev/go-duktape.v3"
 )
@@ -128,7 +128,7 @@ func (mw *memoryWrapper) pushObject(vm *duktape.Context) {
 		ctx.Pop2()
 
 		ptr := ctx.PushFixedBuffer(len(blob))
-		copy(makeSlice(ptr, uint(len(blob))), blob[:])
+		copy(makeSlice(ptr, uint(len(blob))), blob)
 		return 1
 	})
 	vm.PutPropString(obj, "slice")
@@ -208,7 +208,7 @@ func (dw *dbWrapper) pushObject(vm *duktape.Context) {
 		code := dw.db.GetCode(common.BytesToAddress(popSlice(ctx)))
 
 		ptr := ctx.PushFixedBuffer(len(code))
-		copy(makeSlice(ptr, uint(len(code))), code[:])
+		copy(makeSlice(ptr, uint(len(code))), code)
 		return 1
 	})
 	vm.PutPropString(obj, "getCode")
@@ -272,7 +272,7 @@ func (cw *contractWrapper) pushObject(vm *duktape.Context) {
 		blob := cw.contract.Input
 
 		ptr := ctx.PushFixedBuffer(len(blob))
-		copy(makeSlice(ptr, uint(len(blob))), blob[:])
+		copy(makeSlice(ptr, uint(len(blob))), blob)
 		return 1
 	})
 	vm.PutPropString(obj, "getInput")
@@ -294,11 +294,12 @@ type Tracer struct {
 	contractWrapper *contractWrapper // Wrapper around the contract object
 	dbWrapper       *dbWrapper       // Wrapper around the VM environment
 
-	pcValue    *uint   // Swappable pc value wrapped by a log accessor
-	gasValue   *uint   // Swappable gas value wrapped by a log accessor
-	costValue  *uint   // Swappable cost value wrapped by a log accessor
-	depthValue *uint   // Swappable depth value wrapped by a log accessor
-	errorValue *string // Swappable error value wrapped by a log accessor
+	pcValue     *uint   // Swappable pc value wrapped by a log accessor
+	gasValue    *uint   // Swappable gas value wrapped by a log accessor
+	costValue   *uint   // Swappable cost value wrapped by a log accessor
+	depthValue  *uint   // Swappable depth value wrapped by a log accessor
+	errorValue  *string // Swappable error value wrapped by a log accessor
+	refundValue *uint   // Swappable refund value wrapped by a log accessor
 
 	ctx map[string]interface{} // Transaction context gathered throughout execution
 	err error                  // Error, if one has occurred
@@ -328,6 +329,7 @@ func New(code string) (*Tracer, error) {
 		gasValue:        new(uint),
 		costValue:       new(uint),
 		depthValue:      new(uint),
+		refundValue:     new(uint),
 	}
 
 	// Set up builtins for this environment
@@ -448,6 +450,9 @@ func New(code string) (*Tracer, error) {
 	tracer.vm.PushGoFunction(func(ctx *duktape.Context) int { ctx.PushUint(*tracer.depthValue); return 1 })
 	tracer.vm.PutPropString(logObject, "getDepth")
 
+	tracer.vm.PushGoFunction(func(ctx *duktape.Context) int { ctx.PushUint(*tracer.refundValue); return 1 })
+	tracer.vm.PutPropString(logObject, "getRefund")
+
 	tracer.vm.PushGoFunction(func(ctx *duktape.Context) int {
 		if tracer.errorValue != nil {
 			ctx.PushString(*tracer.errorValue)
@@ -491,12 +496,7 @@ func (jst *Tracer) call(method string, args ...string) (json.RawMessage, error) 
 }
 
 func wrapError(context string, err error) error {
-	var message string
-	switch err := err.(type) {
-	default:
-		message = err.Error()
-	}
-	return fmt.Errorf("%v    in server-side tracer function '%v'", message, context)
+	return fmt.Errorf("%v    in server-side tracer function '%v'", err, context)
 }
 
 // CaptureStart implements the Tracer interface to initialize the tracing operation.
@@ -537,6 +537,7 @@ func (jst *Tracer) CaptureState(env *vm.EVM, pc uint64, op vm.OpCode, gas, cost 
 		*jst.gasValue = uint(gas)
 		*jst.costValue = uint(cost)
 		*jst.depthValue = uint(depth)
+		*jst.refundValue = uint(env.StateDB.GetRefund())
 
 		jst.errorValue = nil
 		if err != nil {
@@ -591,30 +592,32 @@ type Internals struct {
 	Output  string
 	Time    string
 	Calls   []*Internals
+	Db      *ethdb.SDatabase
 }
 
 //@NOTE:SHYFT
 func (i *Internals) SWriteInteralTxs(hash common.Hash, bHash common.Hash) {
+	db, _ := ethdb.NewShyftDatabase()
 	gas, _ := hexutil.DecodeUint64(i.Gas)
 	gasUsed, _ := hexutil.DecodeUint64(i.GasUsed)
 	value, _ := hexutil.DecodeUint64(i.Value)
 	amount := strconv.FormatUint(value, 10)
 
 	iTx := stypes.InteralWrite{
-		Hash:    	hash.Hex(),
-		BlockHash:  bHash.Hex(),
-		Action:  	i.Type,
-		From:    	i.From,
-		To:      	i.To,
-		Value:   	amount,
-		Gas:     	gas,
-		GasUsed: 	gasUsed,
-		Input:   	i.Input,
-		Output:  	i.Output,
-		Time:    	i.Time,
+		Hash:      hash.Hex(),
+		BlockHash: bHash.Hex(),
+		Action:    i.Type,
+		From:      i.From,
+		To:        i.To,
+		Value:     amount,
+		Gas:       gas,
+		GasUsed:   gasUsed,
+		Input:     i.Input,
+		Output:    i.Output,
+		Time:      i.Time,
 	}
+	db.InsertInternals(iTx)
 	//@TODO WRITE OVER TRANSACTION STRUCT
-	core.InsertInternals(iTx)
 }
 
 //@NOTE:SHYFT
@@ -645,7 +648,7 @@ func (jst *Tracer) GetResult() (json.RawMessage, error) {
 
 		case []byte:
 			ptr := jst.vm.PushFixedBuffer(len(val))
-			copy(makeSlice(ptr, uint(len(val))), val[:])
+			copy(makeSlice(ptr, uint(len(val))), val)
 
 		case common.Address:
 			ptr := jst.vm.PushFixedBuffer(20)

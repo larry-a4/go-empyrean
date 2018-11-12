@@ -18,27 +18,23 @@ package core
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/common/math"
-	"github.com/ShyftNetwork/go-empyrean/core/sTypes"
+	"github.com/ShyftNetwork/go-empyrean/core/rawdb"
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
-	_ "github.com/lib/pq"
 )
 
 //go:generate gencodec -type Genesis -field-override genesisSpecMarshaling -out gen_genesis.go
@@ -148,92 +144,6 @@ func (e *GenesisMismatchError) Error() string {
 	return fmt.Sprintf("database already contains an incompatible genesis block (have %x, new %x)", e.Stored[:8], e.New[:8])
 }
 
-//WriteShyftGen writes the genesis block to Shyft db
-//@NOTE:SHYFT
-func WriteShyftGen(gen *Genesis, block *types.Block) {
-	for k, v := range gen.Alloc {
-		_, _, err := AccountExists(k.String())
-		switch {
-		case err == sql.ErrNoRows:
-			var toAddr *common.Address
-			var data []byte
-			var gasPrice uint64
-			var cost string
-			//Initializing proper types for tx struct
-			toAddr = &k
-			cost = "0"
-			gasPrice = 0
-			//Appending GENESIS to address stored as txHash and From Addr
-			Genesis := []string{"GENESIS_", k.String()}
-			GENESIS := "GENESIS"
-			txHash := strings.Join(Genesis, k.String())
-			//Create the accountNonce, set to 1 (1 incoming tx), format type
-			accountNonce := v.Nonce + 1
-
-			i, err := strconv.ParseInt(block.Time().String(), 10, 64)
-			if err != nil {
-				panic(err)
-			}
-			age := time.Unix(i, 0)
-			txData := stypes.ShyftTxEntryPretty{
-				TxHash:      txHash,
-				From:        GENESIS,
-				To:          toAddr.String(),
-				BlockHash:   block.Header().Hash().Hex(),
-				BlockNumber: block.Header().Number.String(),
-				Amount:      v.Balance.String(),
-				Cost:        cost,
-				GasPrice:    gasPrice,
-				GasLimit:    block.GasLimit(),
-				Gas:         block.GasUsed(),
-				Nonce:       accountNonce,
-				Age:         age,
-				Data:        data,
-				Status:      "SUCCESS",
-				IsContract:  false,
-			}
-			//Create account and store tx
-			InsertTx(txData)
-
-		default:
-			log.Info("Found Genesis Block")
-		}
-	}
-}
-
-// WriteShyftBlockZero writes block 0 to postgres db
-func WriteShyftBlockZero(block *types.Block, gen *Genesis) error {
-
-	i, error := strconv.ParseInt(block.Time().String(), 10, 64)
-	if error != nil {
-		panic(error)
-	}
-	age := time.Unix(i, 0)
-
-	blockData := stypes.SBlock{
-		Hash:       block.Header().Hash().Hex(),
-		Coinbase:   block.Header().Coinbase.String(),
-		Number:     block.Header().Number.String(),
-		GasUsed:    block.Header().GasUsed,
-		GasLimit:   block.Header().GasLimit,
-		TxCount:    len(gen.Alloc),
-		UncleCount: len(block.Uncles()),
-		Age:        age,
-		ParentHash: block.ParentHash().String(),
-		UncleHash:  block.UncleHash().String(),
-		Difficulty: block.Difficulty().String(),
-		Size:       block.Size().String(),
-		Nonce:      block.Nonce(),
-		Rewards:    "0",
-	}
-	exist := BlockExists(blockData.Hash)
-	if !exist {
-		InsertBlock(blockData)
-		log.Info("Block zero written to DB")
-	}
-	return nil
-}
-
 // SetupGenesisBlock writes or updates the genesis 7block in db.
 // The block that will be used is:
 //
@@ -247,12 +157,12 @@ func WriteShyftBlockZero(block *types.Block, gen *Genesis) error {
 // error is a *params.ConfigCompatError and the new, unwritten config is returned.
 //
 // The returned chain configuration is never nil.
-func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig, common.Hash, error) {
+func SetupGenesisBlock(db ethdb.Database, shyftDb ethdb.SDatabase, genesis *Genesis) (*params.ChainConfig, common.Hash, error) {
 	if genesis != nil && genesis.Config == nil {
 		return params.AllEthashProtocolChanges, common.Hash{}, errGenesisNoConfig
 	}
 	// Just commit the new block if there is no stored genesis block.
-	stored := GetCanonicalHash(db, 0)
+	stored := rawdb.ReadCanonicalHash(db, 0)
 	if (stored == common.Hash{}) {
 		if genesis == nil {
 			log.Info("Writing default main-net genesis block")
@@ -263,12 +173,12 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 		block, err := genesis.Commit(db)
 		//@NOTE:SHYFT SWITCH CASE ENSURES SHYFT GENESIS FUNCTIONS ARE ONLY CALLED ONCE
 		if GlobalPG != "disconnect" {
-			exist := BlockExists(block.Hash().String())
+			exist := shyftDb.BlockExists(block.Hash().String())
 			if !exist {
 				//@NOTE:SHYFT WRITE TO BLOCK ZERO DB
-				WriteShyftBlockZero(block, genesis)
+				WriteShyftBlockZero(shyftDb, block, genesis)
 				//@NOTE:SHYFT WRITE TO DB
-				WriteShyftGen(genesis, block)
+				WriteShyftGen(shyftDb, genesis, block)
 				log.Info("Genesis Block Written")
 			}
 		}
@@ -286,14 +196,11 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 
 	// Get the existing chain configuration.
 	newcfg := genesis.configOrDefault(stored)
-	storedcfg, err := GetChainConfig(db, stored)
-	if err != nil {
-		if err == ErrChainConfigNotFound {
-			// This case happens if a genesis write was interrupted.
-			log.Warn("Found genesis block without chain config")
-			err = WriteChainConfig(db, stored, newcfg)
-		}
-		return newcfg, stored, err
+	storedcfg := rawdb.ReadChainConfig(db, stored)
+	if storedcfg == nil {
+		log.Warn("Found genesis block without chain config")
+		rawdb.WriteChainConfig(db, stored, newcfg)
+		return newcfg, stored, nil
 	}
 	// Special case: don't change the existing config of a non-mainnet chain if no new
 	// config is supplied. These chains would get AllProtocolChanges (and a compat error)
@@ -304,15 +211,16 @@ func SetupGenesisBlock(db ethdb.Database, genesis *Genesis) (*params.ChainConfig
 
 	// Check config compatibility and write the config. Compatibility errors
 	// are returned to the caller unless we're already at block zero.
-	height := GetBlockNumber(db, GetHeadHeaderHash(db))
-	if height == missingNumber {
+	height := rawdb.ReadHeaderNumber(db, rawdb.ReadHeadHeaderHash(db))
+	if height == nil {
 		return newcfg, stored, fmt.Errorf("missing block number for head header hash")
 	}
-	compatErr := storedcfg.CheckCompatible(newcfg, height)
-	if compatErr != nil && height != 0 && compatErr.RewindTo != 0 {
+	compatErr := storedcfg.CheckCompatible(newcfg, *height)
+	if compatErr != nil && *height != 0 && compatErr.RewindTo != 0 {
 		return newcfg, stored, compatErr
 	}
-	return newcfg, stored, WriteChainConfig(db, stored, newcfg)
+	rawdb.WriteChainConfig(db, stored, newcfg)
+	return newcfg, stored, nil
 }
 
 func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
@@ -321,6 +229,8 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 		return g.Config
 	case ghash == params.MainnetGenesisHash:
 		return params.MainnetChainConfig
+	case ghash == params.ShyftnetGenesisHash:
+		return params.ShyftNetworkChainConfig
 	case ghash == params.TestnetGenesisHash:
 		return params.TestnetChainConfig
 	default:
@@ -332,7 +242,7 @@ func (g *Genesis) configOrDefault(ghash common.Hash) *params.ChainConfig {
 // to the given database (or discards it if nil).
 func (g *Genesis) ToBlock(db ethdb.Database) *types.Block {
 	if db == nil {
-		db, _ = ethdb.NewMemDatabase()
+		db = ethdb.NewMemDatabase()
 	}
 	statedb, _ := state.New(common.Hash{}, state.NewDatabase(db))
 	for addr, account := range g.Alloc {
@@ -376,29 +286,19 @@ func (g *Genesis) Commit(db ethdb.Database) (*types.Block, error) {
 	if block.Number().Sign() != 0 {
 		return nil, fmt.Errorf("can't commit genesis block with number > 0")
 	}
-	if err := WriteTd(db, block.Hash(), block.NumberU64(), g.Difficulty); err != nil {
-		return nil, err
-	}
-	if err := WriteBlock(db, block); err != nil {
-		return nil, err
-	}
-	if err := WriteBlockReceipts(db, block.Hash(), block.NumberU64(), nil); err != nil {
-		return nil, err
-	}
-	if err := WriteCanonicalHash(db, block.Hash(), block.NumberU64()); err != nil {
-		return nil, err
-	}
-	if err := WriteHeadBlockHash(db, block.Hash()); err != nil {
-		return nil, err
-	}
-	if err := WriteHeadHeaderHash(db, block.Hash()); err != nil {
-		return nil, err
-	}
+	rawdb.WriteTd(db, block.Hash(), block.NumberU64(), g.Difficulty)
+	rawdb.WriteBlock(db, block)
+	rawdb.WriteReceipts(db, block.Hash(), block.NumberU64(), nil)
+	rawdb.WriteCanonicalHash(db, block.Hash(), block.NumberU64())
+	rawdb.WriteHeadBlockHash(db, block.Hash())
+	rawdb.WriteHeadHeaderHash(db, block.Hash())
+
 	config := g.Config
 	if config == nil {
 		config = params.AllEthashProtocolChanges
 	}
-	return block, WriteChainConfig(db, block.Hash(), config)
+	rawdb.WriteChainConfig(db, block.Hash(), config)
+	return block, nil
 }
 
 // MustCommit writes the genesis block and state to db, panicking on error.
@@ -418,7 +318,7 @@ func GenesisBlockForTesting(db ethdb.Database, addr common.Address, balance *big
 }
 
 // DefaultGenesisBlock returns the Ethereum main net genesis block.
-func DefaultGenesisBlock() *Genesis {
+func DefaultGenesisBlockForEthereum() *Genesis {
 	return &Genesis{
 		Config:     params.MainnetChainConfig,
 		Nonce:      66,
@@ -426,6 +326,18 @@ func DefaultGenesisBlock() *Genesis {
 		GasLimit:   5000,
 		Difficulty: big.NewInt(17179869184),
 		Alloc:      decodePrealloc(mainnetAllocData),
+	}
+}
+
+// DefaultShyftGenesisBlock returns Shyft network genesis block.
+func DefaultGenesisBlock() *Genesis {
+	return &Genesis{
+		Config:     params.ShyftNetworkChainConfig,
+		Nonce:      66,
+		ExtraData:  hexutil.MustDecode("0x0000000000000000000000000000000000000000000000000000000000000000"),
+		GasLimit:   24011655,
+		Difficulty: big.NewInt(1048576),
+		Alloc:      decodePrealloc(shyftNetworkAllocData),
 	}
 }
 
@@ -475,7 +387,7 @@ func DeveloperGenesisBlock(period uint64, faucet common.Address) *Genesis {
 			common.BytesToAddress([]byte{6}): {Balance: big.NewInt(1)}, // ECAdd
 			common.BytesToAddress([]byte{7}): {Balance: big.NewInt(1)}, // ECScalarMul
 			common.BytesToAddress([]byte{8}): {Balance: big.NewInt(1)}, // ECPairing
-			faucet: {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
+			faucet:                           {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
 		},
 	}
 }

@@ -21,9 +21,9 @@
   "sourceMap": "26:106:2:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;26:106:2;;;;;;;",
   "deployedSourceMap": "26:106:2:-;;;;;;;;;;;;;;;;;;;;;;;;49:81;;;;;;;;;;;;;;;;;;;;;;;;;;;;;101:5;:14;;:25;116:9;101:25;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;101:25:2;49:81;:::o",
   "source": "pragma solidity ^0.4.19;\n\ncontract Transfers2 {\n\tfunction transfer(address _addr) public payable {\n\t\t_addr.transfer(msg.value);\n\t}\n}",
-  "sourcePath": "/Users/dustinbrickwood/go/src/github.com/ethereum/go-ethereum/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
+  "sourcePath": "/Users/dustinbrickwood/go/src/github.com/ShyftNetwork/go-empyrean/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
   "ast": {
-    "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ethereum/go-ethereum/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
+    "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ShyftNetwork/go-empyrean/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
     "exportedSymbols": {
       "Transfers2": [
         249
@@ -212,7 +212,7 @@
     "src": "0:132:2"
   },
   "legacyAST": {
-    "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ethereum/go-ethereum/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
+    "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ShyftNetwork/go-empyrean/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
     "exportedSymbols": {
       "Transfers2": [
         249

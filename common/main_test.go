@@ -17,9 +17,18 @@
 package common
 
 import (
+	"os"
+	"os/exec"
 	"testing"
 
 	checker "gopkg.in/check.v1"
 )
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 func Test(t *testing.T) { checker.TestingT(t) }

@@ -18,12 +18,14 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/cespare/cp"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 // These tests are 'smoke tests' for the account related
@@ -31,6 +33,14 @@ import (
 //
 // For most tests, the test files from package accounts
 // are copied into a temporary keystore directory.
+
+func TestMain(m *testing.M) {
+	if reexec.Init() {
+		return
+	}
+	retCode := m.Run()
+	os.Exit(retCode)
+}
 
 func tmpDatadirWithKeystore(t *testing.T) string {
 	datadir := tmpdir(t)
@@ -178,8 +188,7 @@ func TestUnlockFlagMultiIndex(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
 	geth := runGeth(t,
 		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
-		"--unlock", "0,2",
-		"js", "testdata/empty.js")
+		"--unlock", "0,2", "js", "testdata/empty.js")
 	geth.Expect(`
 Unlocking account 0 | Attempt 1/3
 !! Unsupported terminal, password will be echoed.

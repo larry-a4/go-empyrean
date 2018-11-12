@@ -25,16 +25,12 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
 
-	"github.com/ShyftNetwork/go-empyrean/common"
-	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
-	"github.com/ShyftNetwork/go-empyrean/core"
-	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/params"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
 )
 
 var (
@@ -47,11 +43,7 @@ var (
 	difficultyTestDir  = filepath.Join(baseDir, "BasicTests")
 )
 
-const (
-	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
-)
-
-func readJson(reader io.Reader, value interface{}) error {
+func readJSON(reader io.Reader, value interface{}) error {
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return fmt.Errorf("error reading JSON file: %v", err)
@@ -66,14 +58,14 @@ func readJson(reader io.Reader, value interface{}) error {
 	return nil
 }
 
-func readJsonFile(fn string, value interface{}) error {
+func readJSONFile(fn string, value interface{}) error {
 	file, err := os.Open(fn)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	err = readJson(file, value)
+	err = readJSON(file, value)
 	if err != nil {
 		return fmt.Errorf("%s in file %s", err.Error(), fn)
 	}
@@ -99,7 +91,8 @@ type testMatcher struct {
 	configpat    []testConfig
 	failpat      []testFailure
 	skiploadpat  []*regexp.Regexp
-	skipshortpat []*regexp.Regexp
+	slowpat      []*regexp.Regexp
+	whitelistpat *regexp.Regexp
 }
 
 type testConfig struct {
@@ -113,8 +106,8 @@ type testFailure struct {
 }
 
 // skipShortMode skips tests matching when the -short flag is used.
-func (tm *testMatcher) skipShortMode(pattern string) {
-	tm.skipshortpat = append(tm.skipshortpat, regexp.MustCompile(pattern))
+func (tm *testMatcher) slow(pattern string) {
+	tm.slowpat = append(tm.slowpat, regexp.MustCompile(pattern))
 }
 
 // skipLoad skips JSON loading of tests matching the pattern.
@@ -130,6 +123,10 @@ func (tm *testMatcher) fails(pattern string, reason string) {
 	tm.failpat = append(tm.failpat, testFailure{regexp.MustCompile(pattern), reason})
 }
 
+func (tm *testMatcher) whitelist(pattern string) {
+	tm.whitelistpat = regexp.MustCompile(pattern)
+}
+
 // config defines chain config for tests matching the pattern.
 func (tm *testMatcher) config(pattern string, cfg params.ChainConfig) {
 	tm.configpat = append(tm.configpat, testConfig{regexp.MustCompile(pattern), cfg})
@@ -137,10 +134,14 @@ func (tm *testMatcher) config(pattern string, cfg params.ChainConfig) {
 
 // findSkip matches name against test skip patterns.
 func (tm *testMatcher) findSkip(name string) (reason string, skipload bool) {
-	if testing.Short() {
-		for _, re := range tm.skipshortpat {
-			if re.MatchString(name) {
+	isWin32 := runtime.GOARCH == "386" && runtime.GOOS == "windows"
+	for _, re := range tm.slowpat {
+		if re.MatchString(name) {
+			if testing.Short() {
 				return "skipped in -short mode", false
+			}
+			if isWin32 {
+				return "skipped on 32bit windows", false
 			}
 		}
 	}
@@ -178,9 +179,8 @@ func (tm *testMatcher) checkFailure(t *testing.T, name string, err error) error 
 		if err != nil {
 			t.Logf("error: %v", err)
 			return nil
-		} else {
-			return fmt.Errorf("test succeeded unexpectedly")
 		}
+		return fmt.Errorf("test succeeded unexpectedly")
 	}
 	return err
 }
@@ -191,7 +191,6 @@ func (tm *testMatcher) checkFailure(t *testing.T, name string, err error) error 
 // where TestType is the type of the test contained in test files.
 func (tm *testMatcher) walk(t *testing.T, dir string, runTest interface{}) {
 	// Walk the directory.
-	shyfttest.PgTestDbSetup()
 	dirinfo, err := os.Stat(dir)
 	if os.IsNotExist(err) || !dirinfo.IsDir() {
 		fmt.Fprintf(os.Stderr, "can't find test files in %s, did you clone the tests submodule?\n", dir)
@@ -206,8 +205,7 @@ func (tm *testMatcher) walk(t *testing.T, dir string, runTest interface{}) {
 			return nil
 		}
 		if filepath.Ext(path) == ".json" {
-			// shyfttest.PgTestDbSetup()
-			t.Run(name, func(t *testing.T) { shyfttest.PgTestDbSetup(); tm.runTestFile(t, path, name, runTest) })
+			t.Run(name, func(t *testing.T) { tm.runTestFile(t, path, name, runTest) })
 		}
 		return nil
 	})
@@ -220,52 +218,21 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 	if r, _ := tm.findSkip(name); r != "" {
 		t.Skip(r)
 	}
-	t.Parallel()
+	if tm.whitelistpat != nil {
+		if !tm.whitelistpat.MatchString(name) {
+			t.Skip("Skipped by whitelist")
+		}
+	}
+	// t.Parallel()
 
 	// Load the file as map[string]<testType>.
 	m := makeMapFromTestFunc(runTest)
-	if err := readJsonFile(path, m.Addr().Interface()); err != nil {
+	if err := readJSONFile(path, m.Addr().Interface()); err != nil {
 		t.Fatal(err)
 	}
 
-	// Run all tests from the map. Don't wrap in a subtest if there is only one test in the file.
-	// @SHYFT NOTE: Clear pg database
-	shyfttest.PgTestDbSetup()
-	//@SHYFT //SETS UP OUR TEST ENV
-	core.TruncateTables()
-	eth.NewShyftTestLDB()
-	shyftTracer := new(eth.ShyftTracer)
-	core.SetIShyftTracer(shyftTracer)
-
-	ethConf := &eth.Config{
-		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-		Etherbase: common.HexToAddress(testAddress),
-		Ethash: ethash.Config{
-			PowMode: ethash.ModeTest,
-		},
-	}
-
-	eth.SetGlobalConfig(ethConf)
-	eth.InitTracerEnv()
 	keys := sortedMapKeys(m)
 	if len(keys) == 1 {
-		// shyfttest.PgTestDbSetup()
-		//@SHYFT //SETS UP OUR TEST ENV
-		core.TruncateTables()
-		eth.NewShyftTestLDB()
-		shyftTracer := new(eth.ShyftTracer)
-		core.SetIShyftTracer(shyftTracer)
-
-		ethConf := &eth.Config{
-			Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-			Etherbase: common.HexToAddress(testAddress),
-			Ethash: ethash.Config{
-				PowMode: ethash.ModeTest,
-			},
-		}
-
-		eth.SetGlobalConfig(ethConf)
-		eth.InitTracerEnv()
 		runTestFunc(runTest, t, name, m, keys[0])
 	} else {
 		for _, key := range keys {
@@ -274,8 +241,6 @@ func (tm *testMatcher) runTestFile(t *testing.T, path, name string, runTest inte
 				if r, _ := tm.findSkip(name); r != "" {
 					t.Skip(r)
 				}
-				// shyfttest.PgTestDbSetup()
-
 				runTestFunc(runTest, t, name, m, key)
 			})
 		}
@@ -304,7 +269,6 @@ func sortedMapKeys(m reflect.Value) []string {
 }
 
 func runTestFunc(runTest interface{}, t *testing.T, name string, m reflect.Value, key string) {
-	// shyfttest.PgTestDbSetup()
 	reflect.ValueOf(runTest).Call([]reflect.Value{
 		reflect.ValueOf(t),
 		reflect.ValueOf(name),

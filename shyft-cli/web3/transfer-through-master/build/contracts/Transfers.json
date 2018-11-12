@@ -114,9 +114,9 @@
   "sourceMap": "54:986:1:-;;;152:79;8:9:-1;5:2;;;30:1;27;20:12;5:2;152:79:1;188:16;;:::i;:::-;;;;;;;;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;188:16:1;184:1;;:20;;;;;;;;;;;;;;;;;;225:1;;;;;;;;;;;208:6;;:19;;;;;;;;;;;;;;;;;;54:986;;;;;;;;;;;;:::o;:::-;;;;;;;",
   "deployedSourceMap": "54:986:1:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;797:241;;8:9:-1;5:2;;;30:1;27;20:12;5:2;797:241:1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;234:197;;8:9:-1;5:2;;;30:1;27;20:12;5:2;234:197:1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;434:77;;8:9:-1;5:2;;;30:1;27;20:12;5:2;434:77:1;;;;;;;;;;;;;;;;;;;;;;;514:119;;;;;;;;;;;;;;;;;;;;;;;76:40;;8:9:-1;5:2;;;30:1;27;20:12;5:2;76:40:1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;636:158;;8:9:-1;5:2;;;30:1;27;20:12;5:2;636:158:1;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;797:241;862:6;976;871;:13;862:22;;928:1;919:6;:10;896:7;:19;904:10;896:19;;;;;;;;;;;;;;;;:33;;888:42;;;;;;;;966:1;957:6;:10;934:7;:19;942:10;934:19;;;;;;;;;;;;;;;;:33;;;;;;;;;;;985:1;976:10;;971:64;992:1;988;:5;971:64;;;1004:6;1011:1;1004:9;;;;;;;;;;;;;;;;;;:18;;:26;1023:6;1004:26;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;1004:26:1;995:3;;;;;;;971:64;;;797:241;;;;:::o;234:197::-;333:10;322:6;299:7;:19;307:10;299:19;;;;;;;;;;;;;;;;:29;;291:38;;;;;;;;353:30;;;;;;;;;;;;;;;;;;;333:51;;388:6;;;;;;;;;;;:11;;406:6;414:3;388:37;;;;419:5;388:37;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;234:197;;;:::o;434:77::-;471:4;488:7;:19;496:10;488:19;;;;;;;;;;;;;;;;481:26;;434:77;:::o;514:119::-;557:4;590:9;567:7;:19;575:10;567:19;;;;;;;;;;;;;;;;:32;;;;;;;;;;;610:7;:19;618:10;610:19;;;;;;;;;;;;;;;;603:26;;514:119;:::o;76:40::-;;;;;;;;;;;;;;;;;:::o;636:158::-;724:6;701:7;:19;709:10;701:19;;;;;;;;;;;;;;;;:29;;693:38;;;;;;;;758:6;735:7;:19;743:10;735:19;;;;;;;;;;;;;;;;:29;;;;;;;;;;;768:5;:14;;:22;783:6;768:22;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;768:22:1;636:158;;:::o",
   "source": "pragma solidity ^0.4.19;\n\nimport \"./Transfers2.sol\";\n\ncontract Transfers {\n\tmapping (address => uint) public balance;\n\tTransfers2 t;\n\taddress t_addr;\n\n\tfunction Transfers() public {\n\t\tt = new Transfers2();\n\t\tt_addr = address(t);\n\t}\n\n\tfunction transfer(address _addr, uint _value) public {\n\t\trequire(balance[msg.sender] >= _value);\n\t\tbytes4 sig = bytes4(keccak256(\"transfer(address)\"));\n\t\tt_addr.call.value(_value)(sig, _addr);\t\t\n\t}\n\n\tfunction myBalance() public returns (uint) {\n\t\treturn balance[msg.sender];\n\t}\n\n\tfunction deposit() public payable returns (uint) {\n\t\tbalance[msg.sender] += msg.value;\n\t\treturn balance[msg.sender];\n\t}\n\n\tfunction withdraw(address _addr, uint _value) public {\n\t\trequire(balance[msg.sender] >= _value);\n\t\tbalance[msg.sender] -= _value;\n\t\t_addr.transfer(_value);\n\t}\n\n\tfunction withdrawMulti(address[] _addrs, uint _value) public {\n\t\tuint l = _addrs.length;\n\t\trequire(balance[msg.sender] >= _value * l);\n\t\tbalance[msg.sender] -= _value * l;\n\t\tfor (uint i = 0; i < l; i++){\n\t\t\t_addrs[i].transfer(_value);\n\t\t}\n\t}\n}",
-  "sourcePath": "/Users/dustinbrickwood/go/src/github.com/ethereum/go-ethereum/shyft-cli/web3/transfer-through-master/contracts/Transfers.sol",
+  "sourcePath": "/Users/dustinbrickwood/go/src/github.com/ShyftNetwork/go-empyrean/shyft-cli/web3/transfer-through-master/contracts/Transfers.sol",
   "ast": {
-    "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ethereum/go-ethereum/shyft-cli/web3/transfer-through-master/contracts/Transfers.sol",
+    "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ShyftNetwork/go-empyrean/shyft-cli/web3/transfer-through-master/contracts/Transfers.sol",
     "exportedSymbols": {
       "Transfers": [
         233
@@ -137,7 +137,7 @@
         "src": "0:24:1"
       },
       {
-        "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ethereum/go-ethereum/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
+        "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ShyftNetwork/go-empyrean/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
         "file": "./Transfers2.sol",
         "id": 59,
         "nodeType": "ImportDirective",
@@ -2373,7 +2373,7 @@
     "src": "0:1040:1"
   },
   "legacyAST": {
-    "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ethereum/go-ethereum/shyft-cli/web3/transfer-through-master/contracts/Transfers.sol",
+    "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ShyftNetwork/go-empyrean/shyft-cli/web3/transfer-through-master/contracts/Transfers.sol",
     "exportedSymbols": {
       "Transfers": [
         233
@@ -2394,7 +2394,7 @@
         "src": "0:24:1"
       },
       {
-        "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ethereum/go-ethereum/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
+        "absolutePath": "/Users/dustinbrickwood/go/src/github.com/ShyftNetwork/go-empyrean/shyft-cli/web3/transfer-through-master/contracts/Transfers2.sol",
         "file": "./Transfers2.sol",
         "id": 59,
         "nodeType": "ImportDirective",
