@@ -208,6 +208,15 @@ UPDATE
 WHERE accounts.addr = $1
 `
 
+const UpdateToBalanceNonce = `
+INSERT INTO accounts (addr, balance, nonce) VALUES($1, $2, 0) 
+ON CONFLICT ON CONSTRAINT accounts_pkey DO 
+UPDATE 
+	SET balance = ((SELECT balance from accounts where accounts.addr = $1) + $2),
+	nonce = ((SELECT nonce from accounts where accounts.addr = $1) + 0) 
+WHERE accounts.addr = $1
+`
+
 //Creates an internal transaction records in the internal tx table
 const CreateInternalTxTableStmnt = `
 INSERT INTO internaltxs(action, txhash, blockHash, from_addr, to_addr, amount, gas, gasUsed, time, input, output)
