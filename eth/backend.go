@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"net/http"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -50,7 +49,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
-	"github.com/gorilla/mux"
 )
 
 var BlockchainObject *core.BlockChain
@@ -185,27 +183,28 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig, eth.shouldPreserve)
 
 	BlockchainObject = eth.blockchain
-	go func() {
-		r := mux.NewRouter()
-		r.HandleFunc("/rollback_blocks/{blockhash}", func(w http.ResponseWriter, r *http.Request) {
-			vars := mux.Vars(r)
-			blockhash := vars["blockhash"]
-			commonhash := common.HexToHash(blockhash)
-			coinbase := eth.miner.Coinbase()
-			eth.miner.Stop()
-			blocknumber := BlockchainObject.GetBlockByHash(commonhash)
-			_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
-			eth.blockchain.SetHead(blocknumber.NumberU64())
-			err := shyftDb.RollbackPgDb(bHashes)
-			if err != nil {
-				panic(err)
-			}
-			eth.miner.Start(coinbase)
-			//log.Info("rolled back blockchain removing blocks %+v\n", bHashes)
-		})
-
-		http.ListenAndServe(":8081", r)
-	}()
+	NewWhisperEndPoint()
+	//go func() {
+	//	r := mux.NewRouter()
+	//	r.HandleFunc("/rollback_blocks/{blockhash}", func(w http.ResponseWriter, r *http.Request) {
+	//		vars := mux.Vars(r)
+	//		blockhash := vars["blockhash"]
+	//		commonhash := common.HexToHash(blockhash)
+	//		coinbase := eth.miner.Coinbase()
+	//		eth.miner.Stop()
+	//		blocknumber := BlockchainObject.GetBlockByHash(commonhash)
+	//		_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
+	//		eth.blockchain.SetHead(blocknumber.NumberU64())
+	//		err := shyftDb.RollbackPgDb(bHashes)
+	//		if err != nil {
+	//			panic(err)
+	//		}
+	//		eth.miner.Start(coinbase)
+	//		//log.Info("rolled back blockchain removing blocks %+v\n", bHashes)
+	//	})
+	//
+	//	http.ListenAndServe(":8081", r)
+	//}()
 	if err != nil {
 		return nil, err
 	}
