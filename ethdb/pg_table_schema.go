@@ -197,6 +197,17 @@ DO
 WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2;  
 `
 
+//FindOrCreateAcctBlockStmnt - query to find or create an accountblock record returning
+const FindOrCreateAcctBlockStmntToAddr = `
+INSERT INTO accountblocks(acct, blockhash, delta, txcount) VALUES($1, $2, $3, 0)
+ON CONFLICT (acct, blockhash)
+DO
+  UPDATE
+    SET delta = ((SELECT delta FROM accountblocks WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2) + $3),
+        txcount = ((SELECT txcount FROM accountblocks WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2) + 0)
+WHERE accountblocks.acct = $1 AND accountblocks.blockhash = $2;  
+`
+
 //UpdateBalanceNonce - query to update the balance and nonce for a transaction
 // Parameters are addr = $1 amount = $2
 const UpdateBalanceNonce = `

@@ -222,7 +222,7 @@ func (db *SPGDatabase) UpdateMinerAccount(addr string, blockHash string, reward 
 			panic(err)
 		}
 		if rewardInt != 0 {
-			_, err = tx.Exec(FindOrCreateAcctBlockStmnt, addr, blockHash, rewardInt)
+			_, err = tx.Exec(FindOrCreateAcctBlockStmntToAddr, addr, blockHash, rewardInt)
 			if err != nil {
 				panic(err)
 			}
@@ -268,16 +268,16 @@ func (db *SPGDatabase) InsertTx(txData stypes.ShyftTxEntryPretty) error {
 			}
 			// Update account balances and account Nonces
 			// Updates/Creates Account for To
-				_, err = tx.Exec(UpdateToBalanceNonce, acctAddrs[0], toAcctCredit.String())
-				if err != nil {
-					fmt.Println("UPDATE BALANCE NONCE ISSUE")
-					panic(err)
-				}
-				//Update/Create TO accountblock
-				_, err = tx.Exec(FindOrCreateAcctBlockStmnt, acctAddrs[0], txData.BlockHash, toAcctCredit.String())
-				if err != nil {
-					panic(err)
-				}
+			_, err = tx.Exec(UpdateToBalanceNonce, acctAddrs[0], toAcctCredit.String())
+			if err != nil {
+				fmt.Println("UPDATE BALANCE NONCE ISSUE")
+				panic(err)
+			}
+			//Update/Create TO accountblock
+			_, err = tx.Exec(FindOrCreateAcctBlockStmntToAddr, acctAddrs[0], txData.BlockHash, toAcctCredit.String())
+			if err != nil {
+				panic(err)
+			}
 			if acctAddrs[1] != "genesis" {
 				// Updates/Creates Account for From
 				_, err = tx.Exec(UpdateBalanceNonce, acctAddrs[1], fromAcctDebit.String())
@@ -322,7 +322,7 @@ func (db *SPGDatabase) InsertInternals(i stypes.InteralWrite) error {
 		}
 		if i.Value != "0" {
 			//Update/Create TO accountblock
-			_, err = tx.Exec(FindOrCreateAcctBlockStmnt, acctAddrs[0], i.BlockHash, toAcctCredit)
+			_, err = tx.Exec(FindOrCreateAcctBlockStmntToAddr, acctAddrs[0], i.BlockHash, toAcctCredit)
 			if err != nil {
 				panic(err)
 			}
