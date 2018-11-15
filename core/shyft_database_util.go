@@ -44,8 +44,7 @@ func WriteShyftGen(db ethdb.SDatabase, gen *Genesis, block *types.Block) {
 			GENESIS := "GENESIS"
 			txHash := strings.Join(Genesis, k.String())
 			//Create the accountNonce, set to 1 (1 incoming tx), format type
-			accountNonce := v.Nonce + 1
-
+			accountNonce := v.Nonce
 			i, err := strconv.ParseInt(block.Time().String(), 10, 64)
 			if err != nil {
 				panic(err)
