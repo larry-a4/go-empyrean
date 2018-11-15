@@ -45,7 +45,7 @@ HTTPHost = "0.0.0.0"
 HTTPPort = 8545
 HTTPCors = ["*"]
 HTTPVirtualHosts = ["localhost"]
-HTTPModules = ["net", "web3", "eth", "shh", "admin", "debug", "miner"]
+HTTPModules = ["net", "web3", "eth", "shh", "miner"]
 WSPort = 8546
 WSModules = ["net", "web3", "eth", "shh"]
 
