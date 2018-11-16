@@ -36,6 +36,8 @@ import (
 	"github.com/prometheus/prometheus/util/flock"
 )
 
+// Shyft Note: Variable to grab the whisper service so we can customize topic subscriptions and message listening
+var WhisperService Service
 // Node is a container on which services can be registered.
 type Node struct {
 	eventmux *event.TypeMux // Event multiplexer used between the services of a stack
@@ -188,6 +190,7 @@ func (n *Node) Start() error {
 		if _, exists := services[kind]; exists {
 			return &DuplicateServiceError{Kind: kind}
 		}
+		log.Info("Service Contexts", fmt.Sprintf("--> %+v\n", ctx), nil)
 		services[kind] = service
 	}
 	// Gather the protocols and start the freshly assembled P2P server
@@ -201,6 +204,7 @@ func (n *Node) Start() error {
 	started := []reflect.Type{}
 	for kind, service := range services {
 		// Start the next service, stopping all previous upon failure
+		log.Info("Shyft start", fmt.Sprintf("kind %+v --> service %+v\n",kind, service),nil)
 		if err := service.Start(running); err != nil {
 			for _, kind := range started {
 				services[kind].Stop()
@@ -211,6 +215,14 @@ func (n *Node) Start() error {
 		}
 		// Mark the service started for potential cleanup
 		started = append(started, kind)
+		// Shyft Note: Store the Whisper Service for setup of message listening
+		if fmt.Sprintf("%+v", kind) == "*whisperv6.Whisper" {
+			WhisperService = services[kind]
+			err := n.setUpWhisperSubscriptions()
+			if err != nil {
+				log.Info("A problem was encountered in establishing whisper subscriptions \n")
+			}
+		}
 	}
 	// Lastly start the configured RPC interfaces
 	if err := n.startRPC(services); err != nil {
@@ -225,6 +237,11 @@ func (n *Node) Start() error {
 	n.server = running
 	n.stop = make(chan struct{})
 
+	return nil
+}
+
+func (n *Node) setUpWhisperSubscriptions() error {
+	log.Info("Whisper Subscription Setup", fmt.Sprintf("services: %+v\n", WhisperService), nil)
 	return nil
 }
 

@@ -263,6 +263,7 @@ func geth(ctx *cli.Context) error {
 		return fmt.Errorf("invalid command: %q", args[0])
 	}
 	node := makeFullNode(ctx)
+	log.Info("Node object returned", fmt.Sprintf("--> %+v\n", node))
 	startNode(ctx, node)
 	node.Wait()
 	return nil

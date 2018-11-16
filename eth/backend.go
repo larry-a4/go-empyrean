@@ -182,8 +182,8 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	)
 	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig, eth.shouldPreserve)
 
-	BlockchainObject = eth.blockchain
-	NewWhisperEndPoint()
+	//BlockchainObject = eth.blockchain
+	//NewWhisperEndPoint()
 	//go func() {
 	//	r := mux.NewRouter()
 	//	r.HandleFunc("/rollback_blocks/{blockhash}", func(w http.ResponseWriter, r *http.Request) {
