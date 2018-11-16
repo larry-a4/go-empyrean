@@ -125,6 +125,32 @@ var (
 		BloomRoot:    common.HexToHash("0x93d83be0c1b12f732b1a027ecdfb16f39b0d020b8c10bfb90e76f3b01adfc5b6"),
 	}
 
+	// GoerliChainConfig contains the chain parameters to run a node on the Görli test network.
+	GoerliChainConfig = &ChainConfig{
+		ChainID:             big.NewInt(6284),
+		HomesteadBlock:      big.NewInt(0),
+		DAOForkBlock:        nil,
+		DAOForkSupport:      true,
+		EIP150Block:         big.NewInt(0),
+		EIP155Block:         big.NewInt(0),
+		EIP158Block:         big.NewInt(0),
+		ByzantiumBlock:      big.NewInt(0),
+		ConstantinopleBlock: big.NewInt(0),
+		Clique: &CliqueConfig{
+			Period: 15,
+			Epoch:  30000,
+		},
+	}
+
+	// GoerliTrustedCheckpoint contains the light client trusted checkpoint for the Görli test network.
+	GoerliTrustedCheckpoint = &TrustedCheckpoint{
+		Name:         "goerli",
+		SectionIndex: 0,
+		SectionHead:  common.HexToHash("0x56827e53c466f4403ba84f07f95b02372d931fb294d28e6be579495e739b253e"),
+		CHTRoot:      common.HexToHash("0x4bb907f2135af7932a127f4b3307f3fc95eab0b998f7310ee2585ed57521695d"),
+		BloomRoot:    common.HexToHash("0x37e826161366b0340a3b012960dc2c30bdaba7e0ac0e520bdf8de306619541be"),
+	}
+
 	// AllEthashProtocolChanges contains every protocol change (EIPs) introduced
 	// and accepted by the Ethereum core developers into the Ethash consensus.
 	//
