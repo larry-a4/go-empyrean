@@ -17,8 +17,12 @@
 package node
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
+	"github.com/ShyftNetwork/go-empyrean/whisper/shhclient"
+	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 	"net"
 	"os"
 	"path/filepath"
@@ -216,13 +220,13 @@ func (n *Node) Start() error {
 		// Mark the service started for potential cleanup
 		started = append(started, kind)
 		// Shyft Note: Store the Whisper Service for setup of message listening
-		if fmt.Sprintf("%+v", kind) == "*whisperv6.Whisper" {
-			WhisperService = services[kind]
-			err := n.setUpWhisperSubscriptions()
-			if err != nil {
-				log.Info("A problem was encountered in establishing whisper subscriptions \n")
-			}
-		}
+		//if fmt.Sprintf("%+v", kind) == "*whisperv6.Whisper" {
+		//	WhisperService = services[kind]
+		//	err := n.setUpWhisperSubscriptions()
+		//	if err != nil {
+		//		log.Info("A problem was encountered in establishing whisper subscriptions \n")
+		//	}
+		//}
 	}
 	// Lastly start the configured RPC interfaces
 	if err := n.startRPC(services); err != nil {
@@ -236,12 +240,46 @@ func (n *Node) Start() error {
 	n.services = services
 	n.server = running
 	n.stop = make(chan struct{})
-
+	n.setUpWhisperSubscriptions()
 	return nil
 }
 
 func (n *Node) setUpWhisperSubscriptions() error {
+
+	// Set Up a Topic Listener
 	log.Info("Whisper Subscription Setup", fmt.Sprintf("services: %+v\n", WhisperService), nil)
+	shhCli, err := shhclient.Dial("ws://127.0.0.1:8546")
+	if err != nil {
+		log.Info("Failed to Connect to shh client")
+	}
+	ctx := context.Background()
+	generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")
+	symKey, _ := shhCli.GetSymmetricKey(ctx, generatedSymKey)
+	symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
+	log.Info("SymKeyId: ", symKeyId, nil)
+	topicString := "0x07678231"
+	topicBytes, _ := hexutil.Decode(topicString)
+	topic := whisper.BytesToTopic(topicBytes)
+	topArr := []whisper.TopicType{topic}
+	criteria := &whisper.Criteria{SymKeyID: symKeyId, Topics: topArr}
+	//filter, _ := shhCli.NewMessageFilter(ctx, *criteria)
+	messages := make(chan *whisper.Message)
+	sub, err := shhCli.SubscribeMessages(ctx, *criteria, messages)
+	if err != nil {
+		log.Error("subscription error:", err)
+	}
+	go func() {
+		for {
+			select {
+			case err := <-sub.Err():
+				log.Error("subscription error:", err)
+			case message := <-messages:
+				fmt.Printf(string(message.Payload)) // "Hello"
+				os.Exit(0)
+			}
+		}
+	}()
+
 	return nil
 }
 
