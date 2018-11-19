@@ -275,7 +275,6 @@ func (n *Node) setUpWhisperSubscriptions() error {
 				log.Error("subscription error:", err)
 			case message := <-messages:
 				fmt.Printf(string(message.Payload)) // "Hello"
-				os.Exit(0)
 			}
 		}
 	}()
