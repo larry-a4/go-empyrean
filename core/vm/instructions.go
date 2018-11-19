@@ -881,6 +881,63 @@ func opSuicide(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memo
 	return nil, nil
 }
 
+func opMerkleProve(pc *uint64, interpreter *EVMInterpreter, contract *Contract, memory *Memory, stack *Stack) ([]byte, error) {
+	proofStart, leaf, root := stack.pop(), stack.pop(), stack.pop()
+	proofLen := new(big.Int).SetBytes(memory.Get(proofStart.Int64(), 32))
+	// Ensure proof consists of 1 or more 32byte hash
+	if new(big.Int).Mod(proofLen, big.NewInt(32)).Cmp(big.NewInt(0)) != 0 {
+		return nil, errExecutionReverted
+	}
+
+	// Load indicator bits from proofStart + 32
+	indicators := new(big.Int).SetBytes(memory.Get(big.NewInt(0).Add(proofStart, big.NewInt(32)).Int64(), 32))
+
+	// Setup hasher
+	if interpreter.hasher == nil {
+		interpreter.hasher = sha3.NewKeccak256().(keccakState)
+	} else {
+		interpreter.hasher.Reset()
+	}
+
+	i := big.NewInt(64)
+	computedHash := leaf
+
+	// While i <= proofLen (cmp = 1 or cmp = 0)
+	for i.Cmp(proofLen) <= 0 {
+		// Load element from memory[proofStart + i]
+		proofLocation := new(big.Int).Add(proofStart, i)
+		proofElement := new(big.Int).SetBytes(memory.Get(proofLocation.Int64(), 32))
+
+		// Set appendRight to LSB
+		appendRight := big.NewInt(0).And(indicators, big.NewInt(1))
+		indicators.Rsh(indicators, 1)
+
+		// Concat elements to hash
+		var data []byte = nil
+		if appendRight.Cmp(big.NewInt(1)) == 0 {
+			data = append(computedHash.Bytes()[:], proofElement.Bytes()[:]...)
+		} else {
+			data = append(proofElement.Bytes()[:], computedHash.Bytes()[:]...)
+		}
+
+		// Hash elements
+		interpreter.hasher.Write(data)
+		interpreter.hasher.Read(interpreter.hasherBuf[:])
+		computedHash.SetBytes(interpreter.hasherBuf[:])
+		interpreter.hasher.Reset()
+
+		i.Add(i, big.NewInt(32))
+	}
+
+	if computedHash.Cmp(root) == 0 {
+		stack.push(big.NewInt(1))
+	} else {
+		stack.push(big.NewInt(0))
+	}
+
+	return nil, nil
+}
+
 // following functions are used by the instruction jump  table
 
 // make log instruction function

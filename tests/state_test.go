@@ -46,6 +46,7 @@ func TestState(t *testing.T) {
 	st.fails(`^stRevertTest/RevertPrecompiledTouch\.json/EIP158`, "bug in test")
 	st.fails(`^stRevertTest/RevertPrecompiledTouch\.json/Byzantium`, "bug in test")
 	st.fails(`^stRevertTest/RevertPrecompiledTouch.json/Constantinople`, "bug in test")
+	st.fails(`^stBadOpcode/badOpcodes.json/.*/102`, "opcode additions")
 
 	st.walk(t, stateTestDir, func(t *testing.T, name string, test *StateTest) {
 		for _, subtest := range test.Subtests() {
