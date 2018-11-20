@@ -1,0 +1,76 @@
+version: '3'
+services:
+  shyftgeth:
+    build:
+      context: $PWD 
+      dockerfile: ./Dockerfile
+    ports:
+      - "8545:8545"
+      - "8546:8546"
+      - "31333:31333"
+      - "31333:31333/udp"
+      - "8081:8081"
+    volumes:
+      - ./shyftData:/go/src/ShyftNetwork/go-empyrean/shyftData
+    working_dir: /go/src/ShyftNetwork/go-empyrean
+    depends_on: 
+      - pg
+    networks:
+      - shyftnet
+    command: >
+      sh -c 'cd /go/src/ShyftNetwork/go-empyrean &&
+            ./wait-for.sh pg:5432 &&
+            DBENV=docker export DBENV &&
+            ./shyft-cli/initShyftGeth.sh &&
+            geth --config config.toml --gcmode archive --ws --wsaddr="0.0.0.0" --wsorigins "*" --nat=any --minerthreads 4 --targetgaslimit 80000000 --bootnodes enode://e8e2053ccd176ffd04f663ad675cce7038666b4c0fbadc4bf18ffcef2b75a9482acdbc8a9e9ce649b4a819811636ee946b9963db669f959f1e00e616b8cafa21@18.213.224.80:31333 --bootnodes enode://db9636cf1e8a61c0d55301f4f92b49576f48bc793b87bc23acb2b95a1bfe3ba4404f8ca5ef8fe7539a587bdcecbec72aacfc3c067d426b488ede0afec291a225@18.136.86.171:31333'
+  pg:
+    build: 
+      context: $PWD
+      dockerfile: docker/production/pg/Dockerfile
+    volumes:
+      - ./pg-data:/var/lib/postgresql/data
+    ports:
+      - "8001:5432"
+    networks:
+      - shyftnet
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=postgres
+  shyft_block_api:
+    build:
+      context: $PWD 
+      dockerfile: docker/production/shyftApi/Dockerfile
+    # volumes:
+    #   - ./shyftBlockExplorerApi:/go/src/github.com/ShyftNetwork/go-empyrean/shyftBlockExplorerApi
+    working_dir: /go/src/github.com/ShyftNetwork/go-empyrean/shyftBlockExplorerApi
+    ports:
+      - "8080:8080"
+    depends_on:
+      - pg
+    networks:
+      - shyftnet
+    command: >
+      sh -c '
+            pwd && govendor remove github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^ && 
+            govendor fetch github.com/ShyftNetwork/go-empyrean/crypto/secp256k1/^  && 
+            /wait-for.sh pg:5432 &&
+            DBENV=docker export DBENV &&
+            go run -v *.go'
+  shyft_block_ui:
+    build:
+      context: $PWD 
+      dockerfile: docker/production/shyftUi/Dockerfile
+      # volumes:
+      #   - ./shyftBlockExplorerApi:/go/src/github.com/ShyftNetwork/go-empyrean/shyftBlockExplorerApi
+    ports:
+      - "3000:3000"
+    depends_on:
+      - shyft_block_api
+    networks:
+      - shyftnet
+networks:
+  shyftnet:
+    driver: bridge
+  
+

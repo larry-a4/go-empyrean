@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the go-ethereum library. If not, see <http://www.gnu.org/licenses/>.
 
+// +build !js
+
 package ethdb_test
 
 import (
@@ -21,12 +23,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"strconv"
 	"sync"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 )
+
+func TestMain(m *testing.M) {
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	retCode := m.Run()
+	exec.Command("/bin/sh", "../shyft-cli/shyftTestDbClean.sh")
+	os.Exit(retCode)
+}
 
 func newTestLDB() (*ethdb.LDBDatabase, func()) {
 	dirname, err := ioutil.TempDir(os.TempDir(), "ethdb_test_")
@@ -53,12 +63,33 @@ func TestLDB_PutGet(t *testing.T) {
 }
 
 func TestMemoryDB_PutGet(t *testing.T) {
-	db, _ := ethdb.NewMemDatabase()
-	testPutGet(db, t)
+	testPutGet(ethdb.NewMemDatabase(), t)
 }
 
 func testPutGet(db ethdb.Database, t *testing.T) {
 	t.Parallel()
+
+	for _, k := range test_values {
+		err := db.Put([]byte(k), nil)
+		if err != nil {
+			t.Fatalf("put failed: %v", err)
+		}
+	}
+
+	for _, k := range test_values {
+		data, err := db.Get([]byte(k))
+		if err != nil {
+			t.Fatalf("get failed: %v", err)
+		}
+		if len(data) != 0 {
+			t.Fatalf("get returned wrong result, got %q expected nil", string(data))
+		}
+	}
+
+	_, err := db.Get([]byte("non-exist-key"))
+	if err == nil {
+		t.Fatalf("expect to return a not found error")
+	}
 
 	for _, v := range test_values {
 		err := db.Put([]byte(v), []byte(v))
@@ -131,8 +162,7 @@ func TestLDB_ParallelPutGet(t *testing.T) {
 }
 
 func TestMemoryDB_ParallelPutGet(t *testing.T) {
-	db, _ := ethdb.NewMemDatabase()
-	testParallelPutGet(db, t)
+	testParallelPutGet(ethdb.NewMemDatabase(), t)
 }
 
 func testParallelPutGet(db ethdb.Database, t *testing.T) {

@@ -23,10 +23,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
+	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/common/math"
+	"github.com/ShyftNetwork/go-empyrean/consensus"
 	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/state"
@@ -42,17 +45,19 @@ type BlockTest struct {
 	json btJSON
 }
 
+// UnmarshalJSON implements json.Unmarshaler interface.
 func (t *BlockTest) UnmarshalJSON(in []byte) error {
 	return json.Unmarshal(in, &t.json)
 }
 
 type btJSON struct {
-	Blocks    []btBlock             `json:"blocks"`
-	Genesis   btHeader              `json:"genesisBlockHeader"`
-	Pre       core.GenesisAlloc     `json:"pre"`
-	Post      core.GenesisAlloc     `json:"postState"`
-	BestBlock common.UnprefixedHash `json:"lastblockhash"`
-	Network   string                `json:"network"`
+	Blocks     []btBlock             `json:"blocks"`
+	Genesis    btHeader              `json:"genesisBlockHeader"`
+	Pre        core.GenesisAlloc     `json:"pre"`
+	Post       core.GenesisAlloc     `json:"postState"`
+	BestBlock  common.UnprefixedHash `json:"lastblockhash"`
+	Network    string                `json:"network"`
+	SealEngine string                `json:"sealEngine"`
 }
 
 type btBlock struct {
@@ -91,6 +96,11 @@ type btHeaderMarshaling struct {
 	Timestamp  *math.HexOrDecimal256
 }
 
+func TestMain(m *testing.M) {
+	retCode := m.Run()
+	os.Exit(retCode)
+}
+
 func (t *BlockTest) Run() error {
 	config, ok := Forks[t.json.Network]
 	if !ok {
@@ -98,23 +108,31 @@ func (t *BlockTest) Run() error {
 	}
 
 	// import pre accounts & construct test genesis block & state root
-	db, _ := ethdb.NewMemDatabase()
+	db := ethdb.NewMemDatabase()
+	shyftdb, _ := ethdb.NewShyftDatabase()
 	gblock, err := t.genesis(config).Commit(db)
 	if err != nil {
 		return err
 	}
 	if gblock.Hash() != t.json.Genesis.Hash {
-		return fmt.Errorf("genesis block hash doesn't match test: computed=%x, test=%x\n", gblock.Hash().Bytes()[:6], t.json.Genesis.Hash[:6])
+		return fmt.Errorf("genesis block hash doesn't match test: computed=%x, test=%x", gblock.Hash().Bytes()[:6], t.json.Genesis.Hash[:6])
 	}
 	if gblock.Root() != t.json.Genesis.StateRoot {
 		return fmt.Errorf("genesis block state root does not match test: computed=%x, test=%x", gblock.Root().Bytes()[:6], t.json.Genesis.StateRoot[:6])
 	}
 
-	chain, err := core.NewBlockChain(db, nil, config, ethash.NewShared(), vm.Config{})
+	var engine consensus.Engine
+	if t.json.SealEngine == "NoProof" {
+		engine = ethash.NewFaker()
+	} else {
+		engine = ethash.NewShared()
+	}
+	chain, err := core.NewBlockChain(db, shyftdb, nil, config, engine, vm.Config{}, nil)
 	if err != nil {
 		return err
 	}
 	defer chain.Stop()
+	shyftdb.TruncateTables()
 	validBlocks, err := t.insertBlocks(chain)
 	if err != nil {
 		return err
@@ -174,7 +192,6 @@ func (t *BlockTest) insertBlocks(blockchain *core.BlockChain) ([]btBlock, error)
 		}
 		// RLP decoding worked, try to insert into chain:
 		blocks := types.Blocks{cb}
-		core.TruncateTables()
 		i, err := blockchain.InsertChain(blocks)
 		if err != nil {
 			if b.BlockHeader == nil {

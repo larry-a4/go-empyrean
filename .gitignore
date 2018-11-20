@@ -27,6 +27,7 @@ ethash/
 /build/bin/
 /geth*.zip
 
+
 # travis
 profile.tmp
 profile.cov
@@ -36,6 +37,9 @@ profile.cov
 
 # VS Code
 .vscode
+
+# Code Templates
+.github
 
 # dashboard
 /dashboard/assets/flow-typed

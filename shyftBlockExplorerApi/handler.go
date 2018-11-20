@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/ShyftNetwork/go-empyrean/core"
+	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/gorilla/mux"
 )
 
@@ -19,9 +19,7 @@ import (
 func GetTransaction(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	txHash := vars["txHash"]
-	sqldb, err := core.DBConnection()
-	getTxResponse := core.SGetTransaction(sqldb, txHash)
-
+	getTxResponse, err := ethdb.SGetTransaction(txHash)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -35,10 +33,7 @@ func GetTransaction(w http.ResponseWriter, r *http.Request) {
 
 // GetAllTransactions gets txs
 func GetAllTransactions(w http.ResponseWriter, r *http.Request) {
-
-	sqldb, err := core.DBConnection()
-
-	txs := core.SGetAllTransactions(sqldb)
+	txs, err := ethdb.SGetAllTransactions()
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -55,10 +50,7 @@ func GetAllTransactions(w http.ResponseWriter, r *http.Request) {
 func GetAllTransactionsFromBlock(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blockNumber := vars["blockNumber"]
-
-	sqldb, err := core.DBConnection()
-
-	txsFromBlock := core.SGetAllTransactionsFromBlock(sqldb, blockNumber)
+	txsFromBlock, err := ethdb.SGetAllTransactionsFromBlock(blockNumber)
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -75,9 +67,7 @@ func GetAllBlocksMinedByAddress(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	coinbase := vars["coinbase"]
 
-	sqldb, err := core.DBConnection()
-
-	blocksMined := core.SGetAllBlocksMinedByAddress(sqldb, coinbase)
+	blocksMined, err := ethdb.SGetAllBlocksMinedByAddress(coinbase)
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -95,9 +85,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	sqldb, err := core.DBConnection()
-
-	getAccountBalance := core.SGetAccount(sqldb, address)
+	getAccountBalance, err := ethdb.SGetAccount(address)
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -115,9 +103,7 @@ func GetAccountTxs(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	address := vars["address"]
 
-	sqldb, err := core.DBConnection()
-
-	getAccountTxs := core.SGetAccountTxs(sqldb, address)
+	getAccountTxs, err := ethdb.SGetAccountTxs(address)
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -132,10 +118,7 @@ func GetAccountTxs(w http.ResponseWriter, r *http.Request) {
 
 // GetAllAccounts gets balances
 func GetAllAccounts(w http.ResponseWriter, r *http.Request) {
-
-	sqldb, err := core.DBConnection()
-
-	allAccounts := core.SGetAllAccounts(sqldb)
+	allAccounts, err := ethdb.SGetAllAccounts()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -151,8 +134,7 @@ func GetBlock(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	blockNumber := vars["blockNumber"]
 
-	sqldb, err := core.DBConnection()
-	getBlockResponse := core.SGetBlock(sqldb, blockNumber)
+	getBlockResponse, err := ethdb.SGetBlock(blockNumber)
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -167,22 +149,18 @@ func GetBlock(w http.ResponseWriter, r *http.Request) {
 
 // GetAllBlocks response
 func GetAllBlocks(w http.ResponseWriter, r *http.Request) {
-	sqldb, err := core.DBConnection()
-	block3 := core.SGetAllBlocks(sqldb)
+	blocks, err := ethdb.SGetAllBlocks()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, block3)
+	fmt.Fprintln(w, blocks)
 }
 
 func GetRecentBlock(w http.ResponseWriter, r *http.Request) {
-
-	sqldb, err := core.DBConnection()
-
-	mostRecentBlock := core.SGetRecentBlock(sqldb)
+	mostRecentBlock, err := ethdb.SGetRecentBlock()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -195,12 +173,10 @@ func GetRecentBlock(w http.ResponseWriter, r *http.Request) {
 
 //GetInternalTransactions gets internal txs
 func GetInternalTransactionsByHash(w http.ResponseWriter, r *http.Request) {
-	sqldb, err := core.DBConnection()
-
 	vars := mux.Vars(r)
 	txHash := vars["txHash"]
 
-	internalTxs := core.SGetInternalTransaction(sqldb, txHash)
+	internalTxs, err := ethdb.SGetInternalTransaction(txHash)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -214,9 +190,7 @@ func GetInternalTransactionsByHash(w http.ResponseWriter, r *http.Request) {
 
 //GetInternalTransactionsHash gets internal txs hash
 func GetInternalTransactions(w http.ResponseWriter, r *http.Request) {
-	sqldb, err := core.DBConnection()
-
-	internalTxs := core.SGetAllInternalTransactions(sqldb)
+	internalTxs, err := ethdb.SGetAllInternalTransactions()
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return

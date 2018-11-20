@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ShyftNetwork/go-empyrean/log"
+	"github.com/ShyftNetwork/go-empyrean/swarm/log"
 )
 
 /*

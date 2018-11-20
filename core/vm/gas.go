@@ -22,6 +22,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
 
+// Gas costs
 const (
 	GasQuickStep   uint64 = 2
 	GasFastestStep uint64 = 3

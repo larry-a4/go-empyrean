@@ -20,6 +20,7 @@ package les
 
 import (
 	"math/rand"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -28,6 +29,11 @@ import (
 type testDistReq struct {
 	cost, procTime, order uint64
 	canSendTo             map[*testDistPeer]struct{}
+}
+
+func TestMain(m *testing.M) {
+	retCode := m.Run()
+	os.Exit(retCode)
 }
 
 func (r *testDistReq) getCost(dp distPeer) uint64 {
@@ -87,7 +93,7 @@ const (
 	testDistBufLimit       = 10000000
 	testDistMaxCost        = 1000000
 	testDistPeerCount      = 5
-	testDistReqCount       = 50000
+	testDistReqCount       = 5000
 	testDistMaxResendCount = 3
 )
 
@@ -97,9 +103,8 @@ func (p *testDistPeer) waitBefore(cost uint64) (time.Duration, float64) {
 	p.lock.RUnlock()
 	if sumCost < testDistBufLimit {
 		return 0, float64(testDistBufLimit-sumCost) / float64(testDistBufLimit)
-	} else {
-		return time.Duration(sumCost - testDistBufLimit), 0
 	}
+	return time.Duration(sumCost - testDistBufLimit), 0
 }
 
 func (p *testDistPeer) canQueue() bool {

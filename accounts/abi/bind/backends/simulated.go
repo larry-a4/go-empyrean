@@ -31,10 +31,10 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/consensus/ethash"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/core/bloombits"
+	"github.com/ShyftNetwork/go-empyrean/core/rawdb"
 	"github.com/ShyftNetwork/go-empyrean/core/state"
 	"github.com/ShyftNetwork/go-empyrean/core/types"
 	"github.com/ShyftNetwork/go-empyrean/core/vm"
-	"github.com/ShyftNetwork/go-empyrean/eth"
 	"github.com/ShyftNetwork/go-empyrean/eth/filters"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/event"
@@ -48,16 +48,12 @@ var _ bind.ContractBackend = (*SimulatedBackend)(nil)
 var errBlockNumberUnsupported = errors.New("SimulatedBackend cannot access blocks other than the latest block")
 var errGasEstimationFailed = errors.New("gas required exceeds allowance or always failing transaction")
 
-// @SHYFT NOTE: test ShyftTracer
-const (
-	testAddress = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
-)
-
 // SimulatedBackend implements bind.ContractBackend, simulating a blockchain in
 // the background. Its main purpose is to allow easily testing contract bindings.
 type SimulatedBackend struct {
-	database   ethdb.Database   // In memory database to store our testing data
-	blockchain *core.BlockChain // Ethereum blockchain to handle the consensus
+	database      ethdb.Database // In memory database to store our testing data
+	shyftDatabase ethdb.SDatabase
+	blockchain    *core.BlockChain // Ethereum blockchain to handle the consensus
 
 	mu           sync.Mutex
 	pendingBlock *types.Block   // Currently pending block that will be imported on request
@@ -70,18 +66,22 @@ type SimulatedBackend struct {
 
 // NewSimulatedBackend creates a new binding backend using a simulated blockchain
 // for testing purposes.
-func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
-	database, _ := ethdb.NewMemDatabase()
-	core.TruncateTables()
-	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, Alloc: alloc}
+func NewSimulatedBackend(alloc core.GenesisAlloc, gasLimit uint64) *SimulatedBackend {
+	database := ethdb.NewMemDatabase()
+	shyftdb, err := ethdb.NewShyftDatabase()
+	shyftdb.TruncateTables()
+	if err != nil {
+		panic(err)
+	}
+	genesis := core.Genesis{Config: params.AllEthashProtocolChanges, GasLimit: gasLimit, Alloc: alloc}
 	genesis.MustCommit(database)
-	blockchain, _ := core.NewBlockChain(database, nil, genesis.Config, ethash.NewFaker(), vm.Config{})
-
+	blockchain, _ := core.NewBlockChain(database, shyftdb, nil, genesis.Config, ethash.NewFaker(), vm.Config{}, nil)
 	backend := &SimulatedBackend{
-		database:   database,
-		blockchain: blockchain,
-		config:     genesis.Config,
-		events:     filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, blockchain}, false),
+		database:      database,
+		shyftDatabase: shyftdb,
+		blockchain:    blockchain,
+		config:        genesis.Config,
+		events:        filters.NewEventSystem(new(event.TypeMux), &filterBackend{database, shyftdb, blockchain}, false),
 	}
 	backend.rollback()
 	return backend
@@ -91,23 +91,8 @@ func NewSimulatedBackend(alloc core.GenesisAlloc) *SimulatedBackend {
 // fresh new state.
 func (b *SimulatedBackend) Commit() {
 	b.mu.Lock()
+
 	defer b.mu.Unlock()
-	//@SHYFT //SETS UP OUR TEST ENV
-	core.TruncateTables()
-	eth.NewShyftTestLDB()
-	shyftTracer := new(eth.ShyftTracer)
-	core.SetIShyftTracer(shyftTracer)
-
-	ethConf := &eth.Config{
-		Genesis:   core.DeveloperGenesisBlock(15, common.Address{}),
-		Etherbase: common.HexToAddress(testAddress),
-		Ethash: ethash.Config{
-			PowMode: ethash.ModeTest,
-		},
-	}
-
-	eth.SetGlobalConfig(ethConf)
-	eth.InitTracerEnv()
 	if _, err := b.blockchain.InsertChain([]*types.Block{b.pendingBlock}); err != nil {
 		panic(err) // This cannot happen unless the simulator is wrong, fail in that case
 	}
@@ -123,7 +108,7 @@ func (b *SimulatedBackend) Rollback() {
 }
 
 func (b *SimulatedBackend) rollback() {
-	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, 1, func(int, *core.BlockGen) {})
+	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, b.shyftDatabase, 1, func(int, *core.BlockGen) {})
 	statedb, _ := b.blockchain.State()
 
 	b.pendingBlock = blocks[0]
@@ -181,7 +166,7 @@ func (b *SimulatedBackend) StorageAt(ctx context.Context, contract common.Addres
 
 // TransactionReceipt returns the receipt of a transaction.
 func (b *SimulatedBackend) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {
-	receipt, _, _, _ := core.GetReceipt(b.database, txHash)
+	receipt, _, _, _ := rawdb.ReadReceipt(b.database, txHash)
 	return receipt, nil
 }
 
@@ -229,7 +214,7 @@ func (b *SimulatedBackend) PendingNonceAt(ctx context.Context, account common.Ad
 }
 
 // SuggestGasPrice implements ContractTransactor.SuggestGasPrice. Since the simulated
-// chain doens't have miners, we just return a gas price of 1 for any call.
+// chain doesn't have miners, we just return a gas price of 1 for any call.
 func (b *SimulatedBackend) SuggestGasPrice(ctx context.Context) (*big.Int, error) {
 	return big.NewInt(1), nil
 }
@@ -327,11 +312,11 @@ func (b *SimulatedBackend) SendTransaction(ctx context.Context, tx *types.Transa
 		panic(fmt.Errorf("invalid transaction nonce: got %d, want %d", tx.Nonce(), nonce))
 	}
 
-	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, 1, func(number int, block *core.BlockGen) {
+	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, b.shyftDatabase, 1, func(number int, block *core.BlockGen) {
 		for _, tx := range b.pendingBlock.Transactions() {
-			block.AddTx(tx)
+			block.AddTxWithChain(b.blockchain, tx)
 		}
-		block.AddTx(tx)
+		block.AddTxWithChain(b.blockchain, tx)
 	})
 	statedb, _ := b.blockchain.State()
 
@@ -345,18 +330,24 @@ func (b *SimulatedBackend) SendTransaction(ctx context.Context, tx *types.Transa
 //
 // TODO(karalabe): Deprecate when the subscription one can return past data too.
 func (b *SimulatedBackend) FilterLogs(ctx context.Context, query ethereum.FilterQuery) ([]types.Log, error) {
-	// Initialize unset filter boundaried to run from genesis to chain head
-	from := int64(0)
-	if query.FromBlock != nil {
-		from = query.FromBlock.Int64()
+	var filter *filters.Filter
+	if query.BlockHash != nil {
+		// Block filter requested, construct a single-shot filter
+		filter = filters.NewBlockFilter(&filterBackend{b.database, b.shyftDatabase, b.blockchain}, *query.BlockHash, query.Addresses, query.Topics)
+	} else {
+		// Initialize unset filter boundaried to run from genesis to chain head
+		from := int64(0)
+		if query.FromBlock != nil {
+			from = query.FromBlock.Int64()
+		}
+		to := int64(-1)
+		if query.ToBlock != nil {
+			to = query.ToBlock.Int64()
+		}
+		// Construct the range filter
+		filter = filters.NewRangeFilter(&filterBackend{b.database, b.shyftDatabase, b.blockchain}, from, to, query.Addresses, query.Topics)
 	}
-	to := int64(-1)
-	if query.ToBlock != nil {
-		to = query.ToBlock.Int64()
-	}
-	// Construct and execute the filter
-	filter := filters.New(&filterBackend{b.database, b.blockchain}, from, to, query.Addresses, query.Topics)
-
+	// Run the filter and return all the logs
 	logs, err := filter.Logs(ctx)
 	if err != nil {
 		return nil, err
@@ -406,7 +397,7 @@ func (b *SimulatedBackend) SubscribeFilterLogs(ctx context.Context, query ethere
 func (b *SimulatedBackend) AdjustTime(adjustment time.Duration) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, 1, func(number int, block *core.BlockGen) {
+	blocks, _ := core.GenerateChain(b.config, b.blockchain.CurrentBlock(), ethash.NewFaker(), b.database, b.shyftDatabase, 1, func(number int, block *core.BlockGen) {
 		for _, tx := range b.pendingBlock.Transactions() {
 			block.AddTx(tx)
 		}
@@ -437,11 +428,13 @@ func (m callmsg) Data() []byte         { return m.CallMsg.Data }
 // filterBackend implements filters.Backend to support filtering for logs without
 // taking bloom-bits acceleration structures into account.
 type filterBackend struct {
-	db ethdb.Database
-	bc *core.BlockChain
+	db      ethdb.Database
+	shyftdb ethdb.SDatabase
+	bc      *core.BlockChain
 }
 
 func (fb *filterBackend) ChainDb() ethdb.Database  { return fb.db }
+func (fb *filterBackend) ShyftDb() ethdb.SDatabase { return fb.shyftdb }
 func (fb *filterBackend) EventMux() *event.TypeMux { panic("not supported") }
 
 func (fb *filterBackend) HeaderByNumber(ctx context.Context, block rpc.BlockNumber) (*types.Header, error) {
@@ -451,12 +444,24 @@ func (fb *filterBackend) HeaderByNumber(ctx context.Context, block rpc.BlockNumb
 	return fb.bc.GetHeaderByNumber(uint64(block.Int64())), nil
 }
 
+func (fb *filterBackend) HeaderByHash(ctx context.Context, hash common.Hash) (*types.Header, error) {
+	return fb.bc.GetHeaderByHash(hash), nil
+}
+
 func (fb *filterBackend) GetReceipts(ctx context.Context, hash common.Hash) (types.Receipts, error) {
-	return core.GetBlockReceipts(fb.db, hash, core.GetBlockNumber(fb.db, hash)), nil
+	number := rawdb.ReadHeaderNumber(fb.db, hash)
+	if number == nil {
+		return nil, nil
+	}
+	return rawdb.ReadReceipts(fb.db, hash, *number), nil
 }
 
 func (fb *filterBackend) GetLogs(ctx context.Context, hash common.Hash) ([][]*types.Log, error) {
-	receipts := core.GetBlockReceipts(fb.db, hash, core.GetBlockNumber(fb.db, hash))
+	number := rawdb.ReadHeaderNumber(fb.db, hash)
+	if number == nil {
+		return nil, nil
+	}
+	receipts := rawdb.ReadReceipts(fb.db, hash, *number)
 	if receipts == nil {
 		return nil, nil
 	}
@@ -467,7 +472,7 @@ func (fb *filterBackend) GetLogs(ctx context.Context, hash common.Hash) ([][]*ty
 	return logs, nil
 }
 
-func (fb *filterBackend) SubscribeTxPreEvent(ch chan<- core.TxPreEvent) event.Subscription {
+func (fb *filterBackend) SubscribeNewTxsEvent(ch chan<- core.NewTxsEvent) event.Subscription {
 	return event.NewSubscription(func(quit <-chan struct{}) error {
 		<-quit
 		return nil

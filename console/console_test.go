@@ -37,7 +37,7 @@ import (
 const (
 	testInstance = "console-tester"
 	testAddress  = "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
-	)
+)
 
 // hookedPrompter implements UserPrompter to simulate use input via channels.
 type hookedPrompter struct {
@@ -81,9 +81,15 @@ type tester struct {
 	output    *bytes.Buffer
 }
 
+func TestMain(m *testing.M) {
+	retCode := m.Run()
+	os.Exit(retCode)
+}
+
 // newTester creates a test environment based on which the console can operate.
 // Please ensure you call Close() on the returned tester to avoid leaks.
 func newTester(t *testing.T, confOverride func(*eth.Config)) *tester {
+	core.DisconnectPG()
 	// Create a temporary storage for the node keys and initialize it
 	workspace, err := ioutil.TempDir("", "console-tester-")
 	if err != nil {
@@ -132,8 +138,8 @@ func newTester(t *testing.T, confOverride func(*eth.Config)) *tester {
 	}
 	// Create the final tester and return
 	var ethereum *eth.Ethereum
-	stack.Service(&ethereum)
 
+	stack.Service(&ethereum)
 	return &tester{
 		workspace: workspace,
 		stack:     stack,
@@ -201,7 +207,7 @@ func TestInteractive(t *testing.T) {
 
 	go tester.console.Interactive()
 
-	// Wait for a promt and send a statement back
+	// Wait for a prompt and send a statement back
 	select {
 	case <-tester.input.scheduler:
 	case <-time.After(time.Second):
@@ -212,7 +218,7 @@ func TestInteractive(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatalf("input feedback timeout")
 	}
-	// Wait for the second promt and ensure first statement was evaluated
+	// Wait for the second prompt and ensure first statement was evaluated
 	select {
 	case <-tester.input.scheduler:
 	case <-time.After(time.Second):
@@ -249,7 +255,7 @@ func TestExecute(t *testing.T) {
 }
 
 // Tests that the JavaScript objects returned by statement executions are properly
-// pretty printed instead of just displaing "[object]".
+// pretty printed instead of just displaying "[object]".
 func TestPrettyPrint(t *testing.T) {
 	tester := newTester(t, nil)
 	defer tester.Close(t)
@@ -300,7 +306,7 @@ func TestIndenting(t *testing.T) {
 	}{
 		{`var a = 1;`, 0},
 		{`"some string"`, 0},
-		{`"some string with (parentesis`, 0},
+		{`"some string with (parenthesis`, 0},
 		{`"some string with newline
 		("`, 0},
 		{`function v(a,b) {}`, 0},

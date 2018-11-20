@@ -17,10 +17,12 @@
 package eth
 
 import (
+	"testing"
+
+	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
-	"testing"
 	"time"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
@@ -56,7 +58,7 @@ func TestProtocolCompatibility(t *testing.T) {
 	for i, tt := range tests {
 		ProtocolVersions = []uint{tt.version}
 
-		pm, _, err := newTestProtocolManager(tt.mode, 0, nil, nil)
+		pm, _, _, err := newTestProtocolManager(tt.mode, 0, nil, nil)
 		if pm != nil {
 			defer pm.Stop()
 		}
@@ -71,7 +73,8 @@ func TestGetBlockHeaders62(t *testing.T) { testGetBlockHeaders(t, 62) }
 func TestGetBlockHeaders63(t *testing.T) { testGetBlockHeaders(t, 63) }
 
 func testGetBlockHeaders(t *testing.T, protocol int) {
-	pm, _ := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxHashFetch+15, nil, nil)
+	pm, _, shyftdb := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxHashFetch+15, nil, nil)
+	shyftdb.TruncateTables()
 	peer, _ := newTestPeer("peer", protocol, pm, true)
 	defer peer.close()
 
@@ -230,7 +233,7 @@ func TestGetBlockBodies62(t *testing.T) { testGetBlockBodies(t, 62) }
 func TestGetBlockBodies63(t *testing.T) { testGetBlockBodies(t, 63) }
 
 func testGetBlockBodies(t *testing.T, protocol int) {
-	pm, _ := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxBlockFetch+15, nil, nil)
+	pm, _, _ := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxBlockFetch+15, nil, nil)
 	peer, _ := newTestPeer("peer", protocol, pm, true)
 	defer peer.close()
 
@@ -337,8 +340,7 @@ func testGetNodeData(t *testing.T, protocol int) {
 		}
 	}
 	// Assemble the test environment
-	core.TruncateTables()
-	pm, db := newTestProtocolManagerMust(t, downloader.FullSync, 4, generator, nil)
+	pm, db, _ := newTestProtocolManagerMust(t, downloader.FullSync, 4, generator, nil)
 	peer, _ := newTestPeer("peer", protocol, pm, true)
 	defer peer.close()
 
@@ -367,7 +369,7 @@ func testGetNodeData(t *testing.T, protocol int) {
 			t.Errorf("data hash mismatch: have %x, want %x", hash, want)
 		}
 	}
-	statedb, _ := ethdb.NewMemDatabase()
+	statedb := ethdb.NewMemDatabase()
 	for i := 0; i < len(data); i++ {
 		statedb.Put(hashes[i].Bytes(), data[i])
 	}
@@ -430,7 +432,7 @@ func testGetReceipt(t *testing.T, protocol int) {
 		}
 	}
 	// Assemble the test environment
-	pm, _ := newTestProtocolManagerMust(t, downloader.FullSync, 4, generator, nil)
+	pm, _, _ := newTestProtocolManagerMust(t, downloader.FullSync, 4, generator, nil)
 	peer, _ := newTestPeer("peer", protocol, pm, true)
 	defer peer.close()
 
@@ -467,15 +469,19 @@ func testDAOChallenge(t *testing.T, localForked, remoteForked bool, timeout bool
 	}
 	// Create a DAO aware protocol manager
 	var (
-		evmux         = new(event.TypeMux)
-		pow           = ethash.NewFaker()
-		db, _         = ethdb.NewMemDatabase()
-		config        = &params.ChainConfig{DAOForkBlock: big.NewInt(1), DAOForkSupport: localForked}
-		gspec         = &core.Genesis{Config: config}
-		genesis       = gspec.MustCommit(db)
-		blockchain, _ = core.NewBlockChain(db, nil, config, pow, vm.Config{})
+		evmux      = new(event.TypeMux)
+		pow        = ethash.NewFaker()
+		db         = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewShyftDatabase()
+		config     = &params.ChainConfig{DAOForkBlock: big.NewInt(1), DAOForkSupport: localForked}
+		gspec      = &core.Genesis{Config: config}
+		genesis    = gspec.MustCommit(db)
 	)
-	pm, err := NewProtocolManager(config, downloader.FullSync, DefaultConfig.NetworkId, evmux, new(testTxPool), pow, blockchain, db)
+	blockchain, err := core.NewBlockChain(db, shyftdb, nil, config, pow, vm.Config{}, nil)
+	if err != nil {
+		t.Fatalf("failed to create new blockchain: %v", err)
+	}
+	pm, err := NewProtocolManager(config, downloader.FullSync, DefaultConfig.NetworkId, evmux, new(testTxPool), pow, blockchain, db, shyftdb)
 	if err != nil {
 		t.Fatalf("failed to start test protocol manager: %v", err)
 	}
@@ -497,7 +503,7 @@ func testDAOChallenge(t *testing.T, localForked, remoteForked bool, timeout bool
 	}
 	// Create a block to reply to the challenge if no timeout is simulated
 	if !timeout {
-		blocks, _ := core.GenerateChain(&params.ChainConfig{}, genesis, ethash.NewFaker(), db, 1, func(i int, block *core.BlockGen) {
+		blocks, _ := core.GenerateChain(&params.ChainConfig{}, genesis, ethash.NewFaker(), db, shyftdb, 1, func(i int, block *core.BlockGen) {
 			if remoteForked {
 				block.SetExtra(params.DAOForkBlockExtra)
 			}
@@ -519,5 +525,93 @@ func testDAOChallenge(t *testing.T, localForked, remoteForked bool, timeout bool
 		if peers := pm.peers.Len(); peers != 0 {
 			t.Fatalf("peer count mismatch: have %d, want %d", peers, 0)
 		}
+	}
+}
+
+func TestBroadcastBlock(t *testing.T) {
+	var tests = []struct {
+		totalPeers        int
+		broadcastExpected int
+	}{
+		{1, 1},
+		{2, 2},
+		{3, 3},
+		{4, 4},
+		{5, 4},
+		{9, 4},
+		{12, 4},
+		{16, 4},
+		{26, 5},
+		{100, 10},
+	}
+	for _, test := range tests {
+		testBroadcastBlock(t, test.totalPeers, test.broadcastExpected)
+	}
+}
+
+func testBroadcastBlock(t *testing.T, totalPeers, broadcastExpected int) {
+	var (
+		evmux      = new(event.TypeMux)
+		pow        = ethash.NewFaker()
+		db         = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewShyftDatabase()
+		config     = &params.ChainConfig{}
+		gspec      = &core.Genesis{Config: config}
+		genesis    = gspec.MustCommit(db)
+	)
+	blockchain, err := core.NewBlockChain(db, shyftdb, nil, config, pow, vm.Config{}, nil)
+	if err != nil {
+		t.Fatalf("failed to create new blockchain: %v", err)
+	}
+	pm, err := NewProtocolManager(config, downloader.FullSync, DefaultConfig.NetworkId, evmux, new(testTxPool), pow, blockchain, db, shyftdb)
+	if err != nil {
+		t.Fatalf("failed to start test protocol manager: %v", err)
+	}
+	pm.Start(1000)
+	defer pm.Stop()
+	var peers []*testPeer
+	for i := 0; i < totalPeers; i++ {
+		peer, _ := newTestPeer(fmt.Sprintf("peer %d", i), eth63, pm, true)
+		defer peer.close()
+		peers = append(peers, peer)
+	}
+	chain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, 1, func(i int, gen *core.BlockGen) {})
+	pm.BroadcastBlock(chain[0], true /*propagate*/)
+
+	errCh := make(chan error, totalPeers)
+	doneCh := make(chan struct{}, totalPeers)
+	for _, peer := range peers {
+		go func(p *testPeer) {
+			if err := p2p.ExpectMsg(p.app, NewBlockMsg, &newBlockData{Block: chain[0], TD: big.NewInt(131136)}); err != nil {
+				errCh <- err
+			} else {
+				doneCh <- struct{}{}
+			}
+		}(peer)
+	}
+	timeoutCh := time.NewTimer(time.Millisecond * 100).C
+	var receivedCount int
+outer:
+	for {
+		select {
+		case err = <-errCh:
+			break outer
+		case <-doneCh:
+			receivedCount++
+			if receivedCount == totalPeers {
+				break outer
+			}
+		case <-timeoutCh:
+			break outer
+		}
+	}
+	for _, peer := range peers {
+		peer.app.Close()
+	}
+	if err != nil {
+		t.Errorf("error matching block by peer: %v", err)
+	}
+	if receivedCount != broadcastExpected {
+		t.Errorf("block broadcast to %d peers, expected %d", receivedCount, broadcastExpected)
 	}
 }

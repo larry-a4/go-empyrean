@@ -34,21 +34,22 @@ import (
 
 func TestNodeIterator(t *testing.T) {
 	var (
-		fulldb, _  = ethdb.NewMemDatabase()
-		lightdb, _ = ethdb.NewMemDatabase()
+		fulldb     = ethdb.NewMemDatabase()
+		lightdb    = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewShyftDatabase()
 		gspec      = core.Genesis{Alloc: core.GenesisAlloc{testBankAddress: {Balance: testBankFunds}}}
 		genesis    = gspec.MustCommit(fulldb)
 	)
 	gspec.MustCommit(lightdb)
-	blockchain, _ := core.NewBlockChain(fulldb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{})
-	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), fulldb, 4, testChainGen)
-	core.TruncateTables()
+	blockchain, _ := core.NewBlockChain(fulldb, shyftdb, nil, params.TestChainConfig, ethash.NewFullFaker(), vm.Config{}, nil)
+	gchain, _ := core.GenerateChain(params.TestChainConfig, genesis, ethash.NewFaker(), fulldb, shyftdb, 4, testChainGen)
+	shyftdb.TruncateTables()
 	if _, err := blockchain.InsertChain(gchain); err != nil {
 		panic(err)
 	}
 
 	ctx := context.Background()
-	odr := &testOdr{sdb: fulldb, ldb: lightdb}
+	odr := &testOdr{sdb: fulldb, ldb: lightdb, indexerConfig: TestClientIndexerConfig}
 	head := blockchain.CurrentHeader()
 	lightTrie, _ := NewStateDatabase(ctx, head, odr).OpenTrie(head.Root)
 	fullTrie, _ := state.NewDatabase(fulldb).OpenTrie(head.Root)

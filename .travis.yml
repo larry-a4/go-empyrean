@@ -1,0 +1,72 @@
+language: go
+go_import_path: github.com/ShyftNetwork/go-empyrean
+
+matrix:
+  include:
+  - os: linux
+    dist: trusty
+    sudo: required
+    go: 1.10.x
+
+  - os: linux
+    dist: trusty
+    sudo: required
+    go: 1.11.x
+    git:
+      submodules: true
+
+
+  - os: osx
+    sudo: required
+    go: 1.11.x
+
+  - os: linux
+    dist: trusty
+    sudo: required
+    go: 1.11.x
+    env:
+    - LINT
+    git:
+      submodules: false
+    before_install: ignore
+    before_script: ignore
+    script: go run build/ci.go lint
+
+  - os: linux
+    dist: trusty
+    sudo: required
+    go: 1.11.x
+    before_install: ignore
+    before_script: ignore
+    env:
+    - DISABLEPG="disablepg"
+    git:
+      submodules: false
+    script: go run build/ci.go install
+
+cache:
+  timeout: 259200 # 72 hours
+  directories:
+  - $TRAVIS_BUILD_DIR/.git/modules
+
+before_install:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update                       ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo /etc/init.d/postgresql stop          ; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo /etc/init.d/postgresql start 9.6     ; fi
+
+install:
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install postgresql@9.6          ; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew services start postgresql          ; fi
+- go get -t ./...
+
+before_script:
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then createuser -s postgres          ; fi
+- psql -c 'create database shyftdbtest;' -U postgres
+- psql -c 'create database shyftdbtest_2;' -U postgres
+
+script:
+- go run build/ci.go install
+- go run build/ci.go test -coverage $TEST_PACKAGES
+
+
+

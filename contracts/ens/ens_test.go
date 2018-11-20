@@ -18,46 +18,31 @@ package ens
 
 import (
 	"math/big"
-	"os"
 	"testing"
 
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind/backends"
+	"github.com/ShyftNetwork/go-empyrean/common"
 	"github.com/ShyftNetwork/go-empyrean/contracts/ens/contract"
 	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
-	"github.com/ShyftNetwork/go-empyrean/shyfttest"
-	"github.com/docker/docker/pkg/reexec"
 )
 
 var (
-	key, _ = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
-	name   = "my name on ENS"
-	hash   = crypto.Keccak256Hash([]byte("my content"))
-	addr   = crypto.PubkeyToAddress(key.PublicKey)
+	key, _   = crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+	name     = "my name on ENS"
+	hash     = crypto.Keccak256Hash([]byte("my content"))
+	addr     = crypto.PubkeyToAddress(key.PublicKey)
+	testAddr = common.HexToAddress("0x1234123412341234123412341234123412341234")
 )
 
-func TestMain(m *testing.M) {
-	// Reset Pg DB
-	shyfttest.PgTestDbSetup()
-	// check if we have been reexec'd
-
-	if reexec.Init() {
-		return
-	}
-	retCode := m.Run()
-	shyfttest.PgTestTearDown()
-	os.Exit(retCode)
-}
-
 func TestENS(t *testing.T) {
-	contractBackend := backends.NewSimulatedBackend(core.GenesisAlloc{addr: {Balance: big.NewInt(1000000000)}})
+	contractBackend := backends.NewSimulatedBackend(core.GenesisAlloc{addr: {Balance: big.NewInt(1000000000)}}, 10000000)
 	transactOpts := bind.NewKeyedTransactor(key)
 	ensAddr, ens, err := DeployENS(transactOpts, contractBackend)
 	if err != nil {
 		t.Fatalf("can't deploy root registry: %v", err)
 	}
-	core.TruncateTables()
 	contractBackend.Commit()
 
 	// Set ourself as the owner of the name.
@@ -71,7 +56,7 @@ func TestENS(t *testing.T) {
 	if err != nil {
 		t.Fatalf("can't deploy resolver: %v", err)
 	}
-	if _, err := ens.SetResolver(ensNode(name), resolverAddr); err != nil {
+	if _, err := ens.SetResolver(EnsNode(name), resolverAddr); err != nil {
 		t.Fatalf("can't set resolver: %v", err)
 	}
 	contractBackend.Commit()
@@ -89,5 +74,20 @@ func TestENS(t *testing.T) {
 	}
 	if vhost != hash {
 		t.Fatalf("resolve error, expected %v, got %v", hash.Hex(), vhost.Hex())
+	}
+
+	// set the address for the name
+	if _, err = ens.SetAddr(name, testAddr); err != nil {
+		t.Fatalf("can't set address: %v", err)
+	}
+	contractBackend.Commit()
+
+	// Try to resolve the name to an address
+	recoveredAddr, err := ens.Addr(name)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if vhost != hash {
+		t.Fatalf("resolve error, expected %v, got %v", testAddr.Hex(), recoveredAddr.Hex())
 	}
 }

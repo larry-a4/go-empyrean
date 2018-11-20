@@ -37,7 +37,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/event"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
-	"github.com/ShyftNetwork/go-empyrean/p2p/discover"
+	"github.com/ShyftNetwork/go-empyrean/p2p/enode"
 	"github.com/ShyftNetwork/go-empyrean/params"
 )
 
@@ -49,43 +49,44 @@ var (
 // newTestProtocolManager creates a new protocol manager for testing purposes,
 // with the given number of blocks already known, and potential notification
 // channels for different events.
-func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, error) {
+func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, ethdb.SDatabase, error) {
 	var (
-		evmux  = new(event.TypeMux)
-		engine = ethash.NewFaker()
-		db, _  = ethdb.NewMemDatabase()
-		gspec  = &core.Genesis{
+		evmux      = new(event.TypeMux)
+		engine     = ethash.NewFaker()
+		db         = ethdb.NewMemDatabase()
+		shyftdb, _ = ethdb.NewTestInstanceShyftDatabase()
+		gspec      = &core.Genesis{
 			Config: params.TestChainConfig,
 			Alloc:  core.GenesisAlloc{testBank: {Balance: big.NewInt(1000000)}},
 		}
 		genesis       = gspec.MustCommit(db)
-		blockchain, _ = core.NewBlockChain(db, nil, gspec.Config, engine, vm.Config{})
+		blockchain, _ = core.NewBlockChain(db, shyftdb, nil, gspec.Config, engine, vm.Config{}, nil)
 	)
+
 	//@Shyft Note: Truncate Posgres Data Tables To Allow Reuse of Test Data
-	core.TruncateTables()
-	chain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, blocks, generator)
+	chain, _ := core.GenerateChain(gspec.Config, genesis, ethash.NewFaker(), db, shyftdb, blocks, generator)
+	shyftdb.TruncateTables()
 	if _, err := blockchain.InsertChain(chain); err != nil {
 		panic(err)
 	}
-
-	pm, err := NewProtocolManager(gspec.Config, mode, DefaultConfig.NetworkId, evmux, &testTxPool{added: newtx}, engine, blockchain, db)
+	pm, err := NewProtocolManager(gspec.Config, mode, DefaultConfig.NetworkId, evmux, &testTxPool{added: newtx}, engine, blockchain, db, shyftdb)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	pm.Start(1000)
-	return pm, db, nil
+	return pm, db, shyftdb, nil
 }
 
 // newTestProtocolManagerMust creates a new protocol manager for testing purposes,
 // with the given number of blocks already known, and potential notification
 // channels for different events. In case of an error, the constructor force-
 // fails the test.
-func newTestProtocolManagerMust(t *testing.T, mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase) {
-	pm, db, err := newTestProtocolManager(mode, blocks, generator, newtx)
+func newTestProtocolManagerMust(t *testing.T, mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, ethdb.SDatabase) {
+	pm, db, shyftdb, err := newTestProtocolManager(mode, blocks, generator, newtx)
 	if err != nil {
 		t.Fatalf("Failed to create protocol manager: %v", err)
 	}
-	return pm, db
+	return pm, db, shyftdb
 }
 
 // testTxPool is a fake, helper transaction pool for testing purposes
@@ -126,7 +127,7 @@ func (p *testTxPool) Pending() (map[common.Address]types.Transactions, error) {
 	return batches, nil
 }
 
-func (p *testTxPool) SubscribeTxPreEvent(ch chan<- core.TxPreEvent) event.Subscription {
+func (p *testTxPool) SubscribeNewTxsEvent(ch chan<- core.NewTxsEvent) event.Subscription {
 	return p.txFeed.Subscribe(ch)
 }
 
@@ -150,7 +151,7 @@ func newTestPeer(name string, version int, pm *ProtocolManager, shake bool) (*te
 	app, net := p2p.MsgPipe()
 
 	// Generate a random id and create the peer
-	var id discover.NodeID
+	var id enode.ID
 	rand.Read(id[:])
 
 	peer := pm.newPeer(version, p2p.NewPeer(id, name, nil), net)
