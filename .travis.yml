@@ -12,10 +12,9 @@ matrix:
     dist: trusty
     sudo: required
     go: 1.11.x
+    git:
+      submodules: true
 
-  - os: osx
-    sudo: required
-    go: 1.10.x
 
   - os: osx
     sudo: required
