@@ -24,11 +24,13 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/p2p/enode"
+	"github.com/ShyftNetwork/go-empyrean/core"
 )
 
 // Tests that fast sync gets disabled as soon as a real block is successfully
 // imported into the blockchain.
 func TestFastSyncDisabling(t *testing.T) {
+	core.ConnectPG()
 	// Create a pristine protocol manager, check that fast sync is left enabled
 	pmEmpty, _, shyftdb := newTestProtocolManagerMust(t, downloader.FastSync, 0, nil, nil)
 	if atomic.LoadUint32(&pmEmpty.fastSync) == 0 {

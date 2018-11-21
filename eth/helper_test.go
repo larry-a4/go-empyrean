@@ -50,6 +50,7 @@ var (
 // with the given number of blocks already known, and potential notification
 // channels for different events.
 func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, ethdb.SDatabase, error) {
+	core.ConnectPG()
 	var (
 		evmux      = new(event.TypeMux)
 		engine     = ethash.NewFaker()
@@ -82,6 +83,7 @@ func newTestProtocolManager(mode downloader.SyncMode, blocks int, generator func
 // channels for different events. In case of an error, the constructor force-
 // fails the test.
 func newTestProtocolManagerMust(t *testing.T, mode downloader.SyncMode, blocks int, generator func(int, *core.BlockGen), newtx chan<- []*types.Transaction) (*ProtocolManager, *ethdb.MemDatabase, ethdb.SDatabase) {
+	core.ConnectPG()
 	pm, db, shyftdb, err := newTestProtocolManager(mode, blocks, generator, newtx)
 	if err != nil {
 		t.Fatalf("Failed to create protocol manager: %v", err)
