@@ -2,13 +2,13 @@ package eth
 
 import (
 	"context"
-	"log"
 	"fmt"
 	"github.com/ShyftNetwork/go-empyrean/whisper/shhclient"
+	"log"
 	//"github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 
-	"github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
+	"github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 )
 
 func NewWhisperEndPoint() {
@@ -31,7 +31,6 @@ func NewWhisperEndPoint() {
 	}
 	fmt.Println("pub key")
 	fmt.Println(hexutil.Encode(pubKey))
-
 
 	_ = client // we'll be using this in the next section
 	fmt.Println("we have a whisper connection")

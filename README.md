@@ -71,6 +71,23 @@ To stop Geth, **`crtl+C`** in the terminal window, if you proceed with the start
 ``./shyft-geth.sh --start`` Starts GETH
 
 To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.
+
+#####SHH/Whisper
+The shyft go_empyrean node, unlike go ethereum starts the SHH whisper client by default. This is to facilitate broadcast messaging from the shyft js bridge to each of the mining nodes.
+
+To disable the whisper client a startup flag --disablewhisper is provided, which must be passed into the command line when starting up geth.
+
+```
+geth --disablewhisper
+
+```
+
+To overwrite the default whisper variables, the following flags are also provided:
+
+    --shh.maxmessagesize - sets the maximum message size fir the whisper client (integer) -(default: 1048576)  --shh.maxmessagesize=128
+    --shh.pow - the minimum POW accepted for processing whisper messages (float64 - default: 0.2) --shh.pow=0.3
+    --shh.restrict-light - restrictions connections between two whisper light clients (boolean - default: true) --shh.restrict-light
+
 #### Docker Images
 
 Two sets of Docker Images are available for ShyftGeth, the Postgresql Database, and the Shyft Blockchain Explorer, which can be used for local development and testnet connection. The development settings are included in docker-compose.yml, the testnet settings are included in docker-compose.production.yml. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).

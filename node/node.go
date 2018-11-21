@@ -40,8 +40,6 @@ import (
 	"github.com/prometheus/prometheus/util/flock"
 )
 
-// Shyft Note: Variable to grab the whisper service so we can customize topic subscriptions and message listening
-var WhisperService Service
 // Node is a container on which services can be registered.
 type Node struct {
 	eventmux *event.TypeMux // Event multiplexer used between the services of a stack
@@ -78,6 +76,9 @@ type Node struct {
 
 	log log.Logger
 }
+
+// variable to hold running status of shh server
+var shhRunning bool
 
 // New creates a new P2P node, ready for protocol registration.
 func New(conf *Config) (*Node, error) {
@@ -194,7 +195,6 @@ func (n *Node) Start() error {
 		if _, exists := services[kind]; exists {
 			return &DuplicateServiceError{Kind: kind}
 		}
-		log.Info("Service Contexts", fmt.Sprintf("--> %+v\n", ctx), nil)
 		services[kind] = service
 	}
 	// Gather the protocols and start the freshly assembled P2P server
@@ -207,8 +207,6 @@ func (n *Node) Start() error {
 	// Start each of the services
 	started := []reflect.Type{}
 	for kind, service := range services {
-		// Start the next service, stopping all previous upon failure
-		log.Info("Shyft start", fmt.Sprintf("kind %+v --> service %+v\n",kind, service),nil)
 		if err := service.Start(running); err != nil {
 			for _, kind := range started {
 				services[kind].Stop()
@@ -217,16 +215,16 @@ func (n *Node) Start() error {
 
 			return err
 		}
-		// Mark the service started for potential cleanup
 		started = append(started, kind)
-		// Shyft Note: Store the Whisper Service for setup of message listening
-		//if fmt.Sprintf("%+v", kind) == "*whisperv6.Whisper" {
-		//	WhisperService = services[kind]
-		//	err := n.setUpWhisperSubscriptions()
-		//	if err != nil {
-		//		log.Info("A problem was encountered in establishing whisper subscriptions \n")
-		//	}
-		//}
+		// Mark the service started for potential cleanup
+		// Start the next service, stopping all previous upon failure
+		for _, runningProtocol := range running.Protocols {
+			if runningProtocol.Name == "shh" {
+				shhRunning = true
+			} else {
+				shhRunning = false
+			}
+		}
 	}
 	// Lastly start the configured RPC interfaces
 	if err := n.startRPC(services); err != nil {
@@ -240,34 +238,36 @@ func (n *Node) Start() error {
 	n.services = services
 	n.server = running
 	n.stop = make(chan struct{})
-	n.setUpWhisperSubscriptions()
+	if shhRunning {
+		setUpWhisperSubscriptions()
+	}
 	return nil
 }
 
-func (n *Node) setUpWhisperSubscriptions() error {
-
+func setUpWhisperSubscriptions() error {
+	ctx := context.Background()
 	// Set Up a Topic Listener
-	log.Info("Whisper Subscription Setup", fmt.Sprintf("services: %+v\n", WhisperService), nil)
 	shhCli, err := shhclient.Dial("ws://127.0.0.1:8546")
 	if err != nil {
-		log.Info("Failed to Connect to shh client")
+		log.Info("Failed to Connect to shh client", fmt.Sprintf("%+v \n", err), "")
+		panic(err)
 	}
-	ctx := context.Background()
 	generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")
 	symKey, _ := shhCli.GetSymmetricKey(ctx, generatedSymKey)
 	symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
-	log.Info("SymKeyId: ", symKeyId, nil)
-	topicString := "0x07678231"
+	log.Info("Symmetric Key Id: ", "symKeyId", symKeyId)
+	// topicString is "rollback".toHex()
+	topicString := "0x524f4c4c4241434b"
 	topicBytes, _ := hexutil.Decode(topicString)
 	topic := whisper.BytesToTopic(topicBytes)
 	topArr := []whisper.TopicType{topic}
 	criteria := &whisper.Criteria{SymKeyID: symKeyId, Topics: topArr}
-	//filter, _ := shhCli.NewMessageFilter(ctx, *criteria)
 	messages := make(chan *whisper.Message)
 	sub, err := shhCli.SubscribeMessages(ctx, *criteria, messages)
 	if err != nil {
 		log.Error("subscription error:", err)
 	}
+	log.Info("listening for messages", "topicString", topicString)
 	go func() {
 		for {
 			select {
