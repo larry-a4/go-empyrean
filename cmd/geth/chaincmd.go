@@ -201,6 +201,11 @@ func initGenesis(ctx *cli.Context) error {
 			shyftdb = nil
 		} else if ctx.GlobalBool(utils.PostgresFlag.Name) {
 			shyftdb = nil
+		} else if ctx.GlobalBool(utils.GoerliFlag.Name) || ctx.GlobalBool(utils.RinkebyFlag.Name) {
+			shyftdb, err = stack.OpenTestDatabase()
+			if err != nil {
+				utils.Fatalf("Failed to open test database: %v", err)
+			}
 		} else {
 			shyftdb, err = stack.OpenShyftDatabase()
 			if err != nil {

@@ -590,6 +590,10 @@ func (n *Node) OpenShyftDatabase() (ethdb.SDatabase, error) {
 	return ethdb.NewShyftDatabase()
 }
 
+func (n *Node) OpenTestDatabase() (ethdb.SDatabase, error) {
+	return ethdb.NewTestInstanceShyftDatabase()
+}
+
 // ResolvePath returns the absolute path of a resource in the instance directory.
 func (n *Node) ResolvePath(x string) string {
 	return n.config.ResolvePath(x)
