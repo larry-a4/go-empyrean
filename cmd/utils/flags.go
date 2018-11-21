@@ -123,6 +123,10 @@ var (
 		Name:  "disablepg",
 		Usage: "Disconnects the postgres instance used for Shyft Shakedown",
 	}
+	WhisperOffFlag = cli.BoolFlag{
+		Name:  "disablewhisper",
+		Usage: "Disables the whisper server which is turned on by default",
+	}
 	KeyStoreDirFlag = DirectoryFlag{
 		Name:  "keystore",
 		Usage: "Directory for the keystore (default = inside the datadir)",

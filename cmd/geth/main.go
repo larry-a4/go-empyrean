@@ -150,7 +150,8 @@ var (
 	}
 
 	whisperFlags = []cli.Flag{
-		utils.WhisperEnabledFlag,
+		//utils.WhisperEnabledFlag - removed as we are starting whisper by default unless Whisper Off flag is set
+		utils.WhisperOffFlag,
 		utils.WhisperMaxMessageSizeFlag,
 		utils.WhisperMinPOWFlag,
 		utils.WhisperRestrictConnectionBetweenLightClientsFlag,
@@ -263,7 +264,6 @@ func geth(ctx *cli.Context) error {
 		return fmt.Errorf("invalid command: %q", args[0])
 	}
 	node := makeFullNode(ctx)
-	log.Info("Node object returned", fmt.Sprintf("--> %+v\n", node))
 	startNode(ctx, node)
 	node.Wait()
 	return nil
