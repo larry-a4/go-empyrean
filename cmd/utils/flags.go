@@ -120,7 +120,7 @@ var (
 		Value: DirectoryString{node.DefaultDataDir()},
 	}
 	PostgresFlag = cli.BoolFlag{
-		Name:  "disablepg",
+		Name:  "enablepg",
 		Usage: "Connects the postgres instance used for Shyft Shakedown",
 	}
 	KeyStoreDirFlag = DirectoryFlag{
