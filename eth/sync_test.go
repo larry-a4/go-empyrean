@@ -21,10 +21,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/eth/downloader"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/p2p/enode"
-	"github.com/ShyftNetwork/go-empyrean/core"
 )
 
 // Tests that fast sync gets disabled as soon as a real block is successfully
