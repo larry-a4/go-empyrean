@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ShyftNetwork/go-empyrean/cmd/utils"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/whisper/shhclient"
 	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
@@ -78,7 +79,7 @@ type Node struct {
 }
 
 // variable to hold running status of shh server
-var shhRunning bool
+var whisperEndpoint bool
 
 // New creates a new P2P node, ready for protocol registration.
 func New(conf *Config) (*Node, error) {
@@ -218,11 +219,12 @@ func (n *Node) Start() error {
 		started = append(started, kind)
 		// Mark the service started for potential cleanup
 		// Start the next service, stopping all previous upon failure
+
 		for _, runningProtocol := range running.Protocols {
-			if runningProtocol.Name == "shh" {
-				shhRunning = true
+			if runningProtocol.Name == "shh"  && ctx.GetB{
+				whisperEndpoint = true
 			} else {
-				shhRunning = false
+				whisperEndpoint = false
 			}
 		}
 	}
@@ -239,17 +241,18 @@ func (n *Node) Start() error {
 	n.server = running
 	n.stop = make(chan struct{})
 	if shhRunning {
-		setUpWhisperSubscriptions()
+		n.setUpWhisperSubscriptions()
 	}
 	return nil
 }
 
-func setUpWhisperSubscriptions() error {
+func (n *Node) setUpWhisperSubscriptions() error {
 	ctx := context.Background()
 	// Set Up a Topic Listener
-	shhCli, err := shhclient.Dial("ws://127.0.0.1:8546")
+	wsConnect := "ws://" + n.wsEndpoint
+	shhCli, err := shhclient.Dial(wsConnect)
 	if err != nil {
-		log.Info("Failed to Connect to shh client", fmt.Sprintf("%+v \n", err), "")
+		log.Error("Failed to Connect to shh client: ", err)
 		panic(err)
 	}
 	generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")

@@ -59,7 +59,7 @@ func TestAccountListEmpty(t *testing.T) {
 
 func TestAccountList(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
-	geth := runGeth(t, "account", "list", "--datadir", datadir)
+	geth := runGeth(t, "--disablewhisper","account", "list", "--datadir", datadir)
 	defer geth.ExpectExit()
 	if runtime.GOOS == "windows" {
 		geth.Expect(`
@@ -77,7 +77,7 @@ Account #2: {289d485d9771714cce91d3393d764e1311907acc} keystore://{{.Datadir}}/k
 }
 
 func TestAccountNew(t *testing.T) {
-	geth := runGeth(t, "account", "new", "--lightkdf")
+	geth := runGeth(t,  "--disablewhisper","account", "new", "--lightkdf")
 	defer geth.ExpectExit()
 	geth.Expect(`
 Your new account is locked with a password. Please give a password. Do not forget this password.
@@ -89,7 +89,7 @@ Repeat passphrase: {{.InputLine "foobar"}}
 }
 
 func TestAccountNewBadRepeat(t *testing.T) {
-	geth := runGeth(t, "account", "new", "--lightkdf")
+	geth := runGeth(t,  "--disablewhisper","account", "new", "--lightkdf",)
 	defer geth.ExpectExit()
 	geth.Expect(`
 Your new account is locked with a password. Please give a password. Do not forget this password.
@@ -102,7 +102,7 @@ Fatal: Passphrases do not match
 
 func TestAccountUpdate(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
-	geth := runGeth(t, "account", "update",
+	geth := runGeth(t, "--disablewhisper", "account", "update",
 		"--datadir", datadir, "--lightkdf",
 		"f466859ead1932d743d622cb74fc058882e8648a")
 	defer geth.ExpectExit()
@@ -117,7 +117,7 @@ Repeat passphrase: {{.InputLine "foobar2"}}
 }
 
 func TestWalletImport(t *testing.T) {
-	geth := runGeth(t, "wallet", "import", "--lightkdf", "testdata/guswallet.json")
+	geth := runGeth(t, "--disablewhisper","wallet", "import", "--lightkdf", "testdata/guswallet.json")
 	defer geth.ExpectExit()
 	geth.Expect(`
 !! Unsupported terminal, password will be echoed.
@@ -132,7 +132,7 @@ Address: {d4584b5f6229b7be90727b0fc8c6b91bb427821f}
 }
 
 func TestWalletImportBadPassword(t *testing.T) {
-	geth := runGeth(t, "wallet", "import", "--lightkdf", "testdata/guswallet.json")
+	geth := runGeth(t, "--disablewhisper","wallet", "import", "--lightkdf", "testdata/guswallet.json")
 	defer geth.ExpectExit()
 	geth.Expect(`
 !! Unsupported terminal, password will be echoed.
@@ -144,7 +144,7 @@ Fatal: could not decrypt key with given passphrase
 func TestUnlockFlag(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
 	geth := runGeth(t,
-		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
+		"--disablewhisper","--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--unlock", "f466859ead1932d743d622cb74fc058882e8648a",
 		"js", "testdata/empty.js")
 	geth.Expect(`
@@ -168,7 +168,7 @@ Passphrase: {{.InputLine "foobar"}}
 func TestUnlockFlagWrongPassword(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
 	geth := runGeth(t,
-		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
+		"--disablewhisper","--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--unlock", "f466859ead1932d743d622cb74fc058882e8648a")
 	defer geth.ExpectExit()
 	geth.Expect(`
@@ -187,7 +187,7 @@ Fatal: Failed to unlock account f466859ead1932d743d622cb74fc058882e8648a (could 
 func TestUnlockFlagMultiIndex(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
 	geth := runGeth(t,
-		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
+		"--disablewhisper","--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--unlock", "0,2", "js", "testdata/empty.js")
 	geth.Expect(`
 Unlocking account 0 | Attempt 1/3
@@ -213,7 +213,7 @@ Passphrase: {{.InputLine "foobar"}}
 func TestUnlockFlagPasswordFile(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
 	geth := runGeth(t,
-		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
+		"--disablewhisper","--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--password", "testdata/passwords.txt", "--unlock", "0,2",
 		"js", "testdata/empty.js")
 	geth.ExpectExit()
@@ -233,7 +233,7 @@ func TestUnlockFlagPasswordFile(t *testing.T) {
 func TestUnlockFlagPasswordFileWrongPassword(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
 	geth := runGeth(t,
-		"--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
+		"--disablewhisper","--datadir", datadir, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--password", "testdata/wrong-passwords.txt", "--unlock", "0,2")
 	defer geth.ExpectExit()
 	geth.Expect(`
@@ -244,7 +244,7 @@ Fatal: Failed to unlock account 0 (could not decrypt key with given passphrase)
 func TestUnlockFlagAmbiguous(t *testing.T) {
 	store := filepath.Join("..", "..", "accounts", "keystore", "testdata", "dupes")
 	geth := runGeth(t,
-		"--keystore", store, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
+		"--disablewhisper","--keystore", store, "--nat", "none", "--nodiscover", "--maxpeers", "0", "--port", "0",
 		"--unlock", "f466859ead1932d743d622cb74fc058882e8648a",
 		"js", "testdata/empty.js")
 	defer geth.ExpectExit()

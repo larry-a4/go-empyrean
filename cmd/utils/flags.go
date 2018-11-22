@@ -123,10 +123,6 @@ var (
 		Name:  "disablepg",
 		Usage: "Disconnects the postgres instance used for Shyft Shakedown",
 	}
-	WhisperOffFlag = cli.BoolFlag{
-		Name:  "disablewhisper",
-		Usage: "Disables the whisper server which is turned on by default",
-	}
 	KeyStoreDirFlag = DirectoryFlag{
 		Name:  "keystore",
 		Usage: "Directory for the keystore (default = inside the datadir)",
@@ -560,6 +556,10 @@ var (
 		Name:  "gpopercentile",
 		Usage: "Suggested gas price is the given percentile of a set of recent transaction gas prices",
 		Value: eth.DefaultConfig.GPO.Percentile,
+	}
+	WhisperOffFlag = cli.BoolFlag{
+		Name:  "disablewhisper",
+		Usage: "Disables the whisper server which is turned on by default",
 	}
 	WhisperEnabledFlag = cli.BoolFlag{
 		Name:  "shh",
@@ -1119,6 +1119,9 @@ func checkExclusive(ctx *cli.Context, args ...interface{}) {
 
 // SetShhConfig applies shh-related command line flags to the config.
 func SetShhConfig(ctx *cli.Context, stack *node.Node, cfg *whisper.Config) {
+	if ctx.GlobalIsSet(WhisperOffFlag.Name) {
+		node.Config{ShhTopics: false}
+	}
 	if ctx.GlobalIsSet(WhisperMaxMessageSizeFlag.Name) {
 		cfg.MaxMessageSize = uint32(ctx.GlobalUint(WhisperMaxMessageSizeFlag.Name))
 	}
@@ -1221,6 +1224,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 		cfg.EVMInterpreter = ctx.GlobalString(EVMInterpreterFlag.Name)
 	}
 
+	if ctx,
 	// Override any default configs for hard coded networks.
 	switch {
 	case ctx.GlobalBool(TestnetFlag.Name):

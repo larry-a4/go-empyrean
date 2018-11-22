@@ -150,7 +150,7 @@ var (
 	}
 
 	whisperFlags = []cli.Flag{
-		//utils.WhisperEnabledFlag - removed as we are starting whisper by default unless Whisper Off flag is set
+		utils.WhisperEnabledFlag,
 		utils.WhisperOffFlag,
 		utils.WhisperMaxMessageSizeFlag,
 		utils.WhisperMinPOWFlag,
