@@ -354,7 +354,7 @@
 </code></pre>
 <p>Geth uses govendor to manage packages/dependencies: <a href="https://github.com/kardianos/govendor">Go Vendor</a></p>
 
-<p>This has some more information: <a href="https://github.com/ethereum/go-ethereum/wiki/Developers'-Guide">Ethereum Wiki</a></p>
+<p>This has some more information: <a href="https://github.com/ShyftNetwork/go-empyrean/wiki/Developers'-Guide">Ethereum Wiki</a></p>
 
 <p>To add a new dependency, run govendor fetch <import-path> , and commit the changes to git. Then the deps will be accessible on other machines that pull from git.</p>
 
@@ -367,9 +367,7 @@ Once cloned, in a terminal window run the following command:</p>
 
 <p>Before running any CLI options ensure you run <strong><code>make geth</code></strong> in the root directory.</p>
 
-<p><code>.shyft-geth.sh --setup</code> This sets up postgres and the shyft chain db</p>
-
-<p><code>./shyft-geth.sh --start</code> This starts GETH</p>
+<p><code>./shyft-geth.sh --start</code> This starts GETH and writes Shyft Network default genesis block and initializes the postgres instance</p>
 
 <p>At this point you should see GETH running in the terminal and if you opened your postgres instance you should see data being populated into the tables. It might look something similiar to the image below.</p>
 
@@ -377,7 +375,7 @@ Once cloned, in a terminal window run the following command:</p>
 
 <p>To stop Geth, <strong><code>crtl+C</code></strong> in the terminal window, if you proceed with the start script mentioned above the Shyft chain will begin from the last block height, if you wish to start the chain fresh from genesis follow the below steps:</p>
 
-<p><code>./shyft-geth.sh --reset</code> This drops postgres and chaindb data</p>
+<p><code>./shyft-geth.sh --reset</code> This drops chaindb data</p>
 
 <p><code>./shyft-geth.sh --start</code> Starts GETH</p>
 
@@ -386,29 +384,29 @@ Once cloned, in a terminal window run the following command:</p>
 <ul>
 <li><code>cd ./shyft-cli</code></li>
 <li>Open <code>initShyftGeth.sh</code></li>
-<li>Add <code>--disablepg</code> flag to both the if and else statement, typically in front of the <code>--keystore</code> flag</li>
+<li>Remove <code>--enablepg</code> flag to both the if and else statement, typically in front of the <code>--keystore</code> flag</li>
 <li>Open <code>startShyftGeth.sh</code></li>
-<li>Add <code>--disablepg</code> flag to both the if and else statement, typically after the <code>--ws</code> flag</li>
+<li>Remove <code>--enablepg</code> flag to both the if and else statement, typically after the <code>--ws</code> flag</li>
 </ul>
 
 <p>If you&#39;ve followed the steps above your <code>initShyftGeth.sh</code> and <code>startShyftGeth.sh</code> should look similiar as below:</p>
 <pre class="highlight shell tab-shell"><code><span class="c">#!/bin/sh</span>
  <span class="k">if</span> <span class="o">[</span> -z <span class="s2">"</span><span class="k">${</span><span class="nv">DBENV</span><span class="k">}</span><span class="s2">"</span> <span class="o">]</span>; <span class="k">then</span>
-   ./build/bin/geth --identity <span class="s2">"ShyftTestnetNode"</span> --disablepg --keystore ./ --datadir <span class="s2">"./shyftData"</span> init ./ShyftNetwork.json
+   ./build/bin/geth --identity <span class="s2">"ShyftTestnetNode"</span> --keystore ./ --datadir <span class="s2">"./shyftData"</span> init ./ShyftNetwork.json
  <span class="k">else
    if</span> <span class="o">[</span> -d /go/src/ShyftNetwork/go-empyrean/shyftData/geth/chaindata <span class="o">]</span>; <span class="k">then
      </span><span class="nb">echo</span> <span class="s2">"Skipping Genesis Initialization as already completed"</span>
      :
    <span class="k">else
      </span><span class="nb">echo</span> <span class="s2">"Initializing Custom Genesis Block"</span>
-     /bin/geth --identity <span class="s2">"ShyftTestnetNode"</span> --disablepg --keystore ./ --datadir <span class="s2">"./shyftData"</span> init ShyftNetwork.json
+     /bin/geth --identity <span class="s2">"ShyftTestnetNode"</span> --keystore ./ --datadir <span class="s2">"./shyftData"</span> init ShyftNetwork.json
    <span class="k">fi
  fi</span>
 </code></pre><pre class="highlight shell"><code><span class="c">#!/bin/sh</span>
 <span class="k">if</span> <span class="o">[</span> -z <span class="s2">"</span><span class="k">${</span><span class="nv">DBENV</span><span class="k">}</span><span class="s2">"</span> <span class="o">]</span>; <span class="k">then</span>
-  ./build/bin/geth --config config.toml --ws --disablepg --wsaddr<span class="o">=</span><span class="s2">"0.0.0.0"</span> --wsorigins <span class="s2">"*"</span> --nat<span class="o">=</span>any --mine --minerthreads 4 --targetgaslimit 80000000 --unlock <span class="s2">"0x43EC6d0942f7fAeF069F7F63D0384a27f529B062,0x9e602164C5826ebb5A6B68E4AFD9Cd466043dc4A,0x5Bd738164C61FB50eb12E227846CbaeF2dE965Aa,0xC04eE4131895F1d0C294D508AF65D94060AA42BB,0x07D899C4aC0c1725C35C5f816e60273B33a964F7"</span> --password ./unlockPasswords.txt
+  ./build/bin/geth --config config.toml --ws --wsaddr<span class="o">=</span><span class="s2">"0.0.0.0"</span> --wsorigins <span class="s2">"*"</span> --nat<span class="o">=</span>any --mine --minerthreads 4 --targetgaslimit 80000000 --unlock <span class="s2">"0x43EC6d0942f7fAeF069F7F63D0384a27f529B062,0x9e602164C5826ebb5A6B68E4AFD9Cd466043dc4A,0x5Bd738164C61FB50eb12E227846CbaeF2dE965Aa,0xC04eE4131895F1d0C294D508AF65D94060AA42BB,0x07D899C4aC0c1725C35C5f816e60273B33a964F7"</span> --password ./unlockPasswords.txt
 <span class="k">else</span>
-  /bin/geth --config config.toml --gcmode archive --ws --disablepg --wsaddr<span class="o">=</span><span class="s2">"0.0.0.0"</span> --wsorigins <span class="s2">"*"</span> --nat<span class="o">=</span>any --mine --minerthreads 4 --targetgaslimit 80000000 --unlock <span class="s2">"0x43EC6d0942f7fAeF069F7F63D0384a27f529B062,0x9e602164C5826ebb5A6B68E4AFD9Cd466043dc4A,0x5Bd738164C61FB50eb12E227846CbaeF2dE965Aa,0xC04eE4131895F1d0C294D508AF65D94060AA42BB,0x07D899C4aC0c1725C35C5f816e60273B33a964F7"</span> --password ./unlockPasswords.txt
+  /bin/geth --config config.toml --gcmode archive --ws --wsaddr<span class="o">=</span><span class="s2">"0.0.0.0"</span> --wsorigins <span class="s2">"*"</span> --nat<span class="o">=</span>any --mine --minerthreads 4 --targetgaslimit 80000000 --unlock <span class="s2">"0x43EC6d0942f7fAeF069F7F63D0384a27f529B062,0x9e602164C5826ebb5A6B68E4AFD9Cd466043dc4A,0x5Bd738164C61FB50eb12E227846CbaeF2dE965Aa,0xC04eE4131895F1d0C294D508AF65D94060AA42BB,0x07D899C4aC0c1725C35C5f816e60273B33a964F7"</span> --password ./unlockPasswords.txt
 <span class="k">fi</span>
 </code></pre>
 <aside class="warning">
@@ -424,7 +422,7 @@ The above instructions will NOT initialize a postgres instance and will not writ
 
 <p>To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.</p>
 <h3 id='docker-images'>Docker Images</h3>
-<p>Docker Images are available for ShyftGeth and the Postgresql Database which can be used for development and testing. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available <a href="https://docs.docker.com/install/">here</a>.</p>
+<p>Two sets of Docker Images are available for ShyftGeth, the Postgresql Database, and the Shyft Blockchain Explorer, which can be used for local development and testnet connection. The development settings are included in docker-compose.yml, the testnet settings are included in docker-compose.production.yml (shyftgeth not mining by default). To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available <a href="https://docs.docker.com/install/">here</a>.</p>
 
 <p><strong>To build the images for the first time please run the following command:</strong></p>
 
