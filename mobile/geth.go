@@ -31,6 +31,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/ethstats"
 	"github.com/ShyftNetwork/go-empyrean/internal/debug"
 	"github.com/ShyftNetwork/go-empyrean/les"
+	"github.com/ShyftNetwork/go-empyrean/node"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/p2p/nat"
 	"github.com/ShyftNetwork/go-empyrean/params"
