@@ -182,43 +182,29 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	)
 	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig, eth.shouldPreserve)
 	whispChan := ctx.Config().WhisperChannel
-	fmt.Println(whispChan)
+	BlockchainObject = eth.blockchain
 	go func() {
 		for {
 			select {
 			case message := <-whispChan:
-				// we need to call eth.rollback here
-				// OR initiate a call to eth.rollback
-				// node handles different services, ie whisper, eth, blockchain etc
 				fmt.Println("from within backend.go")
 				fmt.Printf(message) // "Hello"
+				blockhash := message
+				commonhash := common.HexToHash(blockhash)
+				coinbase := eth.miner.Coinbase()
+				eth.miner.Stop()
+				blocknumber := BlockchainObject.GetBlockByHash(commonhash)
+				_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
+				eth.blockchain.SetHead(blocknumber.NumberU64())
+				err := shyftDb.RollbackPgDb(bHashes)
+				if err != nil {
+					panic(err)
+				}
+				eth.miner.Start(coinbase)
 			}
 		}
 	}()
 
-	//BlockchainObject = eth.blockchain
-	//NewWhisperEndPoint()
-	//go func() {
-	//	r := mux.NewRouter()
-	//	r.HandleFunc("/rollback_blocks/{blockhash}", func(w http.ResponseWriter, r *http.Request) {
-	//		vars := mux.Vars(r)
-	//		blockhash := vars["blockhash"]
-	//		commonhash := common.HexToHash(blockhash)
-	//		coinbase := eth.miner.Coinbase()
-	//		eth.miner.Stop()
-	//		blocknumber := BlockchainObject.GetBlockByHash(commonhash)
-	//		_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
-	//		eth.blockchain.SetHead(blocknumber.NumberU64())
-	//		err := shyftDb.RollbackPgDb(bHashes)
-	//		if err != nil {
-	//			panic(err)
-	//		}
-	//		eth.miner.Start(coinbase)
-	//		//log.Info("rolled back blockchain removing blocks %+v\n", bHashes)
-	//	})
-	//
-	//	http.ListenAndServe(":8081", r)
-	//}()
 	if err != nil {
 		return nil, err
 	}
