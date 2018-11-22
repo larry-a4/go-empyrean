@@ -1120,7 +1120,7 @@ func checkExclusive(ctx *cli.Context, args ...interface{}) {
 // SetShhConfig applies shh-related command line flags to the config.
 func SetShhConfig(ctx *cli.Context, stack *node.Node, cfg *whisper.Config) {
 	if ctx.GlobalIsSet(WhisperOffFlag.Name) {
-		node.Config{ShhTopics: false}
+		//node.Config{ShhTopics: false}
 	}
 	if ctx.GlobalIsSet(WhisperMaxMessageSizeFlag.Name) {
 		cfg.MaxMessageSize = uint32(ctx.GlobalUint(WhisperMaxMessageSizeFlag.Name))
@@ -1224,7 +1224,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 		cfg.EVMInterpreter = ctx.GlobalString(EVMInterpreterFlag.Name)
 	}
 
-	if ctx,
 	// Override any default configs for hard coded networks.
 	switch {
 	case ctx.GlobalBool(TestnetFlag.Name):

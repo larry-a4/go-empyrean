@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ShyftNetwork/go-empyrean/cmd/utils"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/whisper/shhclient"
 	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
@@ -221,7 +220,7 @@ func (n *Node) Start() error {
 		// Start the next service, stopping all previous upon failure
 
 		for _, runningProtocol := range running.Protocols {
-			if runningProtocol.Name == "shh"  && ctx.GetB{
+			if runningProtocol.Name == "shh" {
 				whisperEndpoint = true
 			} else {
 				whisperEndpoint = false
@@ -240,7 +239,7 @@ func (n *Node) Start() error {
 	n.services = services
 	n.server = running
 	n.stop = make(chan struct{})
-	if shhRunning {
+	if whisperEndpoint {
 		n.setUpWhisperSubscriptions()
 	}
 	return nil
