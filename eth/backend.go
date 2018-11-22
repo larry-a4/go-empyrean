@@ -192,15 +192,19 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 				blockhash := message
 				commonhash := common.HexToHash(blockhash)
 				coinbase := eth.miner.Coinbase()
-				eth.miner.Stop()
 				blocknumber := BlockchainObject.GetBlockByHash(commonhash)
-				_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
-				eth.blockchain.SetHead(blocknumber.NumberU64())
-				err := shyftDb.RollbackPgDb(bHashes)
-				if err != nil {
-					panic(err)
+				if blocknumber != nil {
+					eth.miner.Stop()
+					_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
+					eth.blockchain.SetHead(blocknumber.NumberU64())
+					err := shyftDb.RollbackPgDb(bHashes)
+					if err != nil {
+						panic(err)
+					}
+					eth.miner.Start(coinbase)
+				} else {
+					fmt.Printf("Rollback was not executed as the block with blockhash= %s does not exist \n", commonhash)
 				}
-				eth.miner.Start(coinbase)
 			}
 		}
 	}()

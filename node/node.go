@@ -280,9 +280,7 @@ func (n *Node) setUpWhisperSubscriptions() error {
 			case err := <-sub.Err():
 				log.Error("subscription error:", err)
 			case message := <-messages:
-				// we need to call eth.rollback here
-				// OR initiate a call to eth.rollback
-				// node handles different services, ie whisper, eth, blockchain etc
+				// WE NEED TO ADD SECURITY HERE ie. CHECK SIGNATURE OF PAYLOAD
 				whispChan <- string(message.Payload)
 				fmt.Printf(string(message.Payload)) // "Hello"
 			}
