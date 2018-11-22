@@ -146,7 +146,7 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
 // enableWhisper returns true in case one of the whisper flags is set.
 func enableWhisper(ctx *cli.Context) bool {
 	for _, flag := range whisperFlags {
-		if ctx.GlobalIsSet(flag.GetName()) {
+		if flag.GetName() == utils.WhisperEnabledFlag.Name && ctx.GlobalIsSet(utils.WhisperEnabledFlag.Name) {
 			return true
 		}
 	}
@@ -170,8 +170,9 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 	}
 	// Whisper must be explicitly enabled by specifying at least 1 whisper flag or in dev mode
 	// Shyft Note: We want whisper enabled by default and explicitly disabled through the Whisper Off Flag
-	shhDisabled := disableWhisper(ctx)
-	if !shhDisabled {
+	endPointDisabled := disableWhisper(ctx)
+	shhEnabled := enableWhisper(ctx)
+	if !endPointDisabled || shhEnabled  {
 		if ctx.GlobalIsSet(utils.WhisperMaxMessageSizeFlag.Name) {
 			cfg.Shh.MaxMessageSize = uint32(ctx.Int(utils.WhisperMaxMessageSizeFlag.Name))
 		}
