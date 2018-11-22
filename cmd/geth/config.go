@@ -108,6 +108,8 @@ func defaultNodeConfig() node.Config {
 }
 
 func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
+	fmt.Println("in make config node")
+
 	// Load defaults.
 	cfg := gethConfig{
 		Eth:       eth.DefaultConfig,

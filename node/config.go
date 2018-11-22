@@ -152,6 +152,8 @@ type Config struct {
 
 	ShhTopics bool `toml:",omitempty"`
 
+	WhisperChannel chan string
+
 	// Logger is a custom logger to use with the p2p.Server.
 	Logger log.Logger `toml:",omitempty"`
 }
