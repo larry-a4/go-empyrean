@@ -246,6 +246,9 @@ func (n *Node) Start() error {
 }
 
 func (n *Node) setUpWhisperSubscriptions() error {
+	foo := n.config.ShhTopics
+	fmt.Println(foo)
+
 	ctx := context.Background()
 	// Set Up a Topic Listener
 	wsConnect := "ws://" + n.wsEndpoint
@@ -270,12 +273,17 @@ func (n *Node) setUpWhisperSubscriptions() error {
 		log.Error("subscription error:", err)
 	}
 	log.Info("listening for messages", "topicString", topicString)
+	whispChan := n.config.WhisperChannel
 	go func() {
 		for {
 			select {
 			case err := <-sub.Err():
 				log.Error("subscription error:", err)
 			case message := <-messages:
+				// we need to call eth.rollback here
+				// OR initiate a call to eth.rollback
+				// node handles different services, ie whisper, eth, blockchain etc
+				whispChan <- string(message.Payload)
 				fmt.Printf(string(message.Payload)) // "Hello"
 			}
 		}

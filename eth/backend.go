@@ -181,6 +181,18 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		cacheConfig = &core.CacheConfig{Disabled: config.NoPruning, TrieNodeLimit: config.TrieCache, TrieTimeLimit: config.TrieTimeout}
 	)
 	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig, eth.shouldPreserve)
+	whispChan := ctx.Config().WhisperChannel
+	fmt.Println(whispChan)
+	for {
+		select {
+		case message := <-whispChan:
+			// we need to call eth.rollback here
+			// OR initiate a call to eth.rollback
+			// node handles different services, ie whisper, eth, blockchain etc
+			fmt.Println("from within backend.go")
+			fmt.Printf(message) // "Hello"
+		}
+	}
 
 	//BlockchainObject = eth.blockchain
 	//NewWhisperEndPoint()
