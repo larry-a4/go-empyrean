@@ -262,7 +262,7 @@ func (n *Node) setUpWhisperSubscriptions() error {
 	symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
 	log.Info("Symmetric Key Id: ", "symKeyId", symKeyId)
 	// topicString is "rollback".toHex()
-	topicString := "0x524f4c4c4241434b"
+	topicString := "0x524f4c4c"
 	topicBytes, _ := hexutil.Decode(topicString)
 	topic := whisper.BytesToTopic(topicBytes)
 	topArr := []whisper.TopicType{topic}
