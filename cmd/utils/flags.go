@@ -812,6 +812,16 @@ func setWS(ctx *cli.Context, cfg *node.Config) {
 	}
 }
 
+// setWhisperMode sets the configuration for Whisper based on the
+// command line flags - default is whisper enabled
+
+func setWhisperMode(ctx *cli.Context, cfg *node.Config) {
+	if !ctx.GlobalBool(WhisperOffFlag.Name) && cfg.WhisperDisable {
+		cfg.WhisperDisable = false
+	}
+}
+
+
 // setIPC creates an IPC path configuration from the set command line flags,
 // returning an empty string if IPC was explicitly disabled, or the set path.
 func setIPC(ctx *cli.Context, cfg *node.Config) {
@@ -1119,9 +1129,6 @@ func checkExclusive(ctx *cli.Context, args ...interface{}) {
 
 // SetShhConfig applies shh-related command line flags to the config.
 func SetShhConfig(ctx *cli.Context, stack *node.Node, cfg *whisper.Config) {
-	if ctx.GlobalIsSet(WhisperOffFlag.Name) {
-		//node.Config{ShhTopics: false}
-	}
 	if ctx.GlobalIsSet(WhisperMaxMessageSizeFlag.Name) {
 		cfg.MaxMessageSize = uint32(ctx.GlobalUint(WhisperMaxMessageSizeFlag.Name))
 	}

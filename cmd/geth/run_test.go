@@ -59,6 +59,7 @@ func runGeth(t *testing.T, args ...string) *testgeth {
 	tt := &testgeth{}
 	tt.TestCmd = cmdtest.NewTestCmd(t, tt)
 	for i, arg := range args {
+		t.Logf("Arguments %+v \n", arg)
 		switch {
 		case arg == "-datadir" || arg == "--datadir":
 			if i < len(args)-1 {

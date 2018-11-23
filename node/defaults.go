@@ -48,7 +48,7 @@ var DefaultConfig = Config{
 		MaxPeers:   25,
 		NAT:        nat.Any(),
 	},
-	ShhTopics: true,
+	WhisperDisable: false,
 	WhisperChannel: make(chan string),
 }
 
