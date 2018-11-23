@@ -41,7 +41,7 @@ import (
 //go:generate gencodec -type GenesisAccount -field-override genesisAccountMarshaling -out gen_genesis_account.go
 
 var errGenesisNoConfig = errors.New("genesis has no chain configuration")
-var GlobalPG = ""
+var GlobalPG = "disconnected"
 
 // Genesis specifies the header fields, state of a genesis block. It also defines hard
 // fork switch-over blocks through the chain configuration.
@@ -88,8 +88,8 @@ type GenesisAccount struct {
 }
 
 // DisconnectPG - returns whether flags include running without the Postgres DB
-func DisconnectPG() string {
-	GlobalPG = "disconnect"
+func ConnectPG() string {
+	GlobalPG = "connected"
 	return GlobalPG
 }
 
@@ -172,7 +172,7 @@ func SetupGenesisBlock(db ethdb.Database, shyftDb ethdb.SDatabase, genesis *Gene
 		}
 		block, err := genesis.Commit(db)
 		//@NOTE:SHYFT SWITCH CASE ENSURES SHYFT GENESIS FUNCTIONS ARE ONLY CALLED ONCE
-		if GlobalPG != "disconnect" {
+		if GlobalPG == "connected" {
 			exist := shyftDb.BlockExists(block.Hash().String())
 			if !exist {
 				//@NOTE:SHYFT WRITE TO BLOCK ZERO DB

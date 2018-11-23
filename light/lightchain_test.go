@@ -47,6 +47,7 @@ func TestMain(m *testing.M) {
 
 // makeHeaderChain creates a deterministic chain of headers rooted at parent.
 func makeHeaderChain(parent *types.Header, n int, db ethdb.Database, shyftdb ethdb.SDatabase, seed int) []*types.Header {
+	core.ConnectPG()
 	blocks, _ := core.GenerateChain(params.TestChainConfig, types.NewBlockWithHeader(parent), ethash.NewFaker(), db, shyftdb, n, func(i int, b *core.BlockGen) {
 		b.SetCoinbase(common.Address{0: byte(seed), 19: byte(i)})
 	})
@@ -61,6 +62,7 @@ func makeHeaderChain(parent *types.Header, n int, db ethdb.Database, shyftdb eth
 // chain. Depending on the full flag, if creates either a full block chain or a
 // header only chain.
 func newCanonical(n int) (ethdb.Database, ethdb.SDatabase, *LightChain, error) {
+	core.ConnectPG()
 	db := ethdb.NewMemDatabase()
 	shyftdb, _ := ethdb.NewShyftDatabase()
 	gspec := core.Genesis{Config: params.TestChainConfig}
@@ -94,6 +96,7 @@ func newTestLightChain() *LightChain {
 
 // Test fork of length N starting from block i
 func testFork(t *testing.T, LightChain *LightChain, i, n int, comparator func(td1, td2 *big.Int)) {
+	core.ConnectPG()
 	// Copy old chain up to #i into a new db
 	db, shyftdb, LightChain2, err := newCanonical(i)
 	if err != nil {
@@ -240,6 +243,7 @@ func TestEqualForkHeaders(t *testing.T) {
 
 // Tests that chains missing links do not get accepted by the processor.
 func TestBrokenHeaderChain(t *testing.T) {
+	core.ConnectPG()
 	// Make chain starting from genesis
 	db, shyftdb, LightChain, err := newCanonical(10)
 	if err != nil {

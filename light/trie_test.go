@@ -33,6 +33,7 @@ import (
 )
 
 func TestNodeIterator(t *testing.T) {
+	core.ConnectPG()
 	var (
 		fulldb     = ethdb.NewMemDatabase()
 		lightdb    = ethdb.NewMemDatabase()

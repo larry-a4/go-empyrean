@@ -402,6 +402,7 @@ func TestClique(t *testing.T) {
 		// Create a pristine blockchain with the genesis injected
 		db := ethdb.NewMemDatabase()
 		shyftdb, _ := ethdb.NewShyftDatabase()
+		core.ConnectPG()
 		genesis.Commit(db)
 
 		// Assemble a chain of headers from the cast votes
