@@ -31,8 +31,8 @@ import (
 )
 
 const (
-	ipcAPIs     = "admin:1.0 debug:1.0 eth:1.0 ethash:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 shh:1.0 txpool:1.0 web3:1.0"
-	httpAPIs    = "eth:1.0 net:1.0 rpc:1.0 shh:1.0 web3:1.0"
+	ipcAPIs  = "admin:1.0 debug:1.0 eth:1.0 ethash:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 shh:1.0 txpool:1.0 web3:1.0"
+	httpAPIs = "eth:1.0 net:1.0 rpc:1.0 shh:1.0 web3:1.0"
 )
 
 // Tests that a node embedded within a console can be started up properly and
@@ -45,8 +45,8 @@ func TestConsoleWelcome(t *testing.T) {
 	// shh client
 	geth := runGeth(t,
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
-		"--etherbase", coinbase,"--ws", "--wsaddr=0.0.0.0",
-	"console")
+		"--etherbase", coinbase, "--ws", "--wsaddr=0.0.0.0",
+		"console")
 
 	// Gather all the infos the welcome message needs to contain
 	geth.SetTemplateFunc("goos", func() string { return runtime.GOOS })
@@ -92,7 +92,6 @@ func TestIPCAttachWelcome(t *testing.T) {
 	time.Sleep(30 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, geth, "ipc:"+ipc, ipcAPIs)
 
-
 	geth.Interrupt()
 	geth.ExpectExit()
 }
@@ -105,7 +104,7 @@ func TestHTTPAttachWelcome(t *testing.T) {
 	// shh client
 	geth := runGeth(t,
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
-		"--etherbase", coinbase, "--rpc", "--rpcport", port,  "--ws", "--wsaddr=0.0.0.0")
+		"--etherbase", coinbase, "--rpc", "--rpcport", port, "--ws", "--wsaddr=0.0.0.0")
 
 	time.Sleep(30 * time.Second) // Simple way to wait for the RPC endpoint to open
 	testAttachWelcome(t, geth, "http://localhost:"+port, httpAPIs)
