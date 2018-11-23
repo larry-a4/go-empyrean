@@ -77,9 +77,6 @@ type Node struct {
 	log log.Logger
 }
 
-// variable to hold running status of shh server
-var whisperEndpoint bool
-
 // New creates a new P2P node, ready for protocol registration.
 func New(conf *Config) (*Node, error) {
 	// Copy config and resolve the datadir so future changes to the current
@@ -218,14 +215,6 @@ func (n *Node) Start() error {
 		started = append(started, kind)
 		// Mark the service started for potential cleanup
 		// Start the next service, stopping all previous upon failure
-
-		for _, runningProtocol := range running.Protocols {
-			if runningProtocol.Name == "shh" {
-				whisperEndpoint = true
-			} else {
-				whisperEndpoint = false
-			}
-		}
 	}
 	// Lastly start the configured RPC interfaces
 	if err := n.startRPC(services); err != nil {
@@ -239,54 +228,59 @@ func (n *Node) Start() error {
 	n.services = services
 	n.server = running
 	n.stop = make(chan struct{})
-	if whisperEndpoint {
-		n.setUpWhisperSubscriptions()
-	}
+	n.setUpWhisperSubscriptions()
 	return nil
 }
 
-func (n *Node) setUpWhisperSubscriptions() error {
-	foo := n.config.ShhTopics
-	fmt.Println(foo)
-
-	ctx := context.Background()
-	// Set Up a Topic Listener
-	wsConnect := "ws://" + n.wsEndpoint
-	shhCli, err := shhclient.Dial(wsConnect)
-	if err != nil {
-		log.Error("Failed to Connect to shh client: ", err)
-		panic(err)
-	}
-	generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")
-	symKey, _ := shhCli.GetSymmetricKey(ctx, generatedSymKey)
-	symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
-	log.Info("Symmetric Key Id: ", "symKeyId", symKeyId)
-	// topicString is "rollback".toHex()
-	topicString := "0x524f4c4c"
-	topicBytes, _ := hexutil.Decode(topicString)
-	topic := whisper.BytesToTopic(topicBytes)
-	topArr := []whisper.TopicType{topic}
-	criteria := &whisper.Criteria{SymKeyID: symKeyId, Topics: topArr}
-	messages := make(chan *whisper.Message)
-	sub, err := shhCli.SubscribeMessages(ctx, *criteria, messages)
-	if err != nil {
-		log.Error("subscription error:", err)
-	}
-	log.Info("listening for messages", "topicString", topicString)
-	whispChan := n.config.WhisperChannel
-	go func() {
-		for {
-			select {
-			case err := <-sub.Err():
-				log.Error("subscription error:", err)
-			case message := <-messages:
-				// WE NEED TO ADD SECURITY HERE ie. CHECK SIGNATURE OF PAYLOAD
-				whispChan <- string(message.Payload)
-				fmt.Printf(string(message.Payload)) // "Hello"
-			}
+func (n *Node) shhApi() bool {
+	for _, api := range n.rpcAPIs {
+		if api.Namespace == "shh" {
+			return true
 		}
-	}()
+	}
+	return false
+}
 
+func (n *Node) setUpWhisperSubscriptions() error {
+	if n.shhApi() {
+		ctx := context.Background()
+		// Set Up a Topic Listener
+		wsConnect := "ws://" + n.config.WSEndpoint()
+		shhCli, err := shhclient.Dial(wsConnect)
+		if err != nil {
+			log.Error("Failed to Connect to shh client: ", err)
+			panic(err)
+		}
+		generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")
+		symKey, _ := shhCli.GetSymmetricKey(ctx, generatedSymKey)
+		symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
+		log.Info("Symmetric Key Id: ", "symKeyId", symKeyId)
+		// topicString is "rollback".toHex()
+		topicString := "0x524f4c4c"
+		topicBytes, _ := hexutil.Decode(topicString)
+		topic := whisper.BytesToTopic(topicBytes)
+		topArr := []whisper.TopicType{topic}
+		criteria := &whisper.Criteria{SymKeyID: symKeyId, Topics: topArr}
+		messages := make(chan *whisper.Message)
+		sub, err := shhCli.SubscribeMessages(ctx, *criteria, messages)
+		if err != nil {
+			log.Error("subscription error:", err)
+		}
+		log.Info("listening for messages", "topicString", topicString)
+		whispChan := n.config.WhisperChannel
+		go func() {
+			for {
+				select {
+				case err := <-sub.Err():
+					log.Error("subscription error:", err)
+				case message := <-messages:
+					// WE NEED TO ADD SECURITY HERE ie. CHECK SIGNATURE OF PAYLOAD
+					whispChan <- string(message.Payload)
+					fmt.Printf(string(message.Payload)) // "Hello"
+				}
+			}
+		}()
+	}
 	return nil
 }
 

@@ -150,7 +150,7 @@ type Config struct {
 	// private APIs to untrusted users is a major security risk.
 	WSExposeAll bool `toml:",omitempty"`
 
-	ShhTopics bool `toml:",omitempty"`
+	WhisperDisable bool
 
 	WhisperChannel chan string
 

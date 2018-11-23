@@ -108,8 +108,6 @@ func defaultNodeConfig() node.Config {
 }
 
 func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
-	fmt.Println("in make config node")
-
 	// Load defaults.
 	cfg := gethConfig{
 		Eth:       eth.DefaultConfig,
@@ -137,26 +135,14 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
 		cfg.Ethstats.URL = ctx.GlobalString(utils.EthStatsURLFlag.Name)
 	}
 
-	if !disableWhisper(ctx) {
-		utils.SetShhConfig(ctx, stack, &cfg.Shh)
-	}
+	utils.SetShhConfig(ctx, stack, &cfg.Shh)
 	utils.SetDashboardConfig(ctx, &cfg.Dashboard)
 
 	return stack, cfg
 }
 
-// enableWhisper returns true in case one of the whisper flags is set.
-func enableWhisper(ctx *cli.Context) bool {
-	for _, flag := range whisperFlags {
-		if flag.GetName() == utils.WhisperEnabledFlag.Name && ctx.GlobalIsSet(utils.WhisperEnabledFlag.Name) {
-			return true
-		}
-	}
-	return false
-}
-
 func disableWhisper(ctx *cli.Context) bool {
-	if ctx.GlobalIsSet(utils.WhisperOffFlag.Name) {
+	if ctx.GlobalBool(utils.WhisperOffFlag.Name) {
 		return true
 	}
 	return false
@@ -172,9 +158,7 @@ func makeFullNode(ctx *cli.Context) *node.Node {
 	}
 	// Whisper must be explicitly enabled by specifying at least 1 whisper flag or in dev mode
 	// Shyft Note: We want whisper enabled by default and explicitly disabled through the Whisper Off Flag
-	endPointDisabled := disableWhisper(ctx)
-	shhEnabled := enableWhisper(ctx)
-	if !endPointDisabled || shhEnabled  {
+	if !disableWhisper(ctx) {
 		if ctx.GlobalIsSet(utils.WhisperMaxMessageSizeFlag.Name) {
 			cfg.Shh.MaxMessageSize = uint32(ctx.Int(utils.WhisperMaxMessageSizeFlag.Name))
 		}
