@@ -7,5 +7,5 @@ jobs:
     working_directory:  /go/src/github.com/ShyftNetwork/go-empyrean
     steps:
       - checkout
-      - go run build/ci.go install
-      - go run build/ci.go test -coverage $TEST_PACKAGES
+      - run: go run build/ci.go install
+      - run: go run build/ci.go test -coverage $TEST_PACKAGES
