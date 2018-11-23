@@ -142,10 +142,7 @@ func makeConfigNode(ctx *cli.Context) (*node.Node, gethConfig) {
 }
 
 func disableWhisper(ctx *cli.Context) bool {
-	if ctx.GlobalBool(utils.WhisperOffFlag.Name) {
-		return true
-	}
-	return false
+	return ctx.GlobalBool(utils.WhisperOffFlag.Name)
 }
 
 func makeFullNode(ctx *cli.Context) *node.Node {
