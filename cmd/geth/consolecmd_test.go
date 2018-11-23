@@ -32,12 +32,7 @@ import (
 
 const (
 	ipcAPIs     = "admin:1.0 debug:1.0 eth:1.0 ethash:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 shh:1.0 txpool:1.0 web3:1.0"
-	// SHYFT: Due to problems getting whisper to run in tests the shh service is disabled so the tests can proceed
-	// In tests where whisper is a problem the services shown in the console are disWhisApis & disHttpAPIs
-	// TO DO: Add console tests with whisper enabled
 	httpAPIs    = "eth:1.0 net:1.0 rpc:1.0 shh:1.0 web3:1.0"
-	disWhisAPIs = "admin:1.0 debug:1.0 eth:1.0 ethash:1.0 miner:1.0 net:1.0 personal:1.0 rpc:1.0 txpool:1.0 web3:1.0"
-	disHttpAPIs = "eth:1.0 net:1.0 rpc:1.0 web3:1.0"
 )
 
 // Tests that a node embedded within a console can be started up properly and
@@ -46,10 +41,12 @@ func TestConsoleWelcome(t *testing.T) {
 	coinbase := "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 
 	// Start a geth console, make sure it's cleaned up and terminate the console
+	// Note: Whisper is on by default and we need to pass --ws --wsaddr flags to connect to
+	// shh client
 	geth := runGeth(t,
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
-		"--etherbase", coinbase, "--disablewhisper",
-		"console")
+		"--etherbase", coinbase,"--ws", "--wsaddr=0.0.0.0",
+	"console")
 
 	// Gather all the infos the welcome message needs to contain
 	geth.SetTemplateFunc("goos", func() string { return runtime.GOOS })
@@ -57,9 +54,7 @@ func TestConsoleWelcome(t *testing.T) {
 	geth.SetTemplateFunc("gover", runtime.Version)
 	geth.SetTemplateFunc("gethver", func() string { return params.VersionWithMeta })
 	geth.SetTemplateFunc("niltime", func() string { return time.Unix(0, 0).Format(time.RFC1123) })
-	// SHYFT: temporary removal of whisper. Test wont function when whisper enabled
-	// geth.SetTemplateFunc("apis", func() string { return ipcAPIs })
-	geth.SetTemplateFunc("apis", func() string { return disWhisAPIs })
+	geth.SetTemplateFunc("apis", func() string { return ipcAPIs })
 
 	// Verify the actual welcome message to the required template
 	geth.Expect(`
@@ -88,16 +83,15 @@ func TestIPCAttachWelcome(t *testing.T) {
 		defer os.RemoveAll(ws)
 		ipc = filepath.Join(ws, "geth.ipc")
 	}
-	// Note: we need --shh because testAttachWelcome checks for default
-	// list of ipc modules and shh is included there.
+	// Note: Whisper is on by default and we need to pass --ws --wsaddr flags to connect to
+	// shh client
 	geth := runGeth(t,
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
-		"--etherbase", coinbase, "--ipcpath", ipc, "--disablewhisper")
+		"--etherbase", coinbase, "--ipcpath", ipc, "--ws", "--wsaddr=0.0.0.0")
 
 	time.Sleep(30 * time.Second) // Simple way to wait for the RPC endpoint to open
-	// SHYFT: temporary removal of whisper as test wont function when whisper enabled
-	// testAttachWelcome(t, geth, "ipc:"+ipc, ipcAPIs)
-	testAttachWelcome(t, geth, "ipc:"+ipc, disWhisAPIs)
+	testAttachWelcome(t, geth, "ipc:"+ipc, ipcAPIs)
+
 
 	geth.Interrupt()
 	geth.ExpectExit()
@@ -106,14 +100,15 @@ func TestIPCAttachWelcome(t *testing.T) {
 func TestHTTPAttachWelcome(t *testing.T) {
 	coinbase := "0x8605cdbbdb6d264aa742e77020dcbc58fcdce182"
 	port := strconv.Itoa(trulyRandInt(1024, 65536)) // Yeah, sometimes this will fail, sorry :P
+
+	// Note: Whisper is on by default and we need to pass --ws --wsaddr flags to connect to
+	// shh client
 	geth := runGeth(t,
 		"--port", "0", "--maxpeers", "0", "--nodiscover", "--nat", "none",
-		"--etherbase", coinbase, "--rpc", "--rpcport", port, "--disablewhisper")
+		"--etherbase", coinbase, "--rpc", "--rpcport", port,  "--ws", "--wsaddr=0.0.0.0")
 
 	time.Sleep(30 * time.Second) // Simple way to wait for the RPC endpoint to open
-	// SHYFT: temporary removal of whisper as test wont function when whisper enabled
-	// testAttachWelcome(t, geth, "http://localhost:"+port, httpAPIs)
-	testAttachWelcome(t, geth, "http://localhost:"+port, disHttpAPIs)
+	testAttachWelcome(t, geth, "http://localhost:"+port, httpAPIs)
 
 	geth.Interrupt()
 	geth.ExpectExit()

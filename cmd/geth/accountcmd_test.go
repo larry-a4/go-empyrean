@@ -59,7 +59,7 @@ func TestAccountListEmpty(t *testing.T) {
 
 func TestAccountList(t *testing.T) {
 	datadir := tmpDatadirWithKeystore(t)
-	geth := runGeth(t, "--disablewhisper","account", "list", "--datadir", datadir)
+	geth := runGeth(t, "account", "list", "--datadir", datadir)
 	defer geth.ExpectExit()
 	if runtime.GOOS == "windows" {
 		geth.Expect(`
