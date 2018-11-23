@@ -20,9 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
-	"github.com/ShyftNetwork/go-empyrean/whisper/shhclient"
-	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
+
 	"net"
 	"os"
 	"path/filepath"
@@ -31,12 +29,15 @@ import (
 	"sync"
 
 	"github.com/ShyftNetwork/go-empyrean/accounts"
+	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/event"
 	"github.com/ShyftNetwork/go-empyrean/internal/debug"
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
+	"github.com/ShyftNetwork/go-empyrean/whisper/shhclient"
+	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 	"github.com/prometheus/prometheus/util/flock"
 )
 
