@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.11
-      - image: circlci/postgres:9.6-alpine
+      - image: circleci/postgres:9.6-alpine
     working_directory:  /go/src/github.com/ShyftNetwork/go-empyrean
     steps:
       - checkout
