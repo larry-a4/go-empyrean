@@ -184,27 +184,25 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	whispChan := ctx.Config().WhisperChannel
 	BlockchainObject = eth.blockchain
 	go func() {
-		for {
-			select {
-			case message := <-whispChan:
-				fmt.Println("from within backend.go")
-				fmt.Printf(message) // "Hello"
-				blockhash := message
-				commonhash := common.HexToHash(blockhash)
-				coinbase := eth.miner.Coinbase()
-				blocknumber := BlockchainObject.GetBlockByHash(commonhash)
-				if blocknumber != nil {
-					eth.miner.Stop()
-					_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
-					eth.blockchain.SetHead(blocknumber.NumberU64())
-					err := shyftDb.RollbackPgDb(bHashes)
-					if err != nil {
-						panic(err)
-					}
-					eth.miner.Start(coinbase)
-				} else {
-					fmt.Printf("Rollback was not executed as the block with blockhash= %s does not exist \n", commonhash)
+		message := <-whispChan
+		for _ = range message {
+			fmt.Println("from within backend.go")
+			fmt.Printf(message) // "Hello"
+			blockhash := message
+			commonhash := common.HexToHash(blockhash)
+			coinbase := eth.miner.Coinbase()
+			blocknumber := BlockchainObject.GetBlockByHash(commonhash)
+			if blocknumber != nil {
+				eth.miner.Stop()
+				_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
+				eth.blockchain.SetHead(blocknumber.NumberU64())
+				err := shyftDb.RollbackPgDb(bHashes)
+				if err != nil {
+					panic(err)
 				}
+				eth.miner.Start(coinbase)
+			} else {
+				fmt.Printf("Rollback was not executed as the block with blockhash= %s does not exist \n", commonhash)
 			}
 		}
 	}()
