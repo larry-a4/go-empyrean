@@ -102,7 +102,7 @@ func TestCustomGenesis(t *testing.T) {
 		// Query the custom genesis block
 		geth := runGeth(t,
 			"--datadir", datadir, "--maxpeers", "0", "--port", "0",
-			"--nodiscover", "--nat", "none", "--ipcdisable",
+			"--nodiscover","--disablewhisper", "--nat", "none", "--ipcdisable",
 			"--exec", tt.query, "console")
 		geth.ExpectRegexp(tt.result)
 		geth.ExpectExit()
