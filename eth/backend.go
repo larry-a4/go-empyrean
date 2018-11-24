@@ -52,10 +52,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/rpc"
 )
 
-//var BlockchainObject *core.BlockChain
-
-var DebugAPI PrivateDebugAPI
-
 type LesServer interface {
 	Start(srvr *p2p.Server)
 	Stop()
@@ -187,9 +183,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	blockchainObject := eth.blockchain
 	go func() {
 		message := <-whispChan
-		for _ = range message {
-			fmt.Println("from within backend.go")
-			fmt.Printf(message) // "Hello"
+		for range message {
 			blockhash := message
 			commonhash := common.HexToHash(blockhash)
 			coinbase := eth.miner.Coinbase()
