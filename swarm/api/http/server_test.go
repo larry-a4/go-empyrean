@@ -20,7 +20,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -58,7 +57,7 @@ func init() {
 	log.Root().SetHandler(log.CallerFileHandler(log.LvlFilterHandler(log.Lvl(*loglevel), log.StreamHandler(os.Stderr, log.TerminalFormat(true)))))
 }
 
-func serverFunc(api *api.API) testutil.TestServer {
+func serverFunc(api *api.API) TestServer {
 	return NewServer(api, "")
 }
 
@@ -79,7 +78,7 @@ func TestBzzFeedMultihash(t *testing.T) {
 
 	signer, _ := newTestSigner()
 
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	// add the data our multihash aliased manifest will point to
@@ -167,26 +166,19 @@ func TestBzzFeedMultihash(t *testing.T) {
 
 // Test Swarm feeds using the raw update methods
 func TestBzzFeed(t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := NewTestSwarmServer(t, serverFunc, nil)
 	signer, _ := newTestSigner()
 
 	defer srv.Close()
 
 	// data of update 1
-	update1Data := make([]byte, 666)
+	update1Data := testutil.RandomBytes(1, 666)
 	update1Timestamp := srv.CurrentTime
-	_, err := rand.Read(update1Data)
-	if err != nil {
-		t.Fatal(err)
-	}
 	//data for update 2
 	update2Data := []byte("foo")
 
 	topic, _ := feed.NewTopic("foo.eth", nil)
 	updateRequest := feed.NewFirstRequest(topic)
-	if err != nil {
-		t.Fatal(err)
-	}
 	updateRequest.SetData(update1Data)
 
 	if err := updateRequest.Sign(signer); err != nil {
@@ -263,7 +255,7 @@ func TestBzzFeed(t *testing.T) {
 	if resp.StatusCode == http.StatusOK {
 		t.Fatal("Expected error status since feed update does not contain multihash. Received 200 OK")
 	}
-	b, err = ioutil.ReadAll(resp.Body)
+	_, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -450,7 +442,7 @@ func testBzzGetPath(encrypted bool, t *testing.T) {
 
 	addr := [3]storage.Address{}
 
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	for i, mf := range testmanifest {
@@ -491,6 +483,9 @@ func testBzzGetPath(encrypted bool, t *testing.T) {
 		}
 		defer resp.Body.Close()
 		respbody, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatalf("Error while reading response body: %v", err)
+		}
 
 		if string(respbody) != testmanifest[v] {
 			isexpectedfailrequest := false
@@ -685,7 +680,7 @@ func TestBzzTar(t *testing.T) {
 }
 
 func testBzzTar(encrypted bool, t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 	fileNames := []string{"tmp1.txt", "tmp2.lock", "tmp3.rtf"}
 	fileContents := []string{"tmp1textfilevalue", "tmp2lockfilelocked", "tmp3isjustaplaintextfile"}
@@ -820,7 +815,7 @@ func TestBzzRootRedirectEncrypted(t *testing.T) {
 }
 
 func testBzzRootRedirect(toEncrypt bool, t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	// create a manifest with some data at the root path
@@ -875,7 +870,7 @@ func testBzzRootRedirect(toEncrypt bool, t *testing.T) {
 }
 
 func TestMethodsNotAllowed(t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 	databytes := "bar"
 	for _, c := range []struct {
@@ -934,7 +929,7 @@ func httpDo(httpMethod string, url string, reqBody io.Reader, headers map[string
 }
 
 func TestGet(t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	for _, testCase := range []struct {
@@ -1017,7 +1012,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestModify(t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	swarmClient := swarm.NewClient(srv.URL)
@@ -1118,7 +1113,7 @@ func TestMultiPartUpload(t *testing.T) {
 	// POST /bzz:/ Content-Type: multipart/form-data
 	verbose := false
 	// Setup Swarm
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	url := fmt.Sprintf("%s/bzz:/", srv.URL)
@@ -1149,7 +1144,7 @@ func TestMultiPartUpload(t *testing.T) {
 // TestBzzGetFileWithResolver tests fetching a file using a mocked ENS resolver
 func TestBzzGetFileWithResolver(t *testing.T) {
 	resolver := newTestResolveValidator("")
-	srv := testutil.NewTestSwarmServer(t, serverFunc, resolver)
+	srv := NewTestSwarmServer(t, serverFunc, resolver)
 	defer srv.Close()
 	fileNames := []string{"dir1/tmp1.txt", "dir2/tmp2.lock", "dir3/tmp3.rtf"}
 	fileContents := []string{"tmp1textfilevalue", "tmp2lockfilelocked", "tmp3isjustaplaintextfile"}
