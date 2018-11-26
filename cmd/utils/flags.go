@@ -120,8 +120,8 @@ var (
 		Value: DirectoryString{node.DefaultDataDir()},
 	}
 	PostgresFlag = cli.BoolFlag{
-		Name:  "enablepg",
-		Usage: "Connects the postgres instance used for Shyft Shakedown",
+		Name:  "disablepg",
+		Usage: "Disconnects the postgres instance used for Shyft Shakedown",
 	}
 	KeyStoreDirFlag = DirectoryFlag{
 		Name:  "keystore",
@@ -1152,10 +1152,11 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 	}
 	_, ok := os.LookupEnv("DISABLEPG")
 	if ok {
+		core.DisconnectPG()
 		cfg.Postgres = false
 	} else if ctx.GlobalBool(PostgresFlag.Name) {
-		core.ConnectPG()
-		cfg.Postgres = true
+		core.DisconnectPG()
+		cfg.Postgres = false
 	}
 	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheDatabaseFlag.Name) {
 		cfg.DatabaseCache = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheDatabaseFlag.Name) / 100
@@ -1370,14 +1371,14 @@ func MakeChainShyftDatabase(ctx *cli.Context, stack *node.Node) ethdb.SDatabase 
 	if ok {
 		shyftChainDb = nil
 	} else if ctx.GlobalBool(PostgresFlag.Name) {
-		core.ConnectPG()
+		core.DisconnectPG()
+		shyftChainDb = nil
+	} else {
 		var err error
 		shyftChainDb, err = stack.OpenShyftDatabase()
 		if err != nil {
 			Fatalf("Could not open database: %v", err)
 		}
-	} else {
-		shyftChainDb = nil
 	}
 	return shyftChainDb
 }

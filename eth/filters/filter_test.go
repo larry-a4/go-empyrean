@@ -44,7 +44,6 @@ func makeReceipt(addr common.Address) *types.Receipt {
 }
 
 func BenchmarkFilters(b *testing.B) {
-	core.ConnectPG()
 	dir, err := ioutil.TempDir("", "filtertest")
 	if err != nil {
 		b.Fatal(err)
@@ -105,7 +104,6 @@ func BenchmarkFilters(b *testing.B) {
 }
 
 func TestFilters(t *testing.T) {
-	core.ConnectPG()
 	dir, err := ioutil.TempDir("", "filtertest")
 	if err != nil {
 		t.Fatal(err)
