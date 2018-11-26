@@ -78,7 +78,6 @@ type testWorkerBackend struct {
 }
 
 func newTestWorkerBackend(t *testing.T, chainConfig *params.ChainConfig, engine consensus.Engine, n int) *testWorkerBackend {
-	core.ConnectPG()
 	var (
 		db         = ethdb.NewMemDatabase()
 		shyftdb, _ = ethdb.NewShyftDatabase()

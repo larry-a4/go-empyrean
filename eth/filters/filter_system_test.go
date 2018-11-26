@@ -157,7 +157,6 @@ func (b *testBackend) ServiceFilter(ctx context.Context, session *bloombits.Matc
 // - one that is created after a cutoff moment and uninstalled after a second cutoff moment (blockHashes[cutoff1:cutoff2])
 // - one that is created after the second cutoff moment (blockHashes[cutoff2:])
 func TestBlockSubscription(t *testing.T) {
-	core.ConnectPG()
 	t.Parallel()
 
 	var (

@@ -78,7 +78,9 @@ Once cloned, in a terminal window run the following command:
 
 Before running any CLI options ensure you run **`make geth`** in the root directory.
 
-``./shyft-geth.sh --start`` This starts GETH and writes Shyft Network default genesis block and initializes the postgres instance
+``.shyft-geth.sh --setup`` This sets up postgres and the shyft chain db
+
+``./shyft-geth.sh --start`` This starts GETH
 
 At this point you should see GETH running in the terminal and if you opened your postgres instance you should see data being populated into the tables. It might look something similiar to the image below.
 
@@ -86,7 +88,7 @@ At this point you should see GETH running in the terminal and if you opened your
 
 To stop Geth, **`crtl+C`** in the terminal window, if you proceed with the start script mentioned above the Shyft chain will begin from the last block height, if you wish to start the chain fresh from genesis follow the below steps:
 
-``./shyft-geth.sh --reset`` This drops chaindb data
+``./shyft-geth.sh --reset`` This drops postgres and chaindb data
 
 ``./shyft-geth.sh --start`` Starts GETH
 
@@ -94,23 +96,23 @@ If you wish to run ShyftGeth without a postgres instance please follow the below
 
  - `cd ./shyft-cli`
  - Open `initShyftGeth.sh`
- - Remove `--enablepg` flag to both the if and else statement, typically in front of the `--keystore` flag
+ - Add `--disablepg` flag to both the if and else statement, typically in front of the `--keystore` flag
  - Open `startShyftGeth.sh`
- - Remove `--enablepg` flag to both the if and else statement, typically after the `--ws` flag
+ - Add `--disablepg` flag to both the if and else statement, typically after the `--ws` flag
  
 If you've followed the steps above your `initShyftGeth.sh` and `startShyftGeth.sh` should look similiar as below:
 
 ```shell
 #!/bin/sh
  if [ -z "${DBENV}" ]; then
-   ./build/bin/geth --identity "ShyftTestnetNode" --keystore ./ --datadir "./shyftData" init ./ShyftNetwork.json
+   ./build/bin/geth --identity "ShyftTestnetNode" --disablepg --keystore ./ --datadir "./shyftData" init ./ShyftNetwork.json
  else
    if [ -d /go/src/ShyftNetwork/go-empyrean/shyftData/geth/chaindata ]; then
      echo "Skipping Genesis Initialization as already completed"
      :
    else
      echo "Initializing Custom Genesis Block"
-     /bin/geth --identity "ShyftTestnetNode" --keystore ./ --datadir "./shyftData" init ShyftNetwork.json
+     /bin/geth --identity "ShyftTestnetNode" --disablepg --keystore ./ --datadir "./shyftData" init ShyftNetwork.json
    fi
  fi
 ```
@@ -118,9 +120,9 @@ If you've followed the steps above your `initShyftGeth.sh` and `startShyftGeth.s
 ```
 #!/bin/sh
 if [ -z "${DBENV}" ]; then
-  ./build/bin/geth --config config.toml --ws --wsaddr="0.0.0.0" --wsorigins "*" --nat=any --mine --minerthreads 4 --targetgaslimit 80000000 --unlock "0x43EC6d0942f7fAeF069F7F63D0384a27f529B062,0x9e602164C5826ebb5A6B68E4AFD9Cd466043dc4A,0x5Bd738164C61FB50eb12E227846CbaeF2dE965Aa,0xC04eE4131895F1d0C294D508AF65D94060AA42BB,0x07D899C4aC0c1725C35C5f816e60273B33a964F7" --password ./unlockPasswords.txt
+  ./build/bin/geth --config config.toml --ws --disablepg --wsaddr="0.0.0.0" --wsorigins "*" --nat=any --mine --minerthreads 4 --targetgaslimit 80000000 --unlock "0x43EC6d0942f7fAeF069F7F63D0384a27f529B062,0x9e602164C5826ebb5A6B68E4AFD9Cd466043dc4A,0x5Bd738164C61FB50eb12E227846CbaeF2dE965Aa,0xC04eE4131895F1d0C294D508AF65D94060AA42BB,0x07D899C4aC0c1725C35C5f816e60273B33a964F7" --password ./unlockPasswords.txt
 else
-  /bin/geth --config config.toml --gcmode archive --ws --wsaddr="0.0.0.0" --wsorigins "*" --nat=any --mine --minerthreads 4 --targetgaslimit 80000000 --unlock "0x43EC6d0942f7fAeF069F7F63D0384a27f529B062,0x9e602164C5826ebb5A6B68E4AFD9Cd466043dc4A,0x5Bd738164C61FB50eb12E227846CbaeF2dE965Aa,0xC04eE4131895F1d0C294D508AF65D94060AA42BB,0x07D899C4aC0c1725C35C5f816e60273B33a964F7" --password ./unlockPasswords.txt
+  /bin/geth --config config.toml --gcmode archive --ws --disablepg --wsaddr="0.0.0.0" --wsorigins "*" --nat=any --mine --minerthreads 4 --targetgaslimit 80000000 --unlock "0x43EC6d0942f7fAeF069F7F63D0384a27f529B062,0x9e602164C5826ebb5A6B68E4AFD9Cd466043dc4A,0x5Bd738164C61FB50eb12E227846CbaeF2dE965Aa,0xC04eE4131895F1d0C294D508AF65D94060AA42BB,0x07D899C4aC0c1725C35C5f816e60273B33a964F7" --password ./unlockPasswords.txt
 fi
 ```
 

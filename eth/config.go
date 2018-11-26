@@ -47,7 +47,7 @@ var DefaultConfig = Config{
 	LightPeers:    100,
 	DatabaseCache: 768,
 	TrieCache:     256,
-	Postgres:      false,
+	Postgres:      true,
 	TrieTimeout:   60 * time.Minute,
 	MinerGasFloor: 8000000,
 	MinerGasCeil:  8000000,

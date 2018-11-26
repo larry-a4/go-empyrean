@@ -73,7 +73,6 @@ func TestGetBlockHeaders62(t *testing.T) { testGetBlockHeaders(t, 62) }
 func TestGetBlockHeaders63(t *testing.T) { testGetBlockHeaders(t, 63) }
 
 func testGetBlockHeaders(t *testing.T, protocol int) {
-	core.ConnectPG()
 	pm, _, shyftdb := newTestProtocolManagerMust(t, downloader.FullSync, downloader.MaxHashFetch+15, nil, nil)
 	shyftdb.TruncateTables()
 	peer, _ := newTestPeer("peer", protocol, pm, true)
@@ -463,7 +462,6 @@ func TestDAOChallengeNoVsTimeout(t *testing.T)  { testDAOChallenge(t, false, fal
 func TestDAOChallengeProVsTimeout(t *testing.T) { testDAOChallenge(t, true, true, true) }
 
 func testDAOChallenge(t *testing.T, localForked, remoteForked bool, timeout bool) {
-	core.ConnectPG()
 	// Reduce the DAO handshake challenge timeout
 	if timeout {
 		defer func(old time.Duration) { daoChallengeTimeout = old }(daoChallengeTimeout)
@@ -552,7 +550,6 @@ func TestBroadcastBlock(t *testing.T) {
 }
 
 func testBroadcastBlock(t *testing.T, totalPeers, broadcastExpected int) {
-	core.ConnectPG()
 	var (
 		evmux      = new(event.TypeMux)
 		pow        = ethash.NewFaker()

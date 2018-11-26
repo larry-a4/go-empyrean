@@ -257,7 +257,6 @@ func testChainGen(i int, block *core.BlockGen) {
 }
 
 func testChainOdr(t *testing.T, protocol int, fn odrTestFn) {
-	core.ConnectPG()
 	var (
 		sdb        = ethdb.NewMemDatabase()
 		ldb        = ethdb.NewMemDatabase()
