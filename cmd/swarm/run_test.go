@@ -41,7 +41,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/swarm"
 	"github.com/ShyftNetwork/go-empyrean/swarm/api"
 	swarmhttp "github.com/ShyftNetwork/go-empyrean/swarm/api/http"
-	"github.com/ShyftNetwork/go-empyrean/swarm/testutil"
 	"github.com/docker/docker/pkg/reexec"
 )
 
@@ -58,7 +57,7 @@ func init() {
 	})
 }
 
-func serverFunc(api *api.API) testutil.TestServer {
+func serverFunc(api *api.API) swarmhttp.TestServer {
 	return swarmhttp.NewServer(api, "")
 }
 func TestMain(m *testing.M) {

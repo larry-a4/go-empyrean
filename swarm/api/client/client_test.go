@@ -32,10 +32,9 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/swarm/multihash"
 	"github.com/ShyftNetwork/go-empyrean/swarm/storage/feed"
 	"github.com/ShyftNetwork/go-empyrean/swarm/storage/feed/lookup"
-	"github.com/ShyftNetwork/go-empyrean/swarm/testutil"
 )
 
-func serverFunc(api *api.API) testutil.TestServer {
+func serverFunc(api *api.API) swarmhttp.TestServer {
 	return swarmhttp.NewServer(api, "")
 }
 
@@ -48,7 +47,7 @@ func TestClientUploadDownloadRawEncrypted(t *testing.T) {
 }
 
 func testClientUploadDownloadRaw(toEncrypt bool, t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := swarmhttp.NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	client := NewClient(srv.URL)
@@ -89,7 +88,7 @@ func TestClientUploadDownloadFilesEncrypted(t *testing.T) {
 }
 
 func testClientUploadDownloadFiles(toEncrypt bool, t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := swarmhttp.NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	client := NewClient(srv.URL)
@@ -187,7 +186,7 @@ func newTestDirectory(t *testing.T) string {
 // TestClientUploadDownloadDirectory tests uploading and downloading a
 // directory of files to a swarm manifest
 func TestClientUploadDownloadDirectory(t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := swarmhttp.NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	dir := newTestDirectory(t)
@@ -253,7 +252,7 @@ func TestClientFileListEncrypted(t *testing.T) {
 }
 
 func testClientFileList(toEncrypt bool, t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := swarmhttp.NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	dir := newTestDirectory(t)
@@ -311,7 +310,7 @@ func testClientFileList(toEncrypt bool, t *testing.T) {
 // TestClientMultipartUpload tests uploading files to swarm using a multipart
 // upload
 func TestClientMultipartUpload(t *testing.T) {
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := swarmhttp.NewTestSwarmServer(t, serverFunc, nil)
 	defer srv.Close()
 
 	// define an uploader which uploads testDirFiles with some data
@@ -377,7 +376,7 @@ func TestClientCreateFeedMultihash(t *testing.T) {
 
 	signer, _ := newTestSigner()
 
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := swarmhttp.NewTestSwarmServer(t, serverFunc, nil)
 	client := NewClient(srv.URL)
 	defer srv.Close()
 
@@ -439,7 +438,7 @@ func TestClientCreateUpdateFeed(t *testing.T) {
 
 	signer, _ := newTestSigner()
 
-	srv := testutil.NewTestSwarmServer(t, serverFunc, nil)
+	srv := swarmhttp.NewTestSwarmServer(t, serverFunc, nil)
 	client := NewClient(srv.URL)
 	defer srv.Close()
 
@@ -456,6 +455,9 @@ func TestClientCreateUpdateFeed(t *testing.T) {
 	}
 
 	feedManifestHash, err := client.CreateFeedWithManifest(createRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	correctManifestAddrHex := "0e9b645ebc3da167b1d56399adc3276f7a08229301b72a03336be0e7d4b71882"
 	if feedManifestHash != correctManifestAddrHex {
