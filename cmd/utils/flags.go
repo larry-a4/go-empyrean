@@ -579,6 +579,12 @@ var (
 		Name:  "shh.restrict-light",
 		Usage: "Restrict connection between two whisper light clients",
 	}
+	// WhisperPublic Key Flags - used to pass in to geth command public whisper broadcast keys
+	WhisperKeys = cli.StringFlag{
+		Name:  "whisperkeys",
+		Usage: "Comma separated list of public keys authorized to broadcast whisper messages",
+		Value: "",
+	}
 
 	// Metrics flags
 	MetricsEnabledFlag = cli.BoolFlag{
@@ -812,12 +818,9 @@ func setWS(ctx *cli.Context, cfg *node.Config) {
 	}
 }
 
-// setWhisperMode sets the configuration for Whisper based on the
-// command line flags - default is whisper enabled
-
-func setWhisperMode(ctx *cli.Context, cfg *node.Config) {
-	if !ctx.GlobalBool(WhisperOffFlag.Name) && cfg.WhisperDisable {
-		cfg.WhisperDisable = false
+func setWhisperBroadcastKeys(ctx *cli.Context, cfg *node.Config) {
+	if ctx.GlobalIsSet(WhisperKeys.Name) {
+		cfg.WhisperKeys = splitAndTrim(ctx.GlobalString(WhisperKeys.Name))
 	}
 }
 
@@ -989,6 +992,7 @@ func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
 	setHTTP(ctx, cfg)
 	setWS(ctx, cfg)
 	setNodeUserIdent(ctx, cfg)
+	setWhisperBroadcastKeys(ctx, cfg)
 
 	switch {
 	case ctx.GlobalIsSet(DataDirFlag.Name):

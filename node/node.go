@@ -21,6 +21,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ShyftNetwork/go-empyrean/crypto"
+
+	"github.com/ShyftNetwork/go-empyrean/signer/core"
+
 	"net"
 	"os"
 	"path/filepath"
@@ -242,6 +246,11 @@ func (n *Node) shhApi() bool {
 	return false
 }
 
+func parseMessage(msg string) (string, string) {
+	payload := strings.Split(msg, "--")
+	return payload[0], payload[1]
+}
+
 func (n *Node) setUpWhisperSubscriptions() error {
 	if n.shhApi() {
 		ctx := context.Background()
@@ -276,6 +285,23 @@ func (n *Node) setUpWhisperSubscriptions() error {
 					log.Error("subscription error:", err)
 				case message := <-messages:
 					// WE NEED TO ADD SECURITY HERE ie. CHECK SIGNATURE OF PAYLOAD
+					blockhash, signature := parseMessage(string(message.Payload[:]))
+					bar := []byte(blockhash)
+					hashBlockhash, _ := core.SignHash(bar)
+					rpk, err := crypto.Ecrecover(hashBlockhash, hexutil.Bytes(signature))
+					if err != nil {
+						log.Error("Error in EcRecover", err)
+					}
+					pubKey, err := crypto.DecompressPubkey(rpk)
+					if err != nil {
+						log.Error("Error in Decompress", err)
+					}
+					recoveredAddr := crypto.PubkeyToAddress(*pubKey)
+					for k := range n.config.WhisperKeys {
+						fmt.Println(k)
+						log.Info("Whisper Keys", "WhisperKeys", n.config.WhisperKeys)
+					}
+					fmt.Println("Client connected with address :", recoveredAddr.Hex())
 					whispChan <- string(message.Payload)
 					fmt.Printf(string(message.Payload)) // "Hello"
 				}

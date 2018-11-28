@@ -155,6 +155,7 @@ var (
 		utils.WhisperMaxMessageSizeFlag,
 		utils.WhisperMinPOWFlag,
 		utils.WhisperRestrictConnectionBetweenLightClientsFlag,
+		utils.WhisperKeys,
 	}
 
 	metricsFlags = []cli.Flag{
