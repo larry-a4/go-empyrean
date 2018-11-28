@@ -41,7 +41,6 @@ import (
 //go:generate gencodec -type GenesisAccount -field-override genesisAccountMarshaling -out gen_genesis_account.go
 
 var errGenesisNoConfig = errors.New("genesis has no chain configuration")
-var GlobalPG = ""
 
 // Genesis specifies the header fields, state of a genesis block. It also defines hard
 // fork switch-over blocks through the chain configuration.
@@ -88,10 +87,6 @@ type GenesisAccount struct {
 }
 
 // DisconnectPG - returns whether flags include running without the Postgres DB
-func DisconnectPG() string {
-	GlobalPG = "disconnect"
-	return GlobalPG
-}
 
 // field type overrides for gencodec
 type genesisSpecMarshaling struct {
@@ -172,7 +167,7 @@ func SetupGenesisBlock(db ethdb.Database, shyftDb ethdb.SDatabase, genesis *Gene
 		}
 		block, err := genesis.Commit(db)
 		//@NOTE:SHYFT SWITCH CASE ENSURES SHYFT GENESIS FUNCTIONS ARE ONLY CALLED ONCE
-		if GlobalPG != "disconnect" {
+		if shyftDb != nil {
 			exist := shyftDb.BlockExists(block.Hash().String())
 			if !exist {
 				//@NOTE:SHYFT WRITE TO BLOCK ZERO DB
@@ -387,7 +382,7 @@ func DeveloperGenesisBlock(period uint64, faucet common.Address) *Genesis {
 			common.BytesToAddress([]byte{6}): {Balance: big.NewInt(1)}, // ECAdd
 			common.BytesToAddress([]byte{7}): {Balance: big.NewInt(1)}, // ECScalarMul
 			common.BytesToAddress([]byte{8}): {Balance: big.NewInt(1)}, // ECPairing
-			faucet:                           {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
+			faucet: {Balance: new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), 256), big.NewInt(9))},
 		},
 	}
 }

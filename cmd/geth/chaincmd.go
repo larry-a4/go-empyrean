@@ -196,16 +196,14 @@ func initGenesis(ctx *cli.Context) error {
 		if err != nil {
 			utils.Fatalf("Failed to open database: %v", err)
 		}
-		_, ok := os.LookupEnv("DISABLEPG")
-		if ok {
-			shyftdb = nil
-		} else if ctx.GlobalBool(utils.PostgresFlag.Name) {
-			shyftdb = nil
-		} else {
+		if ctx.GlobalBool(utils.PostgresFlag.Name) {
+			core.ConnectPG()
 			shyftdb, err = stack.OpenShyftDatabase()
 			if err != nil {
 				utils.Fatalf("Failed to open SHYFT database: %v", err)
 			}
+		} else {
+			shyftdb = nil
 		}
 		_, hash, err := core.SetupGenesisBlock(chaindb, shyftdb, genesis)
 		if err != nil {

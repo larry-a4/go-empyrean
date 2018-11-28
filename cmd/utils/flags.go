@@ -120,8 +120,8 @@ var (
 		Value: DirectoryString{node.DefaultDataDir()},
 	}
 	PostgresFlag = cli.BoolFlag{
-		Name:  "disablepg",
-		Usage: "Disconnects the postgres instance used for Shyft Shakedown",
+		Name:  "enablepg",
+		Usage: "Runs the node with a postgres db and writes to the db",
 	}
 	KeyStoreDirFlag = DirectoryFlag{
 		Name:  "keystore",
@@ -1150,14 +1150,6 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 	if ctx.GlobalIsSet(NetworkIdFlag.Name) {
 		cfg.NetworkId = ctx.GlobalUint64(NetworkIdFlag.Name)
 	}
-	_, ok := os.LookupEnv("DISABLEPG")
-	if ok {
-		core.DisconnectPG()
-		cfg.Postgres = false
-	} else if ctx.GlobalBool(PostgresFlag.Name) {
-		core.DisconnectPG()
-		cfg.Postgres = false
-	}
 	if ctx.GlobalIsSet(CacheFlag.Name) || ctx.GlobalIsSet(CacheDatabaseFlag.Name) {
 		cfg.DatabaseCache = ctx.GlobalInt(CacheFlag.Name) * ctx.GlobalInt(CacheDatabaseFlag.Name) / 100
 	}
@@ -1215,6 +1207,9 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 
 	if ctx.GlobalIsSet(EVMInterpreterFlag.Name) {
 		cfg.EVMInterpreter = ctx.GlobalString(EVMInterpreterFlag.Name)
+	}
+	if ctx.GlobalIsSet(PostgresFlag.Name) {
+		cfg.Postgres = true
 	}
 
 	// Override any default configs for hard coded networks.
@@ -1362,18 +1357,13 @@ func MakeChainDatabase(ctx *cli.Context, stack *node.Node) ethdb.Database {
 	return chainDb
 }
 
-// MakeChainDatabase open an LevelDB using the flags passed to the client and will hard crash if it fails.
+// MakeChainShyftDatabase opens a postgresql instance if postgres is enabled.
 func MakeChainShyftDatabase(ctx *cli.Context, stack *node.Node) ethdb.SDatabase {
 	var (
 		shyftChainDb ethdb.SDatabase
 	)
-	_, ok := os.LookupEnv("DISABLEPG")
-	if ok {
-		shyftChainDb = nil
-	} else if ctx.GlobalBool(PostgresFlag.Name) {
-		core.DisconnectPG()
-		shyftChainDb = nil
-	} else {
+	if ctx.GlobalBool(PostgresFlag.Name) {
+		core.ConnectPG()
 		var err error
 		shyftChainDb, err = stack.OpenShyftDatabase()
 		if err != nil {

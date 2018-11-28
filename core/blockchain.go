@@ -1054,7 +1054,7 @@ func (bc *BlockChain) WriteBlockWithState(block *types.Block, receipts []*types.
 	if status == CanonStatTy {
 		bc.insert(block)
 		// NOTE:SHYFT - Write block data for block explorer
-		if GlobalPG != "disconnect" {
+		if bc.shyftDb != nil {
 			if err := SWriteBlock(bc.shyftDb, block, receipts); err != nil {
 				return NonStatTy, err
 			}
