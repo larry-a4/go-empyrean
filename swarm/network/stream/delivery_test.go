@@ -19,9 +19,7 @@ package stream
 import (
 	"bytes"
 	"context"
-	crand "crypto/rand"
 	"fmt"
-	"io"
 	"os"
 	"sync"
 	"testing"
@@ -29,13 +27,17 @@ import (
 
 	"github.com/ShyftNetwork/go-empyrean/node"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
+	"github.com/ShyftNetwork/go-empyrean/p2p/enode"
+	"github.com/ShyftNetwork/go-empyrean/p2p/protocols"
 	"github.com/ShyftNetwork/go-empyrean/p2p/simulations/adapters"
 	p2ptest "github.com/ShyftNetwork/go-empyrean/p2p/testing"
 	"github.com/ShyftNetwork/go-empyrean/swarm/log"
 	"github.com/ShyftNetwork/go-empyrean/swarm/network"
+	pq "github.com/ShyftNetwork/go-empyrean/swarm/network/priorityqueue"
 	"github.com/ShyftNetwork/go-empyrean/swarm/network/simulation"
 	"github.com/ShyftNetwork/go-empyrean/swarm/state"
 	"github.com/ShyftNetwork/go-empyrean/swarm/storage"
+	"github.com/ShyftNetwork/go-empyrean/swarm/testutil"
 )
 
 //Tests initializing a retrieve request
@@ -274,6 +276,86 @@ func TestStreamerUpstreamRetrieveRequestMsgExchange(t *testing.T) {
 	}
 }
 
+// if there is one peer in the Kademlia, RequestFromPeers should return it
+func TestRequestFromPeers(t *testing.T) {
+	dummyPeerID := enode.HexID("3431c3939e1ee2a6345e976a8234f9870152d64879f30bc272a074f6859e75e8")
+
+	addr := network.RandomAddr()
+	to := network.NewKademlia(addr.OAddr, network.NewKadParams())
+	delivery := NewDelivery(to, nil)
+	protocolsPeer := protocols.NewPeer(p2p.NewPeer(dummyPeerID, "dummy", nil), nil, nil)
+	peer := network.NewPeer(&network.BzzPeer{
+		BzzAddr:   network.RandomAddr(),
+		LightNode: false,
+		Peer:      protocolsPeer,
+	}, to)
+	to.On(peer)
+	r := NewRegistry(addr.ID(), delivery, nil, nil, nil)
+
+	// an empty priorityQueue has to be created to prevent a goroutine being called after the test has finished
+	sp := &Peer{
+		Peer:     protocolsPeer,
+		pq:       pq.New(int(PriorityQueue), PriorityQueueCap),
+		streamer: r,
+	}
+	r.setPeer(sp)
+	req := network.NewRequest(
+		storage.Address(hash0[:]),
+		true,
+		&sync.Map{},
+	)
+	ctx := context.Background()
+	id, _, err := delivery.RequestFromPeers(ctx, req)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if *id != dummyPeerID {
+		t.Fatalf("Expected an id, got %v", id)
+	}
+}
+
+// RequestFromPeers should not return light nodes
+func TestRequestFromPeersWithLightNode(t *testing.T) {
+	dummyPeerID := enode.HexID("3431c3939e1ee2a6345e976a8234f9870152d64879f30bc272a074f6859e75e8")
+
+	addr := network.RandomAddr()
+	to := network.NewKademlia(addr.OAddr, network.NewKadParams())
+	delivery := NewDelivery(to, nil)
+
+	protocolsPeer := protocols.NewPeer(p2p.NewPeer(dummyPeerID, "dummy", nil), nil, nil)
+	// setting up a lightnode
+	peer := network.NewPeer(&network.BzzPeer{
+		BzzAddr:   network.RandomAddr(),
+		LightNode: true,
+		Peer:      protocolsPeer,
+	}, to)
+	to.On(peer)
+	r := NewRegistry(addr.ID(), delivery, nil, nil, nil)
+	// an empty priorityQueue has to be created to prevent a goroutine being called after the test has finished
+	sp := &Peer{
+		Peer:     protocolsPeer,
+		pq:       pq.New(int(PriorityQueue), PriorityQueueCap),
+		streamer: r,
+	}
+	r.setPeer(sp)
+
+	req := network.NewRequest(
+		storage.Address(hash0[:]),
+		true,
+		&sync.Map{},
+	)
+
+	ctx := context.Background()
+	// making a request which should return with "no peer found"
+	_, _, err := delivery.RequestFromPeers(ctx, req)
+
+	expectedError := "no peer found"
+	if err.Error() != expectedError {
+		t.Fatalf("expected '%v', got %v", expectedError, err)
+	}
+}
+
 func TestStreamerDownstreamChunkDeliveryMsgExchange(t *testing.T) {
 	tester, streamer, localStore, teardown, err := newStreamerTester(t, &RegistryOptions{
 		Retrieval: RetrievalDisabled,
@@ -447,7 +529,7 @@ func testDeliveryFromNodes(t *testing.T, nodes, conns, chunkCount int, skipCheck
 		//now we can actually upload a (random) file to the round-robin store
 		size := chunkCount * chunkSize
 		log.Debug("Storing data to file store")
-		fileHash, wait, err := roundRobinFileStore.Store(ctx, io.LimitReader(crand.Reader, int64(size)), int64(size), false)
+		fileHash, wait, err := roundRobinFileStore.Store(ctx, testutil.RandomReader(1, size), int64(size), false)
 		// wait until all chunks stored
 		if err != nil {
 			return err
@@ -636,7 +718,7 @@ func benchmarkDeliveryFromNodes(b *testing.B, nodes, conns, chunkCount int, skip
 			for i := 0; i < chunkCount; i++ {
 				// create actual size real chunks
 				ctx := context.TODO()
-				hash, wait, err := remoteFileStore.Store(ctx, io.LimitReader(crand.Reader, int64(chunkSize)), int64(chunkSize), false)
+				hash, wait, err := remoteFileStore.Store(ctx, testutil.RandomReader(i, chunkSize), int64(chunkSize), false)
 				if err != nil {
 					b.Fatalf("expected no error. got %v", err)
 				}
