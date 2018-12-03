@@ -32,6 +32,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ShyftNetwork/go-empyrean"
 	"github.com/ShyftNetwork/go-empyrean/accounts"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
@@ -233,7 +234,35 @@ func (n *Node) Start() error {
 	n.services = services
 	n.server = running
 	n.stop = make(chan struct{})
-	n.setUpWhisperSubscriptions()
+	// if shhApi enabled, register whisper Subscription
+	if n.shhApi() {
+		ctx := context.Background()
+		// Set Up a Topic Listener
+		wsConnect := "ws://" + n.config.WSEndpoint()
+		shhCli, err := shhclient.Dial(wsConnect)
+		if err != nil {
+			log.Error("Failed to Connect to shh client: ", err)
+			panic(err)
+		}
+		generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")
+		symKey, _ := shhCli.GetSymmetricKey(ctx, generatedSymKey)
+		symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
+		log.Info("Symmetric Key Id: ", "symKeyId", symKeyId)
+
+		// topicString is "rollback".toHex()
+		topicString := "0x524f4c4c"
+		topicBytes, _ := hexutil.Decode(topicString)
+		topic := whisper.BytesToTopic(topicBytes)
+		topArr := []whisper.TopicType{topic}
+		criteria := &whisper.Criteria{SymKeyID: symKeyId, Topics: topArr}
+		messages := make(chan *whisper.Message)
+		sub, err := shhCli.SubscribeMessages(ctx, *criteria, messages)
+		if err != nil {
+			log.Error("subscription error:", err)
+		}
+		log.Info("listening for messages", "topicString", topicString)
+		go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, func() []string { return n.config.WhisperKeys })
+	}
 	return nil
 }
 
@@ -251,64 +280,48 @@ func parseMessage(msg string) (string, string) {
 	return payload[0], payload[1]
 }
 
-func (n *Node) setUpWhisperSubscriptions() error {
-	if n.shhApi() {
-		ctx := context.Background()
-		// Set Up a Topic Listener
-		wsConnect := "ws://" + n.config.WSEndpoint()
-		shhCli, err := shhclient.Dial(wsConnect)
-		if err != nil {
-			log.Error("Failed to Connect to shh client: ", err)
-			panic(err)
+func pos(slice []string, address string) int {
+	for p, v := range slice {
+		if v == address {
+			return p
 		}
-		generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")
-		symKey, _ := shhCli.GetSymmetricKey(ctx, generatedSymKey)
-		symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
-		log.Info("Symmetric Key Id: ", "symKeyId", symKeyId)
-		// topicString is "rollback".toHex()
-		topicString := "0x524f4c4c"
-		topicBytes, _ := hexutil.Decode(topicString)
-		topic := whisper.BytesToTopic(topicBytes)
-		topArr := []whisper.TopicType{topic}
-		criteria := &whisper.Criteria{SymKeyID: symKeyId, Topics: topArr}
-		messages := make(chan *whisper.Message)
-		sub, err := shhCli.SubscribeMessages(ctx, *criteria, messages)
-		if err != nil {
+	}
+	return -1
+}
+
+func whisperMessageReceiver(sub ethereum.Subscription, messages chan *whisper.Message, whispChan chan string, whisperKeys func() []string) {
+	for {
+		select {
+		case err := <-sub.Err():
 			log.Error("subscription error:", err)
-		}
-		log.Info("listening for messages", "topicString", topicString)
-		whispChan := n.config.WhisperChannel
-		go func() {
-			for {
-				select {
-				case err := <-sub.Err():
-					log.Error("subscription error:", err)
-				case message := <-messages:
-					// WE NEED TO ADD SECURITY HERE ie. CHECK SIGNATURE OF PAYLOAD
-					blockhash, signature := parseMessage(string(message.Payload[:]))
-					bar := []byte(blockhash)
-					hashBlockhash, _ := core.SignHash(bar)
-					rpk, err := crypto.Ecrecover(hashBlockhash, hexutil.Bytes(signature))
-					if err != nil {
-						log.Error("Error in EcRecover", err)
-					}
-					pubKey, err := crypto.DecompressPubkey(rpk)
-					if err != nil {
-						log.Error("Error in Decompress", err)
-					}
-					recoveredAddr := crypto.PubkeyToAddress(*pubKey)
-					for k := range n.config.WhisperKeys {
-						fmt.Println(k)
-						log.Info("Whisper Keys", "WhisperKeys", n.config.WhisperKeys)
-					}
-					fmt.Println("Client connected with address :", recoveredAddr.Hex())
-					whispChan <- string(message.Payload)
-					fmt.Printf(string(message.Payload)) // "Hello"
+		case message := <-messages:
+			blockHash, sig := parseMessage(string(message.Payload[:]))
+			fmt.Println("sig is ", sig)
+			sigByteArray, err := hexutil.Decode(sig)
+			if err != nil {
+				log.Error("hexutil.Decode err", "err", err)
+				whispChan <- err.Error()
+				break
+			}
+			fmt.Println("AR")
+			var sighex = hexutil.Bytes(sigByteArray)
+			sighex[64] -= 27
+			msgHash, _ := core.SignHash(hexutil.Bytes(blockHash))
+			pubKey, err := crypto.SigToPub(hexutil.Bytes(msgHash), sighex)
+			if err != nil {
+				log.Error("SigToPub err", "err", err)
+				whispChan <- err.Error()
+			} else {
+				recoveredAddr := crypto.PubkeyToAddress(*pubKey).Hex()
+				pos := pos(whisperKeys(), recoveredAddr)
+				if pos == -1 {
+					whispChan <- "UNAUTHORIZED SIGNER"
+				} else {
+					whispChan <- recoveredAddr
 				}
 			}
-		}()
+		}
 	}
-	return nil
 }
 
 func (n *Node) openDataDir() error {
