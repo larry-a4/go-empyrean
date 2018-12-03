@@ -30,6 +30,7 @@ func (c Config) MarshalTOML() (interface{}, error) {
 		DatabaseCache           int
 		TrieCache               int
 		TrieTimeout             time.Duration
+		Postgres                bool
 		Etherbase               common.Address `toml:",omitempty"`
 		MinerNotify             []string       `toml:",omitempty"`
 		MinerExtraData          hexutil.Bytes  `toml:",omitempty"`
@@ -43,6 +44,8 @@ func (c Config) MarshalTOML() (interface{}, error) {
 		GPO                     gasprice.Config
 		EnablePreimageRecording bool
 		DocRoot                 string `toml:"-"`
+		EWASMInterpreter        string
+		EVMInterpreter          string
 	}
 	var enc Config
 	enc.Genesis = c.Genesis
@@ -56,6 +59,7 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	enc.DatabaseCache = c.DatabaseCache
 	enc.TrieCache = c.TrieCache
 	enc.TrieTimeout = c.TrieTimeout
+	enc.Postgres = c.Postgres
 	enc.Etherbase = c.Etherbase
 	enc.MinerNotify = c.MinerNotify
 	enc.MinerExtraData = c.MinerExtraData
@@ -69,6 +73,8 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	enc.GPO = c.GPO
 	enc.EnablePreimageRecording = c.EnablePreimageRecording
 	enc.DocRoot = c.DocRoot
+	enc.EWASMInterpreter = c.EWASMInterpreter
+	enc.EVMInterpreter = c.EVMInterpreter
 	return &enc, nil
 }
 
@@ -86,6 +92,7 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		DatabaseCache           *int
 		TrieCache               *int
 		TrieTimeout             *time.Duration
+		Postgres                *bool
 		Etherbase               *common.Address `toml:",omitempty"`
 		MinerNotify             []string        `toml:",omitempty"`
 		MinerExtraData          *hexutil.Bytes  `toml:",omitempty"`
@@ -99,6 +106,8 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		GPO                     *gasprice.Config
 		EnablePreimageRecording *bool
 		DocRoot                 *string `toml:"-"`
+		EWASMInterpreter        *string
+		EVMInterpreter          *string
 	}
 	var dec Config
 	if err := unmarshal(&dec); err != nil {
@@ -136,6 +145,9 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	}
 	if dec.TrieTimeout != nil {
 		c.TrieTimeout = *dec.TrieTimeout
+	}
+	if dec.Postgres != nil {
+		c.Postgres = *dec.Postgres
 	}
 	if dec.Etherbase != nil {
 		c.Etherbase = *dec.Etherbase
@@ -175,6 +187,12 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	}
 	if dec.DocRoot != nil {
 		c.DocRoot = *dec.DocRoot
+	}
+	if dec.EWASMInterpreter != nil {
+		c.EWASMInterpreter = *dec.EWASMInterpreter
+	}
+	if dec.EVMInterpreter != nil {
+		c.EVMInterpreter = *dec.EVMInterpreter
 	}
 	return nil
 }

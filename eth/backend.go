@@ -85,12 +85,12 @@ type Ethereum struct {
 
 	APIBackend *EthAPIBackend
 
-	miner     *miner.Miner
-	gasPrice  *big.Int
-	etherbase common.Address
-
-	networkID     uint64
-	netRPCService *ethapi.PublicNetAPI
+	miner               *miner.Miner
+	gasPrice            *big.Int
+	etherbase           common.Address
+	shyftConduitAddress string
+	networkID           uint64
+	netRPCService       *ethapi.PublicNetAPI
 
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 }
@@ -147,19 +147,20 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	}
 	log.Info("Initialised chain configuration", "config", chainConfig)
 	eth := &Ethereum{
-		config:         config,
-		chainDb:        chainDb,
-		shyftDb:        shyftDb,
-		chainConfig:    chainConfig,
-		eventMux:       ctx.EventMux,
-		accountManager: ctx.AccountManager,
-		engine:         CreateConsensusEngine(ctx, chainConfig, &config.Ethash, config.MinerNotify, config.MinerNoverify, chainDb),
-		shutdownChan:   make(chan bool),
-		networkID:      config.NetworkId,
-		gasPrice:       config.MinerGasPrice,
-		etherbase:      config.Etherbase,
-		bloomRequests:  make(chan chan *bloombits.Retrieval),
-		bloomIndexer:   NewBloomIndexer(chainDb, shyftDb, params.BloomBitsBlocks, params.BloomConfirms),
+		config:              config,
+		chainDb:             chainDb,
+		shyftDb:             shyftDb,
+		shyftConduitAddress: "yyy",
+		chainConfig:         chainConfig,
+		eventMux:            ctx.EventMux,
+		accountManager:      ctx.AccountManager,
+		engine:              CreateConsensusEngine(ctx, chainConfig, &config.Ethash, config.MinerNotify, config.MinerNoverify, chainDb),
+		shutdownChan:        make(chan bool),
+		networkID:           config.NetworkId,
+		gasPrice:            config.MinerGasPrice,
+		etherbase:           config.Etherbase,
+		bloomRequests:       make(chan chan *bloombits.Retrieval),
+		bloomIndexer:        NewBloomIndexer(chainDb, shyftDb, params.BloomBitsBlocks, params.BloomConfirms),
 	}
 	log.Info("Initialising Ethereum protocol", "versions", ProtocolVersions, "network", config.NetworkId)
 

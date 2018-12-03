@@ -285,6 +285,7 @@ func (n *Node) setUpWhisperSubscriptions() error {
 					log.Error("subscription error:", err)
 				case message := <-messages:
 					// WE NEED TO ADD SECURITY HERE ie. CHECK SIGNATURE OF PAYLOAD
+					// Check whether WhisperSignersContractExists -
 					blockhash, signature := parseMessage(string(message.Payload[:]))
 					bar := []byte(blockhash)
 					hashBlockhash, _ := core.SignHash(bar)

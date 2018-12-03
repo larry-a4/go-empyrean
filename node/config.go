@@ -152,8 +152,11 @@ type Config struct {
 
 	WhisperDisable bool `toml:",omitempty"`
 
-	WhisperChannel chan string `toml:",-" json:"-"`
-	WhisperKeys    []string    `toml:",omitempty"`
+	WhisperChannel         chan string `toml:",-" json:"-"`
+	WhisperKeys            []string    `toml:",omitempty"`
+	WhisperSignersContract string      `toml:",omitempty"`
+
+	//
 
 	// Logger is a custom logger to use with the p2p.Server.
 	Logger log.Logger `toml:",omitempty"`

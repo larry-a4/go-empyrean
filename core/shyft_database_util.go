@@ -225,7 +225,7 @@ func swriteTransactions(db ethdb.SDatabase, tx *types.Transaction, blockHash com
 // @TODO: Calculate reorg - Determine how we include in acctblocks
 func swriteMinerRewards(db ethdb.SDatabase, block *types.Block) string {
 	minerAddr := block.Coinbase().String()
-	shyftConduitAddress := Rewards.ShyftNetworkConduitAddress.String()
+	shyftConduitAddress := common.HexToAddress("9db76b4bbaea76dfda4552b7b9d4e9d43abc55fd").String()
 	// Calculate the total gas used in the block
 	totalGas := new(big.Int)
 	for _, tx := range block.Transactions() {

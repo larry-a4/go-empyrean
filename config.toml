@@ -48,6 +48,7 @@ HTTPVirtualHosts = ["localhost"]
 HTTPModules = ["net", "web3", "eth", "shh", "miner"]
 WSPort = 8546
 WSModules = ["net", "web3", "eth", "shh"]
+WhisperSignersContract = "y"
 
 [Node.P2P]
 MaxPeers = 25
