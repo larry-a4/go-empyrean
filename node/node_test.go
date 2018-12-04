@@ -594,8 +594,9 @@ func TestWhisperChannels(t *testing.T) {
 	messages := make(chan *whisper.Message)
 	whisperChannel := make(chan string)
 	testAddr := "0x7dA99dF96259305Ee38c9fA9E9D551118B12eC3b"
-	whisperKeys := []string{testAddr}
-	go whisperMessageReceiver(sub, messages, whisperChannel, func() []string { return whisperKeys })
+	//whisperKeys := []string{testAddr}
+	//whisperKeys := testAddr
+	go whisperMessageReceiver(sub, messages, whisperChannel, func(testAddr string) bool { return true })
 	msg := &whisper.Message{
 		// nonsense values
 		Payload: []byte("Here is a string--string2"),

@@ -22,6 +22,9 @@ import (
 	"fmt"
 
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/ethclient"
+	"github.com/ShyftNetwork/go-empyrean/whisper/shhclient"
+	"github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 
 	"github.com/ShyftNetwork/go-empyrean/signer/core"
 
@@ -41,8 +44,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/log"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
-	"github.com/ShyftNetwork/go-empyrean/whisper/shhclient"
-	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 	"github.com/prometheus/prometheus/util/flock"
 )
 
@@ -236,34 +237,75 @@ func (n *Node) Start() error {
 	n.stop = make(chan struct{})
 	// if shhApi enabled, register whisper Subscription
 	if n.shhApi() {
-		ctx := context.Background()
-		// Set Up a Topic Listener
-		wsConnect := "ws://" + n.config.WSEndpoint()
-		shhCli, err := shhclient.Dial(wsConnect)
-		if err != nil {
-			log.Error("Failed to Connect to shh client: ", err)
-			panic(err)
-		}
-		generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")
-		symKey, _ := shhCli.GetSymmetricKey(ctx, generatedSymKey)
-		symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
-		log.Info("Symmetric Key Id: ", "symKeyId", symKeyId)
+		// Check n.config.WhisperSignersContract contains contract address
+		// If not available but WhisperKeys flags available continue make subscription
+		// TODO: Remove whisperkey flags once WhisperSignersContract is available
+		// If contract doesnt exist but we have n.config.WhisperKeys - Proceed set up subscription
+		signersContractAddress := n.config.WhisperSignersContract != ""
+		whisperPublicKeys := len(n.config.WhisperKeys) > 0
+		if signersContractAddress || whisperPublicKeys {
+			ctx := context.Background()
+			// Set Up a Topic Listener
+			wsConnect := "ws://" + n.config.WSEndpoint()
+			shhCli, err := shhclient.Dial(wsConnect)
+			if err != nil {
+				log.Error("Failed to Connect to shh client: ", err)
+				panic(err)
+			}
+			generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")
+			symKey, _ := shhCli.GetSymmetricKey(ctx, generatedSymKey)
+			symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
+			log.Info("Symmetric Key Id: ", "symKeyId", symKeyId)
 
-		// topicString is "rollback".toHex()
-		topicString := "0x524f4c4c"
-		topicBytes, _ := hexutil.Decode(topicString)
-		topic := whisper.BytesToTopic(topicBytes)
-		topArr := []whisper.TopicType{topic}
-		criteria := &whisper.Criteria{SymKeyID: symKeyId, Topics: topArr}
-		messages := make(chan *whisper.Message)
-		sub, err := shhCli.SubscribeMessages(ctx, *criteria, messages)
-		if err != nil {
-			log.Error("subscription error:", err)
+			// topicString is "rollback".toHex()
+			topicString := "0x524f4c4c"
+			topicBytes, _ := hexutil.Decode(topicString)
+			topic := whisperv6.BytesToTopic(topicBytes)
+			topArr := []whisperv6.TopicType{topic}
+			criteria := &whisperv6.Criteria{SymKeyID: symKeyId, Topics: topArr}
+			messages := make(chan *whisperv6.Message)
+			sub, err := shhCli.SubscribeMessages(ctx, *criteria, messages)
+			if err != nil {
+				log.Error("subscription error:", err)
+			}
+			log.Info("listening for messages", "topicString", topicString)
+			fmt.Printf("Sub %+v \n", sub)
+			authMethodContract := n.smartContractAvailable(n.config.WhisperSignersContract)
+
+			fmt.Printf("Contract Available %+v \n", authMethodContract)
+			if authMethodContract {
+				contractAddress := n.config.WhisperSignersContract
+				fmt.Printf("Contract Address %+v \n", contractAddress)
+				go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, func(addr string) bool { return true }) // call contract code
+			}
+			//} else {
+			//	go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, func(addr string) bool {
+			//		if pos(n.config.WhisperKeys, addr) == -1 {
+			//			return false
+			//		} else {
+			//			return true
+			//		}
+			//	})
+			//}
 		}
-		log.Info("listening for messages", "topicString", topicString)
-		go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, func() []string { return n.config.WhisperKeys })
 	}
 	return nil
+}
+
+func (n *Node) smartContractAvailable(addr string) bool {
+	gethConnect := "ipc:/" + n.ipcEndpoint
+	ethCli, err := ethclient.Dial(gethConnect)
+	if err != nil {
+		return false
+	}
+	fmt.Printf("Ethclie %+v \n", ethCli)
+	return true
+}
+
+func (n *Node) getKeysFromContract() []string {
+	// Code to read contract address
+	// Connect to geth.ipc and call function to return string array of public keys
+	return n.config.WhisperKeys
 }
 
 func (n *Node) shhApi() bool {
@@ -289,12 +331,19 @@ func pos(slice []string, address string) int {
 	return -1
 }
 
-func whisperMessageReceiver(sub ethereum.Subscription, messages chan *whisper.Message, whispChan chan string, whisperKeys func() []string) {
+//func checkContractExist() bool {
+//
+//	ethclient.Dial()
+//
+//}
+
+func whisperMessageReceiver(sub ethereum.Subscription, messages chan *whisperv6.Message, whispChan chan string, whisperKeys func(addr string) bool) {
 	for {
 		select {
 		case err := <-sub.Err():
 			log.Error("subscription error:", err)
 		case message := <-messages:
+			// get WhisperPulic Keys from either
 			blockHash, sig := parseMessage(string(message.Payload[:]))
 			fmt.Println("sig is ", sig)
 			sigByteArray, err := hexutil.Decode(sig)
@@ -313,8 +362,8 @@ func whisperMessageReceiver(sub ethereum.Subscription, messages chan *whisper.Me
 				whispChan <- err.Error()
 			} else {
 				recoveredAddr := crypto.PubkeyToAddress(*pubKey).Hex()
-				pos := pos(whisperKeys(), recoveredAddr)
-				if pos == -1 {
+				boole := whisperKeys(recoveredAddr)
+				if !boole {
 					whispChan <- "UNAUTHORIZED SIGNER"
 				} else {
 					whispChan <- recoveredAddr
