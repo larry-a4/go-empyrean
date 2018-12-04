@@ -27,7 +27,6 @@ ethash/
 /build/bin/
 /geth*.zip
 
-
 # travis
 profile.tmp
 profile.cov

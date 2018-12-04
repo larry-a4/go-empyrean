@@ -227,7 +227,7 @@ For prerequisites and detailed build instructions please read the
 [Installation Instructions](https://github.com/empyrean/go-ethereum/wiki/Building-Ethereum)
 on the wiki.
 
-Building geth requires both a Go (version 1.7 or later) and a C compiler.
+Building geth requires both a Go (version 1.9 or later) and a C compiler.
 You can install them using your favourite package manager.
 Once the dependencies are installed, run
 
@@ -377,7 +377,7 @@ HTTP based JSON-RPC API options:
 - `--ipcpath` Filename for IPC socket/pipe within the datadir (explicit paths escape it)
 
 You'll need to use your own programming environments' capabilities (libraries, tools, etc) to connect
-via HTTP, WS or IPC to a Geth node configured with the above flags and you'll need to speak [JSON-RPC](http://www.jsonrpc.org/specification)
+via HTTP, WS or IPC to a Geth node configured with the above flags and you'll need to speak [JSON-RPC](https://www.jsonrpc.org/specification)
 on all transports. You can reuse the same connection for multiple requests!
 
 **Note: Please understand the security implications of opening up an HTTP/WS based transport before
@@ -560,7 +560,6 @@ _TODO_
 - Reduce size of the ShytfGeth docker container which is responsible for mining and running the blockchain
 - Adjust docker scripts and ports to facilitate sending of test transactions
 - Modify Docker scripts to facilitate hot reloading during development
->>>>>>> f6eb7e527b0ce41a0ca844bea2aa7b544df322be
 
 ## Contribution
 
