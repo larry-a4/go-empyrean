@@ -1,0 +1,74 @@
+version: '3'
+services:
+  shyftgeth:
+    build:
+      context: $PWD
+      dockerfile: docker/bridge/Dockerfile
+    ports:
+    - "8545:8545"
+    working_dir: /go/src/ShyftNetwork/go-empyrean
+    depends_on:
+    - pg
+    command: >
+      sh -c 'cd /go/src/ShyftNetwork/go-empyrean &&
+            ./wait-for.sh pg:5432 &&
+            DBENV=docker export DBENV &&
+            ./shyft-cli/forBridgeDevelopment.sh'
+  pg:
+    build:
+      context: $PWD
+      dockerfile: docker/development/pg/Dockerfile
+    ports:
+    - "8001:5432"
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=docker
+    - POSTGRES_DB=postgres1
+  shyftgeth2:
+    build:
+      context: $PWD
+      dockerfile: docker/bridge/Dockerfile
+    ports:
+    - "7545:8545"
+    working_dir: /go/src/ShyftNetwork/go-empyrean
+    depends_on:
+    - pg2
+    command: >
+      sh -c 'cd /go/src/ShyftNetwork/go-empyrean &&
+            ./wait-for.sh pg:5432 &&
+            DBENV=docker export DBENV &&
+            ./shyft-cli/forBridgeDevelopment.sh'
+  pg2:
+    build:
+      context: $PWD
+      dockerfile: docker/development/pg/Dockerfile
+    ports:
+    - "8002:5432"
+    environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=docker
+    - POSTGRES_DB=postgres2
+  shyftgeth3:
+      build:
+        context: $PWD
+        dockerfile: docker/bridge/Dockerfile
+      ports:
+      - "6545:8545"
+      working_dir: /go/src/ShyftNetwork/go-empyrean
+      depends_on:
+      - pg3
+      command: >
+        sh -c 'cd /go/src/ShyftNetwork/go-empyrean &&
+              ./wait-for.sh pg:5432 &&
+              DBENV=docker export DBENV &&
+              ./shyft-cli/forBridgeDevelopment.sh'
+  pg3:
+      build:
+        context: $PWD
+        dockerfile: docker/development/pg/Dockerfile
+      ports:
+      - "8003:5432"
+      environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=postgres3

@@ -1,1 +1,2 @@
-CREATE DATABASE shyftdb;
+\set pgdb 'shyftdb'
+CREATE DATABASE :'pgdb';
