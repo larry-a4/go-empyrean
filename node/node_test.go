@@ -593,10 +593,15 @@ func TestWhisperChannels(t *testing.T) {
 	//messages := make(chan *whisper.Message)
 	messages := make(chan *whisper.Message)
 	whisperChannel := make(chan string)
-	testAddr := "0x7dA99dF96259305Ee38c9fA9E9D551118B12eC3b"
+	testAddrA := "0x7dA99dF96259305Ee38c9fA9E9D551118B12eC3b"
 	//whisperKeys := []string{testAddr}
 	//whisperKeys := testAddr
-	go whisperMessageReceiver(sub, messages, whisperChannel, func(testAddr string) bool { return true })
+	go whisperMessageReceiver(sub, messages, whisperChannel, func(testAddr string) bool {
+		if testAddrA == testAddr {
+			return true
+		}
+		return false
+	})
 	msg := &whisper.Message{
 		// nonsense values
 		Payload: []byte("Here is a string--string2"),
@@ -607,7 +612,7 @@ func TestWhisperChannels(t *testing.T) {
 	}
 
 	msg3 := &whisper.Message{
-		// invalid signature
+		// invalid signature, IE not an actual signature
 		Payload: []byte("notablockhash--0x5944a150e7cc2d77cd47d94dfe7665c7921768d4eb8a1479026751e7574e70d37a8b5ba5ec55111572ea30a9c9d9504efebdd8311b7b6bad05c4fd48e51bd3841e"),
 	}
 
@@ -624,8 +629,8 @@ func TestWhisperChannels(t *testing.T) {
 
 	messages <- msg2
 	resp = <-whisperChannel
-	if testAddr != resp {
-		t.Errorf("result mismatch: have %s, want %s", resp, testAddr)
+	if testAddrA != resp {
+		t.Errorf("result mismatch: have %s, want %s", resp, testAddrA)
 	}
 
 	messages <- msg3
