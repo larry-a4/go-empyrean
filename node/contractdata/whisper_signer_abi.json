@@ -1,0 +1,21 @@
+[
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_signer",
+        "type": "address"
+      }
+    ],
+    "name": "isValidSigner",
+    "outputs": [
+      {
+        "name": "result",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+]
