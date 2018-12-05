@@ -272,17 +272,14 @@ func (n *Node) Start() error {
 				log.Error("subscription error:", err)
 			}
 			log.Info("listening for messages", "topicString", topicString)
-			fmt.Printf("Sub %+v \n", sub)
-			authMethodContract := n.smartContractAvailable(n.config.WhisperSignersContract)
-
+			conn := n.dialIPC()
+			authMethodContract := n.smartContractAvailable(n.config.WhisperSignersContract, conn)
 			fmt.Printf("Contract Available %+v \n", authMethodContract)
 			if authMethodContract {
-				contractAddress := n.config.WhisperSignersContract
-				fmt.Printf("Contract Address %+v \n", contractAddress)
-				go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, n.CheckContractAdminStatus) // call contract code
+				//contractAddress := n.config.WhisperSignersContract
+				go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, n.CheckContractAdminStatusWrapper(conn)) // call contract code
 			} else {
 				// Until Testnet deployment and for testing purposes the endpoint can be tested by passing in public signing keys as a cmd line flag
-				//
 				go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, func(addr common.Address) bool {
 					if pos(n.config.WhisperKeys, addr) == -1 {
 						return false
@@ -296,12 +293,21 @@ func (n *Node) Start() error {
 	return nil
 }
 
-func (n *Node) CheckContractAdminStatus(addr common.Address) bool {
+func (n *Node) dialIPC() *ethclient.Client {
 	conn, err := ethclient.Dial("./shyftData/geth.ipc")
 	if err != nil {
 		log.Info("Failed to connect to the Ethereum client: %v", err)
-		return false
 	}
+	return conn
+}
+
+func (n *Node) CheckContractAdminStatusWrapper(conn *ethclient.Client) func(address common.Address) bool {
+	return func(addr common.Address) bool {
+		return n.CheckContractAdminStatus(addr, conn)
+	}
+}
+
+func (n *Node) CheckContractAdminStatus(addr common.Address, conn *ethclient.Client) bool {
 	signerContract, err := NewSignerCaller(common.HexToAddress(n.config.WhisperSignersContract), conn)
 	session := &SignerCallerSession{
 		Contract: signerContract,
@@ -316,13 +322,9 @@ func (n *Node) CheckContractAdminStatus(addr common.Address) bool {
 	return result
 }
 
-func (n *Node) smartContractAvailable(addr string) bool {
-	ethCli, err := ethclient.Dial("./shyftData/geth.ipc")
-	if err != nil {
-		return false
-	}
+func (n *Node) smartContractAvailable(addr string, conn *ethclient.Client) bool {
 	address := common.HexToAddress(addr)
-	bytecode, err := ethCli.CodeAt(context.Background(), address, nil) // nil is latest block
+	bytecode, err := conn.CodeAt(context.Background(), address, nil) // nil is latest block
 	if err != nil {
 		return false
 	}
@@ -362,12 +364,6 @@ func pos(slice []string, address common.Address) int {
 	return -1
 }
 
-//func checkContractExist() bool {
-//
-//	ethclient.Dial()
-//
-//}
-
 func whisperMessageReceiver(sub ethereum.Subscription, messages chan *whisperv6.Message, whispChan chan string, whisperKeys func(addr common.Address) bool) {
 	for {
 		select {
@@ -376,7 +372,6 @@ func whisperMessageReceiver(sub ethereum.Subscription, messages chan *whisperv6.
 		case message := <-messages:
 			// get WhisperPulic Keys from either
 			blockHash, sig := parseMessage(string(message.Payload[:]))
-			fmt.Println("sig is ", sig)
 			sigByteArray, err := hexutil.Decode(sig)
 			if err != nil {
 				log.Error("hexutil.Decode err", "err", err)
@@ -390,15 +385,10 @@ func whisperMessageReceiver(sub ethereum.Subscription, messages chan *whisperv6.
 			pubKey, err := crypto.SigToPub(hexutil.Bytes(msgHash), sighex)
 			if err != nil {
 				log.Error("SigToPub err", "err", err)
-
-				//whispChan <- err.Error()
 			} else {
 				recoveredAddr := crypto.PubkeyToAddress(*pubKey)
 				boole := whisperKeys(recoveredAddr)
-				if !boole {
-					// log error
-					//whispChan <- "UNAUTHORIZED SIGNER"
-				} else {
+				if boole {
 					whispChan <- recoveredAddr.Hex()
 				}
 			}
