@@ -88,6 +88,27 @@ To overwrite the default whisper variables, the following flags are also provide
     --shh.pow - the minimum POW accepted for processing whisper messages (float64 - default: 0.2) --shh.pow=0.3
     --shh.restrict-light - restrictions connections between two whisper light clients (boolean - default: true) --shh.restrict-light
 
+To authenticate whisper messages a call is made to a smart contract that has a predetermined address on the blockchain.
+Upon starting up a geth node if a user wishes to use this functionality they should ensure 
+that the WhisperSignersContract variable in config.toml contains the contract address for authentication of Whisper Signers.
+
+The authentication of WhisperSigner's broadcast messages relies on automatically generated go contract bindings using the 
+the abigen cmd line utility. Should the contract be changed or modified these bindings will need to be regenerated.
+Steps for regenerating are as follows:
+
+```$xslt
+1. Generate the abi for the subject contract and save it at ./generated_bindings/contract_abis/whispersigner_abi.json.
+
+2. Run the following command to regenerate the contract bindings:
+ 
+    ./build/bin/abigen -abi generated_bindings/contract_abis/whispersigner_abi.json \
+    --pkg shyft_contracts --type Signer --out generated_bindings/whisper_signer_binding.go
+
+```
+
+It should be noted that the authentication currently relies on a smart contract boolean returning function [isValidSigner(bool)], 
+that for a given signature address returns true if the contract or contract owner has a public key matching the signature.
+
 #### Docker Images
 
 Two sets of Docker Images are available for ShyftGeth, the Postgresql Database, and the Shyft Blockchain Explorer, which can be used for local development and testnet connection. The development settings are included in docker-compose.yml, the testnet settings are included in docker-compose.production.yml. To launch these containers you will need to have docker-compose installed on your computer. Installation instructions for docker-compose are available [here](https://docs.docker.com/install/).

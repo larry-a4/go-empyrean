@@ -21,6 +21,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ShyftNetwork/go-empyrean/generated_bindings"
+
 	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
 
 	"github.com/ShyftNetwork/go-empyrean/common"
@@ -242,8 +244,8 @@ func (n *Node) Start() error {
 	if n.shhApi() {
 		// Check n.config.WhisperSignersContract contains contract address
 		// If not available but WhisperKeys flags available continue make subscription
-		// TODO: Remove whisperkey flags once WhisperSignersContract is available
 		// If contract doesnt exist but we have n.config.WhisperKeys - Proceed set up subscription
+		// TODO: Remove whisperkey flags once WhisperSignersContract is available// TODO: Remove whisperkey flags once WhisperSignersContract is available
 		signersContractAddress := n.config.WhisperSignersContract != ""
 		whisperPublicKeys := len(n.config.WhisperKeys) > 0
 		if signersContractAddress || whisperPublicKeys {
@@ -276,10 +278,10 @@ func (n *Node) Start() error {
 			authMethodContract := n.smartContractAvailable(n.config.WhisperSignersContract, conn)
 			fmt.Printf("Contract Available %+v \n", authMethodContract)
 			if authMethodContract {
-				//contractAddress := n.config.WhisperSignersContract
 				go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, n.CheckContractAdminStatusWrapper(conn)) // call contract code
 			} else {
-				// Until Testnet deployment and for testing purposes the endpoint can be tested by passing in public signing keys as a cmd line flag
+				// Until Testnet deployment and for testing purposes the endpoint
+				// scan be tested by passing in public signing keys as a cmd line flag
 				go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, func(addr common.Address) bool {
 					if pos(n.config.WhisperKeys, addr) == -1 {
 						return false
@@ -308,8 +310,8 @@ func (n *Node) CheckContractAdminStatusWrapper(conn *ethclient.Client) func(addr
 }
 
 func (n *Node) CheckContractAdminStatus(addr common.Address, conn *ethclient.Client) bool {
-	signerContract, err := NewSignerCaller(common.HexToAddress(n.config.WhisperSignersContract), conn)
-	session := &SignerCallerSession{
+	signerContract, err := shyft_contracts.NewSignerCaller(common.HexToAddress(n.config.WhisperSignersContract), conn)
+	session := &shyft_contracts.SignerCallerSession{
 		Contract: signerContract,
 		CallOpts: bind.CallOpts{
 			Pending: true,
