@@ -24,9 +24,17 @@ import (
 	"testing"
 	"time"
 
+	"math/big"
+
+	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
+	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind/backends"
+	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/core"
 	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/generated_bindings"
 	"github.com/ShyftNetwork/go-empyrean/p2p"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
+	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 )
 
 var (
@@ -571,5 +579,66 @@ func TestAPIGather(t *testing.T) {
 		case <-time.After(time.Second):
 			t.Fatalf("test %d: rpc execution timeout", i)
 		}
+	}
+}
+
+// for stubbing purposes
+type TestType struct {
+	str string
+}
+
+func (sub *TestType) Unsubscribe() {
+	// stub
+}
+
+func (sub *TestType) Err() <-chan error {
+	return make(chan error, 1)
+}
+
+func TestWhisperChannels(t *testing.T) {
+	var sub *TestType = &TestType{"foo"}
+	messages := make(chan *whisper.Message)
+	whisperChannel := make(chan string)
+
+	// signer of the test messages
+	testAddrA := "0x7dA99dF96259305Ee38c9fA9E9D551118B12eC3b"
+
+	go whisperMessageReceiver(sub, messages, whisperChannel, func(testAddr common.Address) bool {
+		if common.HexToAddress(testAddrA) == testAddr {
+			return true
+		}
+		return false
+	})
+
+	msg := &whisper.Message{
+		// valid signature for "notablockhash" for the testAddr
+		Payload: []byte("notablockhash--0x5944a150e7cc2d77cd47d94dfe7665c7921768d4eb8a1479026751e7574e70d37a8b5ba5ec55111572ea30a9c9d9504efebdd8311b7b6bad05c4fd48e51bd3841c"),
+	}
+
+	messages <- msg
+	resp := <-whisperChannel
+	if testAddrA != resp {
+		t.Errorf("result mismatch: have %s, want %s", resp, testAddrA)
+	}
+}
+
+func TestCheckContractAdminStatus(t *testing.T) {
+	key0, _ := crypto.HexToECDSA("b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291")
+	addr0 := crypto.PubkeyToAddress(key0.PublicKey)
+	deployTransactor := bind.NewKeyedTransactor(key0)
+	backend := backends.NewSimulatedBackend(core.GenesisAlloc{addr0: {Balance: big.NewInt(1000000000)}}, 10000000)
+	addr, _, _, err := shyft_contracts.DeployValidSigners(deployTransactor, backend)
+	if err != nil {
+		t.Errorf("Deploy Valid Signers Contract failed %+v \n", err)
+	}
+	t.Log("add is ", addr)
+	stack, err := New(testNodeConfig())
+	if err != nil {
+		t.Fatalf("failed to create protocol stack: %v", err)
+	}
+	result := stack.CheckContractAdminStatus(addr0, backend)
+
+	if result != false {
+		t.Errorf("result mismatch: have %v, want %v", result, false)
 	}
 }

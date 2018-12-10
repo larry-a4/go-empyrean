@@ -557,6 +557,10 @@ var (
 		Usage: "Suggested gas price is the given percentile of a set of recent transaction gas prices",
 		Value: eth.DefaultConfig.GPO.Percentile,
 	}
+	WhisperOffFlag = cli.BoolFlag{
+		Name:  "disablewhisper",
+		Usage: "Disables the whisper server which is turned on by default",
+	}
 	WhisperEnabledFlag = cli.BoolFlag{
 		Name:  "shh",
 		Usage: "Enable Whisper",
@@ -574,6 +578,12 @@ var (
 	WhisperRestrictConnectionBetweenLightClientsFlag = cli.BoolFlag{
 		Name:  "shh.restrict-light",
 		Usage: "Restrict connection between two whisper light clients",
+	}
+	// WhisperPublic Key Flags - used to pass in to geth command public whisper broadcast keys
+	WhisperKeys = cli.StringFlag{
+		Name:  "whisperkeys",
+		Usage: "Comma separated list of public keys authorized to broadcast whisper messages",
+		Value: "",
 	}
 
 	// Metrics flags
@@ -808,6 +818,12 @@ func setWS(ctx *cli.Context, cfg *node.Config) {
 	}
 }
 
+func setWhisperBroadcastKeys(ctx *cli.Context, cfg *node.Config) {
+	if ctx.GlobalIsSet(WhisperKeys.Name) {
+		cfg.WhisperKeys = splitAndTrim(ctx.GlobalString(WhisperKeys.Name))
+	}
+}
+
 // setIPC creates an IPC path configuration from the set command line flags,
 // returning an empty string if IPC was explicitly disabled, or the set path.
 func setIPC(ctx *cli.Context, cfg *node.Config) {
@@ -976,6 +992,7 @@ func SetNodeConfig(ctx *cli.Context, cfg *node.Config) {
 	setHTTP(ctx, cfg)
 	setWS(ctx, cfg)
 	setNodeUserIdent(ctx, cfg)
+	setWhisperBroadcastKeys(ctx, cfg)
 
 	switch {
 	case ctx.GlobalIsSet(DataDirFlag.Name):

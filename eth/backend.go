@@ -20,6 +20,7 @@ package eth
 import (
 	"errors"
 	"fmt"
+
 	"math/big"
 	"runtime"
 	"sync"
@@ -50,10 +51,6 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
 )
-
-var BlockchainObject *core.BlockChain
-
-var DebugApi PrivateDebugAPI
 
 type LesServer interface {
 	Start(srvr *p2p.Server)
@@ -88,22 +85,23 @@ type Ethereum struct {
 
 	APIBackend *EthAPIBackend
 
-	miner     *miner.Miner
-	gasPrice  *big.Int
-	etherbase common.Address
-
-	networkID     uint64
-	netRPCService *ethapi.PublicNetAPI
+	miner               *miner.Miner
+	gasPrice            *big.Int
+	etherbase           common.Address
+	shyftConduitAddress string
+	networkID           uint64
+	netRPCService       *ethapi.PublicNetAPI
 
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 }
 
+// AddLesServer - adds les server
 func (s *Ethereum) AddLesServer(ls LesServer) {
 	s.lesServer = ls
 	ls.SetBloomBitsIndexer(s.bloomIndexer)
 }
 
-// InitTransaction sets up returns a set up ShyftTracer struct type
+// InitTransactionTracking sets up returns a set up ShyftTracer struct type
 func InitTransactionTracking(eth *Ethereum) (*ShyftTracer, error) {
 	jsTracer := "callTracer"
 	config := &TraceConfig{
@@ -149,26 +147,27 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	}
 	log.Info("Initialised chain configuration", "config", chainConfig)
 	eth := &Ethereum{
-		config:         config,
-		chainDb:        chainDb,
-		shyftDb:        shyftDb,
-		chainConfig:    chainConfig,
-		eventMux:       ctx.EventMux,
-		accountManager: ctx.AccountManager,
-		engine:         CreateConsensusEngine(ctx, chainConfig, &config.Ethash, config.MinerNotify, config.MinerNoverify, chainDb),
-		shutdownChan:   make(chan bool),
-		networkID:      config.NetworkId,
-		gasPrice:       config.MinerGasPrice,
-		etherbase:      config.Etherbase,
-		bloomRequests:  make(chan chan *bloombits.Retrieval),
-		bloomIndexer:   NewBloomIndexer(chainDb, shyftDb, params.BloomBitsBlocks, params.BloomConfirms),
+		config:              config,
+		chainDb:             chainDb,
+		shyftDb:             shyftDb,
+		shyftConduitAddress: "yyy",
+		chainConfig:         chainConfig,
+		eventMux:            ctx.EventMux,
+		accountManager:      ctx.AccountManager,
+		engine:              CreateConsensusEngine(ctx, chainConfig, &config.Ethash, config.MinerNotify, config.MinerNoverify, chainDb),
+		shutdownChan:        make(chan bool),
+		networkID:           config.NetworkId,
+		gasPrice:            config.MinerGasPrice,
+		etherbase:           config.Etherbase,
+		bloomRequests:       make(chan chan *bloombits.Retrieval),
+		bloomIndexer:        NewBloomIndexer(chainDb, shyftDb, params.BloomBitsBlocks, params.BloomConfirms),
 	}
 	log.Info("Initialising Ethereum protocol", "versions", ProtocolVersions, "network", config.NetworkId)
 
 	if !config.SkipBcVersionCheck {
 		bcVersion := rawdb.ReadDatabaseVersion(chainDb)
 		if bcVersion != core.BlockChainVersion && bcVersion != 0 {
-			return nil, fmt.Errorf("Blockchain DB version mismatch (%d / %d).\n", bcVersion, core.BlockChainVersion)
+			return nil, fmt.Errorf("blockchain DB version mismatch (%d / %d).\n", bcVersion, core.BlockChainVersion)
 		}
 		rawdb.WriteDatabaseVersion(chainDb, core.BlockChainVersion)
 	}
@@ -181,37 +180,43 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		cacheConfig = &core.CacheConfig{Disabled: config.NoPruning, TrieNodeLimit: config.TrieCache, TrieTimeLimit: config.TrieTimeout}
 	)
 	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig, eth.shouldPreserve)
+	whispChan := ctx.Config().WhisperChannel
+	blockchainObject := eth.blockchain
+	go func() {
+		message := <-whispChan
+		for range message {
+			blockhash := message
+			commonhash := common.HexToHash(blockhash)
+			coinbase := eth.miner.Coinbase()
+			blocknumber := blockchainObject.GetBlockByHash(commonhash)
+			if blocknumber != nil {
+				eth.miner.Stop()
+				_, bHashes := blockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
+				err = eth.blockchain.SetHead(blocknumber.NumberU64())
+				if err != nil {
+					panic(err)
+				}
+				err = shyftDb.RollbackPgDb(bHashes)
+				if err != nil {
+					panic(err)
+				}
+				eth.miner.Start(coinbase)
+			} else {
+				fmt.Printf("Rollback was not executed as the block with blockhash= %s does not exist \n", commonhash)
+			}
+		}
+	}()
 
-	BlockchainObject = eth.blockchain
-	NewWhisperEndPoint()
-	//go func() {
-	//	r := mux.NewRouter()
-	//	r.HandleFunc("/rollback_blocks/{blockhash}", func(w http.ResponseWriter, r *http.Request) {
-	//		vars := mux.Vars(r)
-	//		blockhash := vars["blockhash"]
-	//		commonhash := common.HexToHash(blockhash)
-	//		coinbase := eth.miner.Coinbase()
-	//		eth.miner.Stop()
-	//		blocknumber := BlockchainObject.GetBlockByHash(commonhash)
-	//		_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
-	//		eth.blockchain.SetHead(blocknumber.NumberU64())
-	//		err := shyftDb.RollbackPgDb(bHashes)
-	//		if err != nil {
-	//			panic(err)
-	//		}
-	//		eth.miner.Start(coinbase)
-	//		//log.Info("rolled back blockchain removing blocks %+v\n", bHashes)
-	//	})
-	//
-	//	http.ListenAndServe(":8081", r)
-	//}()
 	if err != nil {
 		return nil, err
 	}
 	// Rewind the chain in case of an incompatible config upgrade.
 	if compat, ok := genesisErr.(*params.ConfigCompatError); ok {
 		log.Warn("Rewinding chain to upgrade configuration", "err", compat)
-		eth.blockchain.SetHead(compat.RewindTo)
+		err = eth.blockchain.SetHead(compat.RewindTo)
+		if err != nil {
+			panic(err)
+		}
 		rawdb.WriteChainConfig(chainDb, genesisHash, chainConfig)
 	}
 	eth.bloomIndexer.Start(eth.blockchain)
