@@ -398,7 +398,7 @@ func whisperMessageReceiver(sub ethereum.Subscription, messages chan *whisperv6.
 				recoveredAddr := crypto.PubkeyToAddress(*pubKey)
 				boole := whisperKeys(recoveredAddr)
 				if boole {
-					whispChan <- recoveredAddr.Hex()
+					whispChan <- blockHash
 				}
 			}
 		}
