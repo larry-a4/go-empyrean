@@ -20,7 +20,6 @@ package eth
 import (
 	"errors"
 	"fmt"
-
 	"math/big"
 	"runtime"
 	"sync"
@@ -180,37 +179,10 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		cacheConfig = &core.CacheConfig{Disabled: config.NoPruning, TrieNodeLimit: config.TrieCache, TrieTimeLimit: config.TrieTimeout}
 	)
 	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig, eth.shouldPreserve)
-	whispChan := ctx.Config().WhisperChannel
-	blockchainObject := eth.blockchain
-	go func() {
-		message := <-whispChan
-		for range message {
-			blockhash := message
-			commonhash := common.HexToHash(blockhash)
-			coinbase := eth.miner.Coinbase()
-			blocknumber := blockchainObject.GetBlockByHash(commonhash)
-			if blocknumber != nil {
-				eth.miner.Stop()
-				_, bHashes := blockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
-				err = eth.blockchain.SetHead(blocknumber.NumberU64())
-				if err != nil {
-					panic(err)
-				}
-				err = shyftDb.RollbackPgDb(bHashes)
-				if err != nil {
-					panic(err)
-				}
-				eth.miner.Start(coinbase)
-			} else {
-				fmt.Printf("Rollback was not executed as the block with blockhash= %s does not exist \n", commonhash)
-			}
-		}
-	}()
 
 	if err != nil {
 		return nil, err
 	}
-	// Rewind the chain in case of an incompatible config upgrade.
 	if compat, ok := genesisErr.(*params.ConfigCompatError); ok {
 		log.Warn("Rewinding chain to upgrade configuration", "err", compat)
 		err = eth.blockchain.SetHead(compat.RewindTo)
@@ -233,6 +205,9 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	eth.miner = miner.New(eth, eth.chainConfig, eth.EventMux(), eth.engine, config.MinerRecommit, config.MinerGasFloor, config.MinerGasCeil, eth.isLocalBlock)
 	eth.miner.SetExtra(makeExtraData(config.MinerExtraData))
 
+	// Rewind the chain in case of an incompatible config upgrade.
+	whispChan := ctx.Config().WhisperChannel
+	go rollbackListener(whispChan, eth.blockchain, shyftDb, eth.miner.Coinbase(), eth.miner)
 	eth.APIBackend = &EthAPIBackend{eth, nil}
 	gpoParams := config.GPO
 	if gpoParams.Default == nil {
@@ -248,6 +223,44 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	SetGlobalConfig(config)
 
 	return eth, nil
+}
+
+func rollbackListener(whispChan chan string, bc *core.BlockChain, shyftDb ethdb.SDatabase, coinbase common.Address, miner *miner.Miner) {
+
+	for message := range whispChan {
+		rollbackFn(message, bc, miner, shyftDb, coinbase)
+	}
+}
+
+func rollbackFn(message string, bc *core.BlockChain, miner *miner.Miner, shyftDb ethdb.SDatabase, coinbase common.Address) {
+	blockhash := message
+	commonhash := common.HexToHash(blockhash)
+	blocknumber := bc.GetBlockByHash(commonhash)
+	if blocknumber != nil {
+		if miner != nil {
+			miner.Stop()
+		}
+		_, bHashes := bc.GetBlockHashesSinceLastValidBlockHash(commonhash)
+		fmt.Println(blocknumber.NumberU64())
+		err := bc.SetHead(blocknumber.NumberU64())
+		if err != nil {
+			fmt.Println("err ", err)
+
+			panic(err)
+		}
+		err = shyftDb.RollbackPgDb(bHashes)
+		if err != nil {
+			fmt.Println("err ", err)
+			panic(err)
+		}
+		if miner != nil {
+			miner.Start(coinbase)
+		}
+		fmt.Println("FOOOO")
+
+	} else {
+		fmt.Printf("Rollback was not executed as the block with blockhash= %s does not exist \n", blockhash)
+	}
 }
 
 func makeExtraData(extra []byte) []byte {

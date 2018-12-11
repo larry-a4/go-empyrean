@@ -604,10 +604,7 @@ func TestWhisperChannels(t *testing.T) {
 	testAddrA := "0x7dA99dF96259305Ee38c9fA9E9D551118B12eC3b"
 
 	go whisperMessageReceiver(sub, messages, whisperChannel, func(testAddr common.Address) bool {
-		if common.HexToAddress(testAddrA) == testAddr {
-			return true
-		}
-		return false
+		return common.HexToAddress(testAddrA) == testAddr
 	})
 
 	msg := &whisper.Message{
@@ -617,7 +614,7 @@ func TestWhisperChannels(t *testing.T) {
 
 	messages <- msg
 	resp := <-whisperChannel
-	if testAddrA != resp {
+	if "notablockhash" != resp {
 		t.Errorf("result mismatch: have %s, want %s", resp, testAddrA)
 	}
 }
@@ -638,7 +635,7 @@ func TestCheckContractAdminStatus(t *testing.T) {
 	}
 	result := stack.CheckContractAdminStatus(addr0, backend)
 
-	if result != false {
+	if !result {
 		t.Errorf("result mismatch: have %v, want %v", result, false)
 	}
 }
