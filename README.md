@@ -12,6 +12,10 @@ go-empyrean is based on a fork of go-ethereum. Much of the functionality and pro
 
 https://shyftnetwork.github.io/go-empyrean/#setup
 
+#### Tag Release Command
+
+`gren release --tags=v0.8.2 --data-source=prs --override`
+
 #### Dependencies
     
  - go 1.10
