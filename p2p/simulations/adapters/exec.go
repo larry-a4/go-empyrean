@@ -166,7 +166,6 @@ func (n *ExecNode) Start(snapshots map[string][]byte) (err error) {
 
 	// encode a copy of the config containing the snapshot
 	confCopy := *n.Config
-	//log.Output(fmt.Sprintf("NODE CONFIG: %+v \n", confCopy), 1, 1, context.Background())
 	confCopy.Snapshots = snapshots
 	confCopy.PeerAddrs = make(map[string]string)
 	for id, node := range n.adapter.nodes {

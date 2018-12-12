@@ -84,12 +84,11 @@ type Ethereum struct {
 
 	APIBackend *EthAPIBackend
 
-	miner               *miner.Miner
-	gasPrice            *big.Int
-	etherbase           common.Address
-	shyftConduitAddress string
-	networkID           uint64
-	netRPCService       *ethapi.PublicNetAPI
+	miner         *miner.Miner
+	gasPrice      *big.Int
+	etherbase     common.Address
+	networkID     uint64
+	netRPCService *ethapi.PublicNetAPI
 
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 }

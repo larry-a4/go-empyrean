@@ -30,11 +30,6 @@ func TestEC(t *testing.T) {
 
 	x, y := elliptic.Unmarshal(crypto.S256(), rpk)
 	foo := &ecdsa.PublicKey{Curve: crypto.S256(), X: x, Y: y}
-	//pubKey, err := crypto.DecompressPubkey(rpk)
-	//if err != nil {
-	//	fmt.Println("Error in Decompress", err)
-	//}
 	recoveredAddr := crypto.PubkeyToAddress(*foo)
 	fmt.Println("Client connected with address :", recoveredAddr.Hex())
-
 }
