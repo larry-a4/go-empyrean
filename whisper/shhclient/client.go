@@ -22,7 +22,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean"
 	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
-	whisper "github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
+	"github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
 )
 
 // Client defines typed wrappers for the Whisper v6 RPC API.
@@ -52,8 +52,8 @@ func (sc *Client) Version(ctx context.Context) (string, error) {
 }
 
 // Info returns diagnostic information about the whisper node.
-func (sc *Client) Info(ctx context.Context) (whisper.Info, error) {
-	var info whisper.Info
+func (sc *Client) Info(ctx context.Context) (whisperv6.Info, error) {
+	var info whisperv6.Info
 	err := sc.c.CallContext(ctx, &info, "shh_info")
 	return info, err
 }
@@ -159,7 +159,7 @@ func (sc *Client) DeleteSymmetricKey(ctx context.Context, id string) error {
 }
 
 // Post a message onto the network.
-func (sc *Client) Post(ctx context.Context, message whisper.NewMessage) (string, error) {
+func (sc *Client) Post(ctx context.Context, message whisperv6.NewMessage) (string, error) {
 	var hash string
 	return hash, sc.c.CallContext(ctx, &hash, "shh_post", message)
 }
@@ -167,14 +167,14 @@ func (sc *Client) Post(ctx context.Context, message whisper.NewMessage) (string,
 // SubscribeMessages subscribes to messages that match the given criteria. This method
 // is only supported on bi-directional connections such as websockets and IPC.
 // NewMessageFilter uses polling and is supported over HTTP.
-func (sc *Client) SubscribeMessages(ctx context.Context, criteria whisper.Criteria, ch chan<- *whisper.Message) (ethereum.Subscription, error) {
+func (sc *Client) SubscribeMessages(ctx context.Context, criteria whisperv6.Criteria, ch chan<- *whisperv6.Message) (ethereum.Subscription, error) {
 	return sc.c.ShhSubscribe(ctx, ch, "messages", criteria)
 }
 
 // NewMessageFilter creates a filter within the node. This filter can be used to poll
 // for new messages (see FilterMessages) that satisfy the given criteria. A filter can
 // timeout when it was polled for in whisper.filterTimeout.
-func (sc *Client) NewMessageFilter(ctx context.Context, criteria whisper.Criteria) (string, error) {
+func (sc *Client) NewMessageFilter(ctx context.Context, criteria whisperv6.Criteria) (string, error) {
 	var id string
 	return id, sc.c.CallContext(ctx, &id, "shh_newMessageFilter", criteria)
 }
@@ -187,7 +187,7 @@ func (sc *Client) DeleteMessageFilter(ctx context.Context, id string) error {
 
 // FilterMessages retrieves all messages that are received between the last call to
 // this function and match the criteria that where given when the filter was created.
-func (sc *Client) FilterMessages(ctx context.Context, id string) ([]*whisper.Message, error) {
-	var messages []*whisper.Message
+func (sc *Client) FilterMessages(ctx context.Context, id string) ([]*whisperv6.Message, error) {
+	var messages []*whisperv6.Message
 	return messages, sc.c.CallContext(ctx, &messages, "shh_getFilterMessages", id)
 }

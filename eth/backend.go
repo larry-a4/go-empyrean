@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"net/http"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -50,12 +49,7 @@ import (
 	"github.com/ShyftNetwork/go-empyrean/params"
 	"github.com/ShyftNetwork/go-empyrean/rlp"
 	"github.com/ShyftNetwork/go-empyrean/rpc"
-	"github.com/gorilla/mux"
 )
-
-var BlockchainObject *core.BlockChain
-
-var DebugApi PrivateDebugAPI
 
 type LesServer interface {
 	Start(srvr *p2p.Server)
@@ -90,22 +84,22 @@ type Ethereum struct {
 
 	APIBackend *EthAPIBackend
 
-	miner     *miner.Miner
-	gasPrice  *big.Int
-	etherbase common.Address
-
+	miner         *miner.Miner
+	gasPrice      *big.Int
+	etherbase     common.Address
 	networkID     uint64
 	netRPCService *ethapi.PublicNetAPI
 
 	lock sync.RWMutex // Protects the variadic fields (e.g. gas price and etherbase)
 }
 
+// AddLesServer - adds les server
 func (s *Ethereum) AddLesServer(ls LesServer) {
 	s.lesServer = ls
 	ls.SetBloomBitsIndexer(s.bloomIndexer)
 }
 
-// InitTransaction sets up returns a set up ShyftTracer struct type
+// InitTransactionTracking sets up returns a set up ShyftTracer struct type
 func InitTransactionTracking(eth *Ethereum) (*ShyftTracer, error) {
 	jsTracer := "callTracer"
 	config := &TraceConfig{
@@ -170,7 +164,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	if !config.SkipBcVersionCheck {
 		bcVersion := rawdb.ReadDatabaseVersion(chainDb)
 		if bcVersion != core.BlockChainVersion && bcVersion != 0 {
-			return nil, fmt.Errorf("Blockchain DB version mismatch (%d / %d).\n", bcVersion, core.BlockChainVersion)
+			return nil, fmt.Errorf("blockchain DB version mismatch (%d / %d).\n", bcVersion, core.BlockChainVersion)
 		}
 		rawdb.WriteDatabaseVersion(chainDb, core.BlockChainVersion)
 	}
@@ -184,35 +178,15 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	)
 	eth.blockchain, err = core.NewBlockChain(chainDb, shyftDb, cacheConfig, eth.chainConfig, eth.engine, vmConfig, eth.shouldPreserve)
 
-	BlockchainObject = eth.blockchain
-	go func() {
-		r := mux.NewRouter()
-		r.HandleFunc("/rollback_blocks/{blockhash}", func(w http.ResponseWriter, r *http.Request) {
-			vars := mux.Vars(r)
-			blockhash := vars["blockhash"]
-			commonhash := common.HexToHash(blockhash)
-			coinbase := eth.miner.Coinbase()
-			eth.miner.Stop()
-			blocknumber := BlockchainObject.GetBlockByHash(commonhash)
-			_, bHashes := BlockchainObject.GetBlockHashesSinceLastValidBlockHash(commonhash)
-			eth.blockchain.SetHead(blocknumber.NumberU64())
-			err := shyftDb.RollbackPgDb(bHashes)
-			if err != nil {
-				panic(err)
-			}
-			eth.miner.Start(coinbase)
-			//log.Info("rolled back blockchain removing blocks %+v\n", bHashes)
-		})
-
-		http.ListenAndServe(":8081", r)
-	}()
 	if err != nil {
 		return nil, err
 	}
-	// Rewind the chain in case of an incompatible config upgrade.
 	if compat, ok := genesisErr.(*params.ConfigCompatError); ok {
 		log.Warn("Rewinding chain to upgrade configuration", "err", compat)
-		eth.blockchain.SetHead(compat.RewindTo)
+		err = eth.blockchain.SetHead(compat.RewindTo)
+		if err != nil {
+			panic(err)
+		}
 		rawdb.WriteChainConfig(chainDb, genesisHash, chainConfig)
 	}
 	eth.bloomIndexer.Start(eth.blockchain)
@@ -229,6 +203,9 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	eth.miner = miner.New(eth, eth.chainConfig, eth.EventMux(), eth.engine, config.MinerRecommit, config.MinerGasFloor, config.MinerGasCeil, eth.isLocalBlock)
 	eth.miner.SetExtra(makeExtraData(config.MinerExtraData))
 
+	// Rewind the chain in case of an incompatible config upgrade.
+	whispChan := ctx.Config().WhisperChannel
+	go rollbackListener(whispChan, eth.blockchain, shyftDb, eth.miner.Coinbase(), eth.miner)
 	eth.APIBackend = &EthAPIBackend{eth, nil}
 	gpoParams := config.GPO
 	if gpoParams.Default == nil {
@@ -244,6 +221,44 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	SetGlobalConfig(config)
 
 	return eth, nil
+}
+
+func rollbackListener(whispChan chan string, bc *core.BlockChain, shyftDb ethdb.SDatabase, coinbase common.Address, miner *miner.Miner) {
+
+	for message := range whispChan {
+		rollbackFn(message, bc, miner, shyftDb, coinbase)
+	}
+}
+
+func rollbackFn(message string, bc *core.BlockChain, miner *miner.Miner, shyftDb ethdb.SDatabase, coinbase common.Address) {
+	blockhash := message
+	commonhash := common.HexToHash(blockhash)
+	blocknumber := bc.GetBlockByHash(commonhash)
+	if blocknumber != nil {
+		if miner != nil {
+			miner.Stop()
+		}
+		_, bHashes := bc.GetBlockHashesSinceLastValidBlockHash(commonhash)
+		fmt.Println(blocknumber.NumberU64())
+		err := bc.SetHead(blocknumber.NumberU64())
+		if err != nil {
+			fmt.Println("err ", err)
+
+			panic(err)
+		}
+		err = shyftDb.RollbackPgDb(bHashes)
+		if err != nil {
+			fmt.Println("err ", err)
+			panic(err)
+		}
+		if miner != nil {
+			miner.Start(coinbase)
+		}
+		fmt.Println("FOOOO")
+
+	} else {
+		fmt.Printf("Rollback was not executed as the block with blockhash= %s does not exist \n", blockhash)
+	}
 }
 
 func makeExtraData(extra []byte) []byte {

@@ -145,6 +145,13 @@ var AppHelpFlagGroups = []flagGroup{
 		},
 	},
 	{
+		Name: "WHISPER BROADCAST KEYS",
+		Flags: []cli.Flag{
+			utils.WhisperKeys,
+			utils.PasswordFileFlag,
+		},
+	},
+	{
 		Name: "API AND CONSOLE",
 		Flags: []cli.Flag{
 			utils.RPCEnabledFlag,
