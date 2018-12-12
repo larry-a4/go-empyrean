@@ -635,7 +635,7 @@ func TestCheckContractAdminStatus(t *testing.T) {
 	}
 	result := stack.CheckContractAdminStatus(addr0, backend)
 
-	if !result {
+	if result {
 		t.Errorf("result mismatch: have %v, want %v", result, false)
 	}
 }
