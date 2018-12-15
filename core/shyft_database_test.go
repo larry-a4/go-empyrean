@@ -58,6 +58,7 @@ func TestInsertTx(t *testing.T) {
 	// Set up a  test transaction
 	tx := CreateTestTransactions()
 	db, _ := ethdb.NewShyftDatabase()
+	db.TruncateTables()
 	testDbName := ethdb.DbName()
 
 	blockHash := "0x656c34545f90a730a19008c0e7a7cd4fb3895064b48d6d69761bd5abad681056"
@@ -136,7 +137,7 @@ func TestInsertTx(t *testing.T) {
 }
 
 func insertBlocksTransactions() (map[string][]ethdb.Account, []string, *ethdb.SPGDatabase, *sqlx.DB) {
-	// ethdb.RemoveTestDbs("shyfttest")
+	//ethdb.RemoveTestDbs("shyfttest")
 	db, _ := ethdb.NewShyftDatabase()
 	db.TruncateTables()
 
