@@ -4,6 +4,7 @@ services:
     build:
       context: $PWD 
       dockerfile: ./Dockerfile
+    image: tim/latestgeth
     ports:
       - "8545:8545"
       - "8546:8546"
@@ -16,18 +17,19 @@ services:
       - "31333:31333/udp"
       - "8081:8081"
     volumes:
-      - .:/go/src/ShyftNetwork/go-empyrean
-    working_dir: /go/src/ShyftNetwork/go-empyrean
+      - ./shyftData/:/go-empyrean/shyftData/
+      - ./shyft-files/:/go-empyrean/shyft-files/
+    working_dir: /go-empyrean
     depends_on: 
       - pg
     networks:
       - shyftnet
     command: >
-      sh -c 'cd /go/src/ShyftNetwork/go-empyrean &&
-            ./wait-for.sh pg:5432 &&
+      sh -c 'cd /go-empyrean &&
+            ./shyft-files/wait-for.sh pg:5432 &&
             DBENV=docker export DBENV &&
-            ./shyft-cli/initShyftGeth.sh &&
-            ./shyft-cli/startShyftGeth.sh'
+            ./shyft-files/shyft-cli/initShyftGeth.sh &&
+            ./shyft-files/shyft-cli/startShyftGeth.sh'
   pg:
     build: 
       context: $PWD
