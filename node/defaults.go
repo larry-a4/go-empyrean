@@ -48,6 +48,8 @@ var DefaultConfig = Config{
 		MaxPeers:   25,
 		NAT:        nat.Any(),
 	},
+	WhisperDisable: false,
+	WhisperChannel: make(chan string),
 }
 
 // DefaultDataDir is the default data directory to use for the databases and other

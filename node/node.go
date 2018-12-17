@@ -17,8 +17,20 @@
 package node
 
 import (
+	"context"
 	"errors"
 	"fmt"
+
+	"github.com/ShyftNetwork/go-empyrean/generated_bindings"
+
+	"github.com/ShyftNetwork/go-empyrean/accounts/abi/bind"
+
+	"github.com/ShyftNetwork/go-empyrean/common"
+	"github.com/ShyftNetwork/go-empyrean/crypto"
+	"github.com/ShyftNetwork/go-empyrean/ethclient"
+	"github.com/ShyftNetwork/go-empyrean/whisper/shhclient"
+	"github.com/ShyftNetwork/go-empyrean/whisper/whisperv6"
+
 	"net"
 	"os"
 	"path/filepath"
@@ -26,7 +38,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ShyftNetwork/go-empyrean"
 	"github.com/ShyftNetwork/go-empyrean/accounts"
+	"github.com/ShyftNetwork/go-empyrean/common/hexutil"
 	"github.com/ShyftNetwork/go-empyrean/ethdb"
 	"github.com/ShyftNetwork/go-empyrean/event"
 	"github.com/ShyftNetwork/go-empyrean/internal/debug"
@@ -200,7 +214,6 @@ func (n *Node) Start() error {
 	// Start each of the services
 	started := []reflect.Type{}
 	for kind, service := range services {
-		// Start the next service, stopping all previous upon failure
 		if err := service.Start(running); err != nil {
 			for _, kind := range started {
 				services[kind].Stop()
@@ -209,8 +222,9 @@ func (n *Node) Start() error {
 
 			return err
 		}
-		// Mark the service started for potential cleanup
 		started = append(started, kind)
+		// Mark the service started for potential cleanup
+		// Start the next service, stopping all previous upon failure
 	}
 	// Lastly start the configured RPC interfaces
 	if err := n.startRPC(services); err != nil {
@@ -224,8 +238,171 @@ func (n *Node) Start() error {
 	n.services = services
 	n.server = running
 	n.stop = make(chan struct{})
+	// if shhApi enabled, register whisper Subscription
+	if n.shhApi() {
+		// Check n.config.WhisperSignersContract contains contract address
+		// If not available but WhisperKeys flags available continue make subscription
+		// If contract doesnt exist but we have n.config.WhisperKeys - Proceed set up subscription
+		// TODO: Remove whisperkey flags once WhisperSignersContract is available// TODO: Remove whisperkey flags once WhisperSignersContract is available
+		signersContractAddress := n.config.WhisperSignersContract != ""
+		whisperPublicKeys := len(n.config.WhisperKeys) > 0
+		if signersContractAddress || whisperPublicKeys {
+			ctx := context.Background()
+			// Set Up a Topic Listener
+			wsConnect := "ws://" + n.config.WSEndpoint()
+			shhCli, err := shhclient.Dial(wsConnect)
+			if err != nil {
+				log.Error("Failed to Connect to shh client: ", err)
+				panic(err)
+			}
+			generatedSymKey, err := shhCli.GenerateSymmetricKeyFromPassword(ctx, "foobar")
+			symKey, _ := shhCli.GetSymmetricKey(ctx, generatedSymKey)
+			symKeyId, _ := shhCli.AddSymmetricKey(ctx, symKey)
+			log.Info("Symmetric Key Id: ", "symKeyId", symKeyId)
 
+			// topicString is "rollback".toHex()
+			topicString := "0x524f4c4c"
+			topicBytes, _ := hexutil.Decode(topicString)
+			topic := whisperv6.BytesToTopic(topicBytes)
+			topArr := []whisperv6.TopicType{topic}
+			criteria := &whisperv6.Criteria{SymKeyID: symKeyId, Topics: topArr}
+			messages := make(chan *whisperv6.Message)
+			sub, err := shhCli.SubscribeMessages(ctx, *criteria, messages)
+			if err != nil {
+				log.Error("subscription error:", err)
+			}
+			log.Info("listening for messages", "topicString", topicString)
+			conn := n.dialIPC()
+			authMethodContract := n.smartContractAvailable(n.config.WhisperSignersContract, conn)
+			fmt.Printf("Contract Available %+v \n", authMethodContract)
+			if authMethodContract {
+				go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, n.CheckContractAdminStatusWrapper(conn)) // call contract code
+			} else {
+				// Until Testnet deployment and for testing purposes the endpoint
+				// scan be tested by passing in public signing keys as a cmd line flag
+				go whisperMessageReceiver(sub, messages, n.config.WhisperChannel, func(addr common.Address) bool {
+					if pos(n.config.WhisperKeys, addr) == -1 {
+						return false
+					} else {
+						return true
+					}
+				})
+			}
+		}
+	}
 	return nil
+}
+
+func (n *Node) dialIPC() *ethclient.Client {
+	conn, err := ethclient.Dial("./shyftData/geth.ipc")
+	if err != nil {
+		log.Info("Failed to connect to the Ethereum client: %v", err)
+	}
+	return conn
+}
+
+func (n *Node) CheckContractAdminStatusWrapper(conn *ethclient.Client) func(address common.Address) bool {
+	return func(addr common.Address) bool {
+		return n.CheckContractAdminStatus(addr, conn)
+	}
+}
+
+func (n *Node) CheckContractAdminStatus(addr common.Address, conn bind.ContractCaller) bool {
+	signerContract, err := shyft_contracts.NewValidSignersCaller(common.HexToAddress(n.config.WhisperSignersContract), conn)
+	if err != nil {
+		log.Info("Signer contract not initialized")
+		return false
+	}
+	//signerContract, err := shyft_contracts.NewSignerCaller(common.HexToAddress(n.config.WhisperSignersContract), conn)
+	session := &shyft_contracts.ValidSignersCallerSession{
+		Contract: signerContract,
+		CallOpts: bind.CallOpts{
+			Pending: true,
+		},
+	}
+	result, err := session.IsValidSigner(addr)
+	if err != nil {
+		log.Info("No response from contract %+v \n", err)
+	}
+	return result
+}
+
+func (n *Node) smartContractAvailable(addr string, conn *ethclient.Client) bool {
+	address := common.HexToAddress(addr)
+	bytecode, err := conn.CodeAt(context.Background(), address, nil) // nil is latest block
+	if err != nil {
+		return false
+	}
+	if len(bytecode) > 0 {
+		fmt.Println("is contract ") // is contract
+		return true
+	}
+	return false
+}
+
+func (n *Node) getKeysFromContract() []string {
+	// Code to read contract address
+	// Connect to geth.ipc and call function to return string array of public keys
+	return n.config.WhisperKeys
+}
+
+func (n *Node) shhApi() bool {
+	for _, api := range n.rpcAPIs {
+		if api.Namespace == "shh" {
+			return true
+		}
+	}
+	return false
+}
+
+func parseMessage(msg string) (string, string) {
+	payload := strings.Split(msg, "--")
+	return payload[0], payload[1]
+}
+
+func pos(slice []string, address common.Address) int {
+	for p, v := range slice {
+		if v == address.Hex() {
+			return p
+		}
+	}
+	return -1
+}
+
+// Copied from signer/core/api.go to avoid cyclic dependency in testing
+func SignHash(data []byte) ([]byte, string) {
+	msg := fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(data), data)
+	return crypto.Keccak256([]byte(msg)), msg
+}
+
+func whisperMessageReceiver(sub ethereum.Subscription, messages chan *whisperv6.Message, whispChan chan string, whisperKeys func(addr common.Address) bool) {
+	for {
+		select {
+		case err := <-sub.Err():
+			log.Error("subscription error:", err)
+		case message := <-messages:
+			// get eth public keys from message
+			blockHash, sig := parseMessage(string(message.Payload[:]))
+			sigByteArray, err := hexutil.Decode(sig)
+			if err != nil {
+				log.Error("hexutil.Decode err", "err", err)
+				break
+			}
+			var sighex = hexutil.Bytes(sigByteArray)
+			sighex[64] -= 27
+			msgHash, _ := SignHash(hexutil.Bytes(blockHash))
+			pubKey, err := crypto.SigToPub(hexutil.Bytes(msgHash), sighex)
+			if err != nil {
+				log.Error("SigToPub err", "err", err)
+			} else {
+				recoveredAddr := crypto.PubkeyToAddress(*pubKey)
+				boole := whisperKeys(recoveredAddr)
+				if boole {
+					whispChan <- blockHash
+				}
+			}
+		}
+	}
 }
 
 func (n *Node) openDataDir() error {
@@ -323,7 +500,7 @@ func (n *Node) stopIPC() {
 		n.ipcListener.Close()
 		n.ipcListener = nil
 
-		n.log.Info("IPC endpoint closed", "endpoint", n.ipcEndpoint)
+		n.log.Info("IPC endpoint closed", "url", n.ipcEndpoint)
 	}
 	if n.ipcHandler != nil {
 		n.ipcHandler.Stop()

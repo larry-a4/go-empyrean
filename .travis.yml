@@ -2,6 +2,8 @@ language: go
 go_import_path: github.com/ShyftNetwork/go-empyrean
 
 matrix:
+  allow_failures:
+    - os: osx
   include:
   - os: linux
     dist: trusty

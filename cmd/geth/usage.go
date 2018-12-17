@@ -81,6 +81,7 @@ var AppHelpFlagGroups = []flagGroup{
 			utils.LightServFlag,
 			utils.LightPeersFlag,
 			utils.LightKDFFlag,
+			utils.WhitelistFlag,
 		},
 	},
 	{
@@ -141,6 +142,13 @@ var AppHelpFlagGroups = []flagGroup{
 		Name: "ACCOUNT",
 		Flags: []cli.Flag{
 			utils.UnlockedAccountFlag,
+			utils.PasswordFileFlag,
+		},
+	},
+	{
+		Name: "WHISPER BROADCAST KEYS",
+		Flags: []cli.Flag{
+			utils.WhisperKeys,
 			utils.PasswordFileFlag,
 		},
 	},
