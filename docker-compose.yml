@@ -16,24 +16,27 @@ services:
       - "31333:31333/udp"
       - "8081:8081"
     volumes:
-      - .:/go/src/ShyftNetwork/go-empyrean
-    working_dir: /go/src/ShyftNetwork/go-empyrean
+      - ./shyftData/:/go-empyrean/shyftData/
+      - ./shyft-config/:/go-empyrean/shyft-config/
+    working_dir: /go-empyrean
     depends_on: 
       - pg
     networks:
       - shyftnet
     command: >
-      sh -c 'cd /go/src/ShyftNetwork/go-empyrean &&
-            ./wait-for.sh pg:5432 &&
+      sh -c 'cd /go-empyrean &&
+            ./shyft-config/wait-for.sh pg:5432 &&
             DBENV=docker export DBENV &&
-            ./shyft-cli/initShyftGeth.sh &&
-            ./shyft-cli/startShyftGeth.sh'
+            ./shyft-config/shyft-cli/initShyftGeth.sh &&
+            ./shyft-config/shyft-cli/startShyftGeth.sh'
   pg:
-    build: 
-      context: $PWD
-      dockerfile: docker/development/pg/Dockerfile
+      #    build:
+      #context: $PWD
+      #dockerfile: docker/development/pg/Dockerfile
+    image: postgres:10.4-alpine
     volumes:
       - ./pg-data:/var/lib/postgresql/data
+        ####- ./shyft-config/shyft-cli/pg-docker-init.d:/docker-entrypoint-initdb.d ## is this necessary?
     ports:
       - "8001:5432"
     networks:
