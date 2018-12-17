@@ -158,9 +158,13 @@ func (e *GenesisMismatchError) Error() string {
 //
 // The returned chain configuration is never nil.
 func SetupGenesisBlock(db ethdb.Database, shyftDb ethdb.SDatabase, genesis *Genesis) (*params.ChainConfig, common.Hash, error) {
+	return SetupGenesisBlockWithOverride(db, shyftDb, genesis, nil)
+}
+func SetupGenesisBlockWithOverride(db ethdb.Database, shyftDb ethdb.SDatabase, genesis *Genesis, constantinopleOverride *big.Int) (*params.ChainConfig, common.Hash, error) {
 	if genesis != nil && genesis.Config == nil {
 		return params.AllEthashProtocolChanges, common.Hash{}, errGenesisNoConfig
 	}
+
 	// Just commit the new block if there is no stored genesis block.
 	stored := rawdb.ReadCanonicalHash(db, 0)
 	if (stored == common.Hash{}) {
@@ -196,6 +200,9 @@ func SetupGenesisBlock(db ethdb.Database, shyftDb ethdb.SDatabase, genesis *Gene
 
 	// Get the existing chain configuration.
 	newcfg := genesis.configOrDefault(stored)
+	if constantinopleOverride != nil {
+		newcfg.ConstantinopleBlock = constantinopleOverride
+	}
 	storedcfg := rawdb.ReadChainConfig(db, stored)
 	if storedcfg == nil {
 		log.Warn("Found genesis block without chain config")

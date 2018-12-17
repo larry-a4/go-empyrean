@@ -500,7 +500,7 @@ func (n *Node) stopIPC() {
 		n.ipcListener.Close()
 		n.ipcListener = nil
 
-		n.log.Info("IPC endpoint closed", "endpoint", n.ipcEndpoint)
+		n.log.Info("IPC endpoint closed", "url", n.ipcEndpoint)
 	}
 	if n.ipcHandler != nil {
 		n.ipcHandler.Stop()

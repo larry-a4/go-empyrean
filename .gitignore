@@ -62,3 +62,5 @@ shyftBlockExplorerApi/vendor/**/.git
 shyftBlockExplorerApi/vendor/*
 !shyftBlockExplorerApi/vendor/*.json
 
+build/_workspace/*
+

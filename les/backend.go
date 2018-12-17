@@ -54,6 +54,7 @@ type LightEthereum struct {
 	// Channel for shutting down the service
 	shutdownChan chan bool
 
+	// Handlers
 	peers      *peerSet
 	txPool     *light.TxPool
 	blockchain *light.LightChain
