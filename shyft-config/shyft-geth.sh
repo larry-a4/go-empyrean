@@ -18,20 +18,20 @@ do
 key="$1"
 case $key in
     --setup)
-    sh ./shyft-cli/setup.sh
+    sh ./shyft-config/shyft-cli/setup.sh
     shift # past argument
     ;;
     --start)
-    sh ./shyft-cli/startShyftGeth.sh
+    sh ./shyft-config/shyft-cli/startShyftGeth.sh
     shift # past argument
     ;;
     --js)
-    sh ./shyft-cli/runJs.sh ./shyft-cli/web3/$2.js
+    sh ./shyft-config/shyft-cli/runJs.sh ./shyft-config/shyft-cli/web3/$2.js
     shift # past argument
     shift # past argument
     ;;
     --reset)
-    sh ./shyft-cli/resetShyftGeth.sh
+    sh ./shyft-config/shyft-cli/resetShyftGeth.sh
     shift # past argument
     ;;
     *)    # unknown option
