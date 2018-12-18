@@ -62,17 +62,17 @@ Once cloned, in a terminal window run the following command:
 
 Before running any CLI options ensure you run **`make geth`** in the root directory.
 
-``.shyft-geth.sh --setup`` This sets up postgres and the shyft chain db
+``sh shyft-config/shyft-geth.sh --setup`` This sets up postgres and the shyft chain db
 
-``./shyft-geth.sh --start`` This starts GETH
+``sh shyft-config/shyft-geth.sh --start`` This starts GETH
 
 At this point you should see GETH running in the terminal and if you opened your postgres instance you should see data being populated into the tables. It might look something similiar to the image below.
 
 To stop Geth, **`crtl+C`** in the terminal window, if you proceed with the start script mentioned above the Shyft chain will begin from the last block height, if you wish to start the chain fresh from genesis follow the below steps:
 
-``./shyft-geth.sh --reset`` This drops postgres and chaindb data
+``sh shyft-config/shyft-geth.sh --reset`` This drops postgres and chaindb data
 
-``./shyft-geth.sh --start`` Starts GETH
+``sh shyft-config/shyft-geth.sh --start`` Starts GETH
 
 To see transactions being submitted on the network see the sendTransactions command in the CLI section of this readme.
 
@@ -118,7 +118,7 @@ Two sets of Docker Images are available for ShyftGeth, the Postgresql Database, 
 
 **To build the images for the first time please run the following command:**
 
-`./shyft-geth.sh --setup # clears persisted directories prior to docker build`
+`sh shyft-config/shyft-geth.sh --setup # clears persisted directories prior to docker build`
 
 `docker-compose up --build`
 
@@ -126,7 +126,7 @@ If you would like to reinitialize/rebuild the docker images you can run the abov
 
 To launch ShyftGeth, PG, the ShyftBlock Explorer Api and UI anytime after initial build - issue the following commands from the root of the project directory:
 
-`./shyft-geth.sh --setup # clears persisted directories prior to docker build`
+`sh shyft-config/shyft-geth.sh --setup # clears persisted directories prior to docker build`
 
 **`docker-compose up`**
 
@@ -172,7 +172,7 @@ ie. for shyftBlockExplorerApi:
 
 The Postgresql Database Container will persist the database data to the directory ``./pg-data`` _. So if you do want to reinitialize the database you should delete this directory as well as the blockchain data directories ``(./shyftData ./privatenet)`` prior to launching the docker containers. There is a shell script available to delete these folders to run it execute the following command:
 
-**``./shyft-cli/resetShyftGeth.sh``**
+**``shyft-config/shyft-cli/resetShyftGeth.sh``**
 
 Blockchain data is persisted to **``./ethash/.ethash and ./shyftData__``**. If you would like to reset the test blockchain you will need to delete the **``__./ethash ./shyftData & ./privatenet__``** directories.
 
@@ -235,7 +235,7 @@ _TODO_
 
 #### CLI
 
-Run `./shyft-geth.sh` with one of the following flags:
+Run `sh shyft-config/shyft-geth.sh` with one of the following flags:
 
 - `--setup` - Setups postgres and the shyft chain db.
 - `--start` - Starts geth.
@@ -533,12 +533,12 @@ limit blocks converge to (`--targetgaslimit`) and the price transactions are acc
 
 #### CLI
 
-Run `./shyft-geth.sh` with one of the following flags:
+Run `sh shyft-config/shyft-geth.sh` with one of the following flags:
 
 - `--setup` - Setups postgres and the shyft chain db.
 - `--start` - Starts geth.
 - `--reset` - Drops postgress and chain db, and reinstantiates both.
-- `--js [web3 filename]` - Executes web3 calls with a passed file name. If the file name is `sendTransactions.js`, `./shyft-geth.sh --js sendTransactions`.
+- `--js [web3 filename]` - Executes web3 calls with a passed file name. If the file name is `sendTransactions.js`, `sh shyft-config/shyft-geth.sh --js sendTransactions`.
 
 #### Docker Images
 
