@@ -30,13 +30,11 @@ services:
             ./shyft-config/shyft-cli/initShyftGeth.sh &&
             ./shyft-config/shyft-cli/startShyftGeth.sh'
   pg:
-      #    build:
-      #context: $PWD
-      #dockerfile: docker/development/pg/Dockerfile
-    image: postgres:10.4-alpine
+    build:
+      context: $PWD
+      dockerfile: docker/development/pg/Dockerfile
     volumes:
       - ./pg-data:/var/lib/postgresql/data
-        ####- ./shyft-config/shyft-cli/pg-docker-init.d:/docker-entrypoint-initdb.d ## is this necessary?
     ports:
       - "8001:5432"
     networks:
