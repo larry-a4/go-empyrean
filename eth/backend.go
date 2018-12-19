@@ -205,7 +205,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 
 	// Rewind the chain in case of an incompatible config upgrade.
 	whispChan := ctx.Config().WhisperChannel
-	go rollbackListener(whispChan, eth.blockchain, shyftDb, eth.miner.Coinbase(), eth.miner)
+	go rollbackListener(whispChan, eth.blockchain, shyftDb, eth.miner)
 	eth.APIBackend = &EthAPIBackend{eth, nil}
 	gpoParams := config.GPO
 	if gpoParams.Default == nil {
@@ -223,38 +223,56 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 	return eth, nil
 }
 
-func rollbackListener(whispChan chan string, bc *core.BlockChain, shyftDb ethdb.SDatabase, coinbase common.Address, miner *miner.Miner) {
+func rollbackListener(whispChan chan string, bc *core.BlockChain, shyftDb ethdb.SDatabase, miner *miner.Miner) {
 
 	for message := range whispChan {
-		rollbackFn(message, bc, miner, shyftDb, coinbase)
+		rollbackFn(message, bc, miner, shyftDb)
 	}
 }
 
-func rollbackFn(message string, bc *core.BlockChain, miner *miner.Miner, shyftDb ethdb.SDatabase, coinbase common.Address) {
+func rollbackFn(message string, bc *core.BlockChain, miner *miner.Miner, shyftDb ethdb.SDatabase) {
 	blockhash := message
 	commonhash := common.HexToHash(blockhash)
 	blocknumber := bc.GetBlockByHash(commonhash)
 	if blocknumber != nil {
-		if miner != nil {
+		if miner.Coinbase() != common.BytesToAddress([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}) {
+			fmt.Println("Miner initialized")
+			etherbase := miner.Coinbase()
+			fmt.Println("etherbase  ", etherbase)
 			miner.Stop()
-		}
-		_, bHashes := bc.GetBlockHashesSinceLastValidBlockHash(commonhash)
-		fmt.Println(blocknumber.NumberU64())
-		err := bc.SetHead(blocknumber.NumberU64())
-		if err != nil {
-			fmt.Println("err ", err)
 
-			panic(err)
+			_, bHashes := bc.GetBlockHashesSinceLastValidBlockHash(commonhash)
+			fmt.Println(blocknumber.NumberU64())
+			err := bc.SetHead(blocknumber.NumberU64())
+			if err != nil {
+				fmt.Println("err ", err)
+
+				panic(err)
+			}
+			err = shyftDb.RollbackPgDb(bHashes)
+			if err != nil {
+				fmt.Println("err ", err)
+				panic(err)
+			}
+
+			fmt.Println("coinbase is ", etherbase)
+			miner.Start(etherbase)
+		} else {
+			fmt.Println("Miner not initialized")
+			_, bHashes := bc.GetBlockHashesSinceLastValidBlockHash(commonhash)
+			fmt.Println(blocknumber.NumberU64())
+			err := bc.SetHead(blocknumber.NumberU64())
+			if err != nil {
+				fmt.Println("err ", err)
+
+				panic(err)
+			}
+			err = shyftDb.RollbackPgDb(bHashes)
+			if err != nil {
+				fmt.Println("err ", err)
+				panic(err)
+			}
 		}
-		err = shyftDb.RollbackPgDb(bHashes)
-		if err != nil {
-			fmt.Println("err ", err)
-			panic(err)
-		}
-		if miner != nil {
-			miner.Start(coinbase)
-		}
-		fmt.Println("FOOOO")
 
 	} else {
 		fmt.Printf("Rollback was not executed as the block with blockhash= %s does not exist \n", blockhash)
