@@ -202,7 +202,9 @@ NB: The Shyft Geth docker image size is 1+ GB so make sure you have adequate spa
 
 #### Shyft BlockExplorer API
 
-In order to store the block explorer database, a custom folder was created `./shyft_schema` that contains all the necessary functions to read and write to the explorer database.
+Database queries used by the block explorer api are stored in ethdb/pg_table_schema.go.
+
+In order to store the block explorer database, a custom folder was created `/ethdb/shyft_schema` that contains all the necessary functions to read and write to the explorer database.
 
 The main functions exist in `./core/shyft_database_util.go` and `./core/shyft_get_utils.go`
 
